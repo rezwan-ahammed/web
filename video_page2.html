@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Watch</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f2f5;
+            font-family: sans-serif;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 10px 16px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header .left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .left a {
+            color: #262626;
+            text-decoration: none;
+            margin-right: 16px;
+        }
+
+        .header .right {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .right .icon {
+            margin-right: 16px;
+            font-size: 20px;
+            color: #262626;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tabs a {
+            text-decoration: none;
+            color: #262626;
+            font-weight: bold;
+        }
+
+        .tabs a.active {
+            color: #007bff;
+        }
+
+        .content {
+            display: flex;
+            padding: 8px;
+            background-color: #fff;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .content .video-card {
+            width: 100%;
+            padding: 5px;
+        }
+
+        .content .video-card img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .content .video-card .details {
+            padding: 10px;
+        }
+
+        .content .video-card .details h3 {
+            margin-top: 0;
+            font-weight: bold;
+        }
+
+        .content .video-card .details p {
+            margin-bottom: 0;
+        }
+
+        .content .video-card .details .buttons {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 10px;
+        }
+
+        .content .video-card .details .buttons .icon {
+            font-size: 18px;
+            color: #262626;
+        }
+
+        .content .video-card .details .buttons .icon:hover {
+            color: #007bff;
+        }
+
+        .content .video-card .details .buttons .button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .content .video-card .details .buttons .button:hover {
+            opacity: 0.8;
+        }
+
+        .content .video-card .details .text {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .content .post {
+            width: 100%;
+            padding: 5px;
+        }
+
+        .content .post .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .content .post .header .user {
+            display: flex;
+            align-items: center;
+        }
+
+        .content .post .header .user img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .content .post .header .user .name {
+            font-weight: bold;
+        }
+
+        .content .post .header .actions {
+            display: flex;
+        }
+
+        .content .post .header .actions .icon {
+            font-size: 18px;
+            color: #262626;
+            margin-right: 8px;
+        }
+
+        .content .post .header .actions .icon:hover {
+            color: #007bff;
+        }
+
+        .content .post .text {
+            margin-top: 10px;
+        }
+
+        .content .post .video {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+
+        .content .post .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .content .post .footer .icon {
+            font-size: 18px;
+            color: #262626;
+        }
+
+        .content .post .footer .icon:hover {
+            color: #007bff;
+        }
+
+        .content .post .footer .button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .follow-button {
+        margin-left:25px;
+        padding:5px;
+        text-decoration:none;
+        color:#007bff;
+        }
+
+        .content .post .footer .button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="left">
+            <a href="#"><i class="fas fa-home"></i></a>
+            <a href="#"><i class="fas fa-users"></i></a>
+        </div>
+        <div class="right">
+            <a href="#"><i class="fas fa-play-circle"></i></a>
+            <a href="#"><i class="fas fa-user-circle"></i></a>
+            <a href="#"><i class="fas fa-bell"></i></a>
+            <a href="#"><i class="fas fa-bars"></i></a>
+        </div>
+    </header>
+    <div class="header">
+        <div class="left">
+        <img style="width:40px; height:auto; padding-right:8px;" src="https://z-m-static.xx.fbcdn.net/rsrc.php/v3/y6/r/UbJC5lwxeBU.png" class="fb-logo" alt="Facebook"><h1>Video</h1>
+        </div>
+        <div class="right">
+            <a href="#"><i class="fas fa-user-circle"></i></a>
+            <a href="#"><i class="fas fa-search"></i></a>
+        </div>
+    </div>
+    <div class="tabs">
+        <a href="#" class="active">For you</a>
+        <a href="#">Live</a>
+        <a href="#">Reels</a>
+        <a href="#">Following</a>
+    </div>
+    <div class="content">
+        <div class="post">
+            <div class="header">
+                <div class="user">
+                    <img src="user.jpg" alt="User Image">
+                    <div class="name">Rafsan The Chotobhai</div><a href="#" class="follow-button">Follow</a>
+                </div>
+                <div class="actions">
+                    <a href="#"><i class="fas fa-ellipsis-h"></i></a>
+                </div>
+            </div>
+            <div class="text"></div>
+            <div class="video">
+                <video width="100%" controls>
+                    <source src="video.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="footer">
+                <div class="actions">
+                    <a href="#"><i class="fas fa-thumbs-up icon"></i></a>
+                    <a href="#"><i class="fas fa-comment icon"></i></a>
+                    <a href="#"><i class="fas fa-share icon"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit-id.js" crossorigin="anonymous"></script>
+</body>
+</html>
