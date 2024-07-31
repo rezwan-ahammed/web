@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for easy customization */
+        :root {
+            --primary-color: #4285f4;
+            /* Example primary color */
+            --secondary-color: #f2f2f2;
+            /* Example secondary color */
+            --text-color: #333;
+            --font-family: 'Roboto', 'Noto Serif Bengali', sans-serif;
+            --ripple-color: rgba(0, 0, 0, 0.2); /* Ripple color */
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex: 0.83;
+            max-width: 600px;
+            margin: 0px 0px;
+            background-color: #fff;
+            border-radius: 0px;
+            padding-top: 65px;
+            padding-bottom: 30px;
+            height: 100%;
+        }
+
+        .chat-window {
+            height: calc(100% - 50px);
+            /* Adjusted to accommodate the input container */
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-container {
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 15px;
+            outline: none;
+            background: #eeeeee;
+        }
+
+        .input-container {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #ffffff;
+            transition: bottom 0.3s;
+            /* Add transition for smooth animation */
+        }
+
+        header {
+            background-color: #ffffff;
+            color: ;
+            padding: 0px 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            transition: top 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* Align items to opposite ends */
+        }
+
+        header h2 {
+            padding-left: 10px;
+            font-family: 'Lobster Two', cursive;
+        }
+
+        .send-button,
+        .add-conversation-button,
+        .free-line-button,
+        .delete-icon,
+        .rename-icon {
+            background-color: #fff;
+            border: none;
+            border-radius: 50%;
+            padding: 8px;
+            padding-left: 10px;
+            margin-left: 10px;
+            margin-right: 10px;
+            cursor: pointer;
+            outline: none;
+            transition: background-color 0.2s;
+            /* Add transition for background color change */
+            position: relative;
+            /* For ripple effect */
+            overflow: hidden;
+            /* Hide the ripple effect if it extends beyond the button */
+        }
+
+        .send-button:hover,
+        .add-conversation-button:hover,
+        .free-line-button:hover,
+        .delete-icon:hover,
+        .rename-icon:hover {
+            background: #eeeeee;
+        }
+
+        .send-button .material-icons,
+        .add-conversation-button .material-icons,
+        .free-line-button .material-icons,
+        .delete-icon,
+        .rename-icon {
+            vertical-align: middle;
+        }
+
+        .conversation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .user-layout,
+        .bot-layout {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 70%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .chat-image {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            margin-right: 10px;
+            margin-top: 5px;
+        }
+
+        /* Code Block Styling */
+        .codewrap {
+            background-color: #000000;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px;
+            overflow-x: auto;
+            /* Enable horizontal scrolling if needed */
+        }
+
+        .code {
+            font-family: Consolas, Menlo, monospace;
+            white-space: pre-wrap;
+            color: white;
+            /* Allow wrapping for longer lines */
+        }
+
+        .listwrap {
+            background-color: black;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px;
+            color: white;
+            overflow-x: auto;
+            /* Enable horizontal scrolling if needed */
+        }
+
+        /* Navigation Drawer Styling */
+        .navigation-drawer {
+            position: fixed;
+            left: -250px;
+            top: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #f2f2f2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s;
+            /* Smooth opening and closing animation */
+        }
+
+        .navigation-drawer.open {
+            left: 0;
+        }
+
+        .navigation-drawer-header {
+            padding: 20px;
+            background-color: #fff;
+            color: #333;
+            text-align: center;
+        }
+
+        .navigation-drawer-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+        }
+
+        .navigation-drawer-list li {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            position: relative;
+            /* To position the options menu */
+            display: flex;
+            /* Align items in a row */
+            align-items: center;
+            /* Vertically center items */
+        }
+
+        .navigation-drawer-list li:last-child {
+            border-bottom: none;
+        }
+
+        .navigation-drawer-list li.active {
+            background-color: #e9e9e9;
+        }
+
+        /* Delete and Rename Icons Styling */
+        .delete-icon,
+        .rename-icon {
+            cursor: pointer;
+            margin-left: auto;
+            /* Push to the right */
+            margin-right: 10px;
+            /* Add spacing */
+            color: #333;
+            /* Default color */
+            font-size: 18px;
+            position: relative;
+            /* For ripple effect */
+            overflow: hidden;
+            /* Hide the ripple effect if it extends beyond the icon */
+        }
+
+        /* Delete and Rename Icons Hover Effect */
+        .delete-icon:hover {
+            color: red;
+        }
+
+        .rename-icon:hover {
+            color: blue;
+        }
+
+        /* Ripple Effect Styling */
+        .send-button::before,
+        .add-conversation-button::before,
+        .free-line-button::before,
+        .delete-icon::before,
+        .rename-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--ripple-color);
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 0.3s ease-out;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .send-button:active::before,
+        .add-conversation-button:active::before,
+        .free-line-button:active::before,
+        .delete-icon:active::before,
+        .rename-icon:active::before {
+            transform: scale(1.5);
+            opacity: 0.7;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 600px) {
+            .container {
+                max-width: 100%;
+                padding-top: 100px;
+                /* Increase padding for header */
+            }
+
+            .input-container {
+                bottom: 10px;
+                /* Adjust input container position */
+            }
+
+            .add-conversation-button {
+                bottom: 10px;
+                left: 10px;
+                /* Adjust free line button position */
+            }
+
+            .free-line-button {
+                bottom: 10px;
+                right: 10px;
+                /* Adjust free line button position */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header id="header">
+        <h2><b>Intellimate</b><sup style="font-size:10px;"> by Rezwan</sup></h2>
+        <button class="add-conversation-button" id="addConversationButton">
+            <i class="material-icons">add</i>
+        </button>
+        <button class="free-line-button" id="freeLineButton">
+            <i class="material-icons">menu</i>
+        </button>
+    </header>
+
+    <div class="navigation-drawer" id="navigationDrawer">
+        <div class="navigation-drawer-header">
+            <h3>Conversations</h3>
+        </div>
+        <ul class="navigation-drawer-list" id="conversationList">
+        </ul>
+    </div>
+
+    <div class="container">
+        <div class="chat-window" id="chat-window">
+            <div class="chat-container" id="edit">
+                <!-- Display loading indicator -->
+                <div id="loading-indicator" style="display:none;">
+                    <i class="material-icons">autorenew</i> Loading...
+                </div>
+            </div>
+        </div>
+        <div class="input-container" id="inputContainer">
+            <input type="enter" inputmode="next" id="input" placeholder="Type your message..."
+                class="input-field">
+            <button id="button" class="send-button">
+                <i class="material-icons">send</i>
+            </button>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "@google/generative-ai": "https://esm.run/@google/generative-ai"
+            }
+        }
+    </script>
+
+    <script type="module">
+         import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Constants
+const API_KEY = "AIzaSyBmJtxnS2fsnSbFbscPMRhw50mMoLK6n_g";
+const MAX_CONTEXT_LENGTH = 10; // Adjust this value based on the model's token limit
+const DEFAULT_CONVERSATION = 'general';
+
+// Initialize Google Generative AI
+const genAI = new GoogleGenerativeAI(API_KEY);
+
+// DOM Elements
+const conversationList = document.getElementById('conversationList');
+const navigationDrawer = document.getElementById('navigationDrawer');
+const addConversationButton = document.getElementById('addConversationButton');
+const freeLineButton = document.getElementById('freeLineButton');
+const inputContainer = document.getElementById('inputContainer');
+const loadingIndicator = document.getElementById('loading-indicator');
+const chatWindow = document.getElementById('edit');
+const inputField = document.getElementById('input');
+const sendButton = document.getElementById('button');
+
+// State
+let currentConversation = DEFAULT_CONVERSATION;
+let conversationData = {};
+
+// Initialize the app
+function initApp() {
+    loadConversation();
+    updateConversationList();
+    displayConversation(currentConversation);
+    setupEventListeners();
+}
+
+// Event Listeners
+function setupEventListeners() {
+    addConversationButton.addEventListener('click', handleAddConversation);
+    freeLineButton.addEventListener('click', toggleNavigationDrawer);
+    document.addEventListener('click', handleOutsideClick);
+    sendButton.addEventListener('click', () => run());
+    inputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') run();
+    });
+    inputField.addEventListener('focus', () => adjustInputContainer('60px'));
+    inputField.addEventListener('blur', () => adjustInputContainer('0'));
+}
+
+// Conversation Handling
+async function handleAddConversation() {
+    const initialMessage = prompt("Enter a message to start the conversation:");
+    if (initialMessage) {
+        try {
+            const suggestedName = await generateConversationName(initialMessage);
+            currentConversation = suggestedName;
+            chatWindow.innerHTML = '';
+            conversationData[currentConversation] = [];
+            await run(initialMessage);
+            navigationDrawer.classList.remove('open');
+            saveCurrentConversation();
+        } catch (error) {
+            console.error("Error creating new conversation:", error);
+            alert("An error occurred. Please try again.");
+        }
+    }
+}
+
+async function generateConversationName(initialMessage) {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    try {
+        const result = await model.generateContent(`Suggest a 5-word name for a conversation starting with: "${initialMessage}"`);
+        return result.response.text().trim();
+    } catch (error) {
+        console.error("Error generating conversation name:", error);
+        return "New Conversation";
+    }
+}
+
+function displayConversation(conversationName) {
+    currentConversation = conversationName;
+    const messages = conversationData[conversationName] || [];
+    chatWindow.innerHTML = messages.map(createMessageHTML).join('');
+    updateConversationList();
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    saveCurrentConversation();
+}
+
+function createMessageHTML(message) {
+    return `
+        <div class='conversation-container'>
+            <div class='user-layout'>
+                <img class='chat-image' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqdJ6sI40UhgqDS-_Fa5LZ7qzkombbQlnPgsoVlp1NQtBAU7ZD9Y59VIQ&s=10' alt='User Avatar'/>
+                <article class='message'>${escapeHTML(message.user)}</article>
+            </div>
+            <div class='bot-layout'>
+                <img class='chat-image' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqdJ6sI40UhgqDS-_Fa5LZ7qzkombbQlnPgsoVlp1NQtBAU7ZD9Y59VIQ&s=10' alt='AI Avatar'/>
+                <article class='message'>${formatAndReplace(message.ai)}</article>
+            </div>
+        </div>
+    `;
+}
+
+// Utility Functions
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
+}
+
+function formatAndReplace(response) {
+    return response.replace(/\n/g, '<br>');
+}
+
+function adjustInputContainer(bottom) {
+    inputContainer.style.bottom = bottom;
+}
+
+function toggleNavigationDrawer() {
+    navigationDrawer.classList.toggle('open');
+}
+
+function handleOutsideClick(event) {
+    if (!navigationDrawer.contains(event.target) && 
+        !addConversationButton.contains(event.target) && 
+        !freeLineButton.contains(event.target)) {
+        navigationDrawer.classList.remove('open');
+    }
+}
+
+// Local Storage
+function saveConversation() {
+    try {
+        localStorage.setItem('conversations', JSON.stringify(conversationData));
+        saveCurrentConversation();
+    } catch (error) {
+        console.error("Error saving conversation:", error);
+    }
+}
+
+function saveCurrentConversation() {
+    localStorage.setItem('currentConversation', currentConversation);
+}
+
+function loadConversation() {
+    try {
+        const conversations = JSON.parse(localStorage.getItem('conversations')) || {};
+        conversationData = conversations;
+        currentConversation = localStorage.getItem('currentConversation') || DEFAULT_CONVERSATION;
+    } catch (error) {
+        console.error("Error loading conversations:", error);
+        conversationData = {};
+        currentConversation = DEFAULT_CONVERSATION;
+    }
+}
+
+// Update Conversation List
+function updateConversationList() {
+    conversationList.innerHTML = '';
+    for (let conversationName in conversationData) {
+        let listItem = createConversationListItem(conversationName);
+        conversationList.appendChild(listItem);
+    }
+}
+
+function createConversationListItem(conversationName) {
+    let listItem = document.createElement('li');
+    listItem.textContent = conversationName;
+    if (conversationName === currentConversation) {
+        listItem.classList.add('active');
+    }
+    
+    let deleteIcon = createIcon('delete', () => deleteConversation(conversationName));
+    let renameIcon = createIcon('edit', () => renameConversation(conversationName));
+    
+    listItem.appendChild(deleteIcon);
+    listItem.appendChild(renameIcon);
+    listItem.addEventListener('click', () => {
+        displayConversation(conversationName);
+        navigationDrawer.classList.remove('open');
+    });
+    
+    return listItem;
+}
+
+function createIcon(iconName, clickHandler) {
+    let icon = document.createElement('i');
+    icon.classList.add('material-icons', `${iconName}-icon`);
+    icon.textContent = iconName;
+    icon.addEventListener('click', clickHandler);
+    return icon;
+}
+
+function deleteConversation(conversationName) {
+    delete conversationData[conversationName];
+    saveConversation();
+    updateConversationList();
+    if (currentConversation === conversationName) {
+        displayConversation(DEFAULT_CONVERSATION);
+    }
+}
+
+function renameConversation(oldName) {
+    let newName = prompt('Enter a new name for the conversation:', oldName);
+    if (newName && newName !== oldName) {
+        conversationData[newName] = conversationData[oldName];
+        delete conversationData[oldName];
+        saveConversation();
+        updateConversationList();
+        if (currentConversation === oldName) {
+            currentConversation = newName;
+        }
+        displayConversation(currentConversation);
+    }
+}
+
+// Main run function
+async function run(input = inputField.value) {
+    if (input === "") return;
+
+    try {
+        loadingIndicator.style.display = 'block';
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        
+        // Get the full conversation history for context
+        const conversationHistory = conversationData[currentConversation] || [];
+        const recentMessages = conversationHistory.slice(-MAX_CONTEXT_LENGTH);
+        const context = recentMessages.map(msg => `User: ${msg.user}\nAI: ${msg.ai}`).join('\n');
+        
+        const result = await model.generateContent(`${context}\nUser: ${input}\nAI:`);
+        const aiResponse = result.response.text();
+        
+        updateChatWindow(input, aiResponse);
+        
+        if (!conversationData[currentConversation]) {
+            conversationData[currentConversation] = [];
+        }
+        conversationData[currentConversation].push({ user: input, ai: aiResponse });
+        saveConversation();
+    } catch (error) {
+        console.error("Error generating response:", error);
+        updateChatWindow(input, `Error: ${error.message}`);
+    } finally {
+        loadingIndicator.style.display = 'none';
+    }
+}
+
+function updateChatWindow(input, aiResponse) {
+    chatWindow.innerHTML += createMessageHTML({ user: input, ai: aiResponse });
+    inputField.value = "";
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+// Initialize the app
+window.onload = initApp;
+    </script>
+</body>
+
+</html>
