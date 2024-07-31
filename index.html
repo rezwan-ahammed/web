@@ -1,28 +1,32 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>Mathemate</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@100..900&display=swap" rel="stylesheet">
-    <script>
-        
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezwan Ahammed | Portfolio</title>
+    <link rel="icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto', 'Noto Serif Bengali', sans-serif;
-            background-color: #fff;
+        * {
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            background-color: #fff;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Header */
         header {
-            background-color: #ffffff;
-            color: ;
-            padding: 0px 8px;
+            background-color: #fff;
+            color: #333;
+            padding: 10px 20px;
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
             position: fixed;
             top: 0;
@@ -30,93 +34,594 @@
             transition: top 0.3s;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            z-index: 10;
         }
+
         header h2 {
-            padding-left: 10px;
-            font-family: 'Lobster Two', cursive;
-        }
-        .toolbar-title {
-            flex: 1;
+            font-family: 'Open Sans', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
             margin: 0;
-            font-size: 20px;
-            font-weight: 500;
         }
-        main {
-            padding: 20px;
-            padding-top: 80px;
+
+        /* Menu Button */
+        .menu-btn {
+            display: none; /* Hide the menu button on larger screens */
         }
-        footer {
-            color: #fff;
-            background: #bdbdbd;
-            padding: 10px;
-            text-align: center;
-        }
-        .hidden {
-            top: -100px;
-        }
-        .input-container {
+
+        /* Side Drawer */
+        .side-drawer {
             position: fixed;
-            bottom: 0;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s;
+            z-index: 100;
+            padding: 20px;
+            display: none; /* Hide the side drawer on larger screens */
+        }
+
+        .side-drawer.open {
+            left: 0;
+        }
+
+        .side-drawer ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .side-drawer ul li {
+            margin-bottom: 15px;
+            position: relative; /* To position the submenu */
+        }
+
+        .side-drawer ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .side-drawer ul li a:hover {
+            background-color: #eee;
+        }
+
+        .side-drawer ul li ul { /* Submenu */
+            display: none;
+            position: absolute;
+            top: 100%;
             left: 0;
             width: 100%;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .side-drawer ul li ul li {
+            margin: 0;
+        }
+
+        .side-drawer ul li ul li a {
+            padding: 10px 20px;
+            display: block;
+            text-decoration: none;
+            color: #333;
+            font-weight: normal; /* Make submenu items less bold */
+            transition: background-color 0.3s;
+        }
+
+        .side-drawer ul li ul li a:hover {
+            background-color: #eee;
+        }
+
+        .side-drawer ul li:hover ul { /* Show submenu on hover */
+            display: block;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: url('hero-bg.jpg') no-repeat center center/cover;
+            height: 100vh;
             display: flex;
             align-items: center;
-            padding: 0px;
-            background-color: #ffffff;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+            color: #fff;
+            margin-top: 60px; /* Adjust for header height */
         }
-        ul {
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .hero .btn {
+            display: inline-block;
+            background: #333;
+            color: #fff;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero .btn:hover {
+            background: #555;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Section Container */
+        .section-container {
+            padding: 50px 20px;
+            margin-bottom: 50px;
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 700;
+        }
+
+        /* Section Content */
+        .section-content {
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
         }
-        li {
+
+        /* Section Item */
+        .section-item {
+            flex: 1 1 300px; /* Adjust flex-basis for desired item width */
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Section Item Image */
+        .section-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* Section Item Title */
+        .section-item h3 {
+            margin: 10px 0;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Section Item Text */
+        .section-item p {
+            color: #555;
+        }
+
+        /* Learn More Button */
+        .learn-more-btn {
+            display: inline-block;
+            background: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-weight: 500;
+        }
+
+        .learn-more-btn:hover {
+            background: #0062cc;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Video Section */
+        .video-section {
+            position: relative;
+            margin-bottom: 50px;
+        }
+
+        .video-section .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* Aspect ratio for 16:9 videos */
+            overflow: hidden;
+        }
+
+        .video-section .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Video Overlay */
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1;
+        }
+
+        .video-section:hover .video-overlay {
+            opacity: 1;
+        }
+
+        .video-overlay h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .video-overlay p {
+            font-size: 16px;
+        }
+
+        /* Footer */
+        footer {
+            background: #333;
+            color: #fff;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        nav ul {
             list-style: none;
+            margin: 0;
+            padding: 0;
         }
-        img {
-            width: 25px;
-            height: 25px;
+
+        nav ul li {
+            display: inline-block;
+            margin-left: 20px;
         }
-        .text{
-        padding:10px;
-        margin:60px 0px;
-        font-size:18px;
-        width:100%;
-        text-align:center;
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #007bff;
+        }
+
+        /* Side Drawer Styling for Menu */
+        .side-drawer .section-container {
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+
+        .side-drawer .section-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .side-drawer .section-item {
+            flex: 1 1 100%; /* Make items full width */
+            padding: 10px 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .side-drawer .section-item h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .side-drawer .section-item p {
+            font-size: 14px;
+            color: #777;
+        }
+
+        .side-drawer .learn-more-btn {
+            display: none; /* Hide the Learn More button in the side drawer */
+        }
+
+        /* Responsive Styling */
+        @media (max-width: 768px) {
+            .section-content {
+                flex-direction: column;
+            }
+
+            .section-item {
+                flex-basis: 100%;
+            }
+
+            /* Show the menu button on smaller screens */
+            .menu-btn {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 25px;
+                height: 20px;
+                cursor: pointer;
+            }
+
+            .menu-btn span {
+                display: block;
+                width: 100%;
+                height: 3px;
+                background-color: #333;
+                border-radius: 2px;
+                transition: transform 0.3s;
+            }
+
+            /* Show the side drawer on smaller screens */
+            .side-drawer {
+                display: block;
+            }
+
+            /* Hide the navigation on smaller screens */
+            nav {
+                display: none;
+            }
         }
     </style>
 </head>
-
 <body>
+    <!-- Header -->
     <header id="header">
-        <h2><b>Mathemate</b><sup style="font-size:10px;"> by Rezwan</sup></h2>
+        <h2>Rezwan Ahammed</h2>
+        <div class="menu-btn" onclick="toggleDrawer()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </header>
 
-    <div class="container">
-	<article class="text">
-	<h3>Hey there!</h3>
-	<p>Welcome to Mathemate.</p>
-	Let's get introduced to our products: 
-</article>
-        <!--<div class="input-container">
-            <ul>
-                <li>
-                    <img src="images/home_outline.png" alt="Home Icon">
-                </li>
-                <li>
-                    <img src="images/search_outline.png" alt="Search Icon">
-                </li>
-                <li>
-                    <img src="images/video_outline.png" alt="Video Icon">
-                </li>
-                <li>
-                    <img src="images/pdf_outline.png" alt="PDF Icon">
-                </li>
-                <li>
-                    <img src="images/profile_outline.png" alt="Profile Icon">
-                </li>
-            </ul>
-        </div>-->
-        
+    <!-- Side Drawer -->
+    <div class="side-drawer" id="sideDrawer">
+        <div class="section-container">
+            <div class="section-title">
+                <h2>About Google</h2>
+            </div>
+            <div class="section-content">
+                <div class="section-item">
+                    <p>Our mission, products, and impact</p>
+                </div>
+            </div>
+        </div>
+        <div class="section-container">
+            <div class="section-item">
+                <p>More about our core commitments</p>
+            </div>
+        </div>
+        <div class="section-container">
+            <div class="section-title">
+                <h2>Belonging</h2>
+            </div>
+            <div class="section-content">
+                <div class="section-item">
+                    <p>Expanding what's possible for everyone</p>
+                </div>
+            </div>
+        </div>
+        <div class="section-container">
+            <div class="section-title">
+                <h2>Learning</h2>
+            </div>
+            <div class="section-content">
+                <div class="section-item">
+                    <p>Unlocking opportunity with education & career tools</p>
+                </div>
+            </div>
+        </div>
+        <div class="section-container">
+            <div class="section-title">
+                <h2>Safety Center</h2>
+            </div>
+            <div class="section-content">
+                <div class="section-item">
+                    <p>Keeping billions of people safe online</p>
+                </div>
+            </div>
+        </div>
+        <div class="section-container">
+            <div class="section-title">
+                <h2>Crisis Response</h2>
+            </div>
+            <div class="section-content">
+                <div class="section-item">
+                    <p>Our efforts to help in times of need</p>
+                </div>
+            </div>
+        </div>
     </div>
-</body>
 
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <h1>Rezwan Ahammed</h1>
+        <p>Web & Mobile Developer</p>
+    </section>
+
+    <!-- Navigation -->
+    <nav>
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Section 1: Helpful Products -->
+    <section class="section-container" id="about">
+        <div class="section-title">
+            <h2>Helpful products. Built with you in mind.</h2>
+        </div>
+        <div class="section-content">
+            <div class="section-item">
+                <img src="project1.jpg" alt="Project 1">
+                <h3>Get product support</h3>
+                <p>Need help with a Google product? Find answers, troubleshoot issues, and get expert support.</p>
+                <a href="#" class="learn-more-btn">Learn more</a>
+            </div>
+            <div class="section-item">
+                <img src="project2.jpg" alt="Project 2">
+                <h3>Get disability support</h3>
+                <p>Explore accessibility features and resources for Google products.</p>
+                <a href="#" class="learn-more-btn">Learn more</a>
+            </div>
+            <div class="section-item">
+                <img src="project3.jpg" alt="Project 3">
+                <h3>Shop Google Store</h3>
+                <p>Find the latest Google devices, accessories, and more.</p>
+                <a href="#" class="learn-more-btn">Shop now</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Latest Product News -->
+    <section class="section-container">
+        <div class="section-title">
+            <h2>LATEST PRODUCT NEWS</h2>
+        </div>
+        <div class="section-content">
+            <div class="section-item">
+                <h3>How to use Google Photos AI editing tools, now...</h3>
+            </div>
+            <div class="section-item">
+                <h3>Explore new augmented reality features in Google...</h3>
+            </div>
+            <div class="section-item">
+                <h3>New reporting and genAI tools to boost creative...</h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Helpful Technology -->
+    <section class="video-section">
+        <div class="video-container">
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/your-video-id" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <div class="video-overlay">
+            <h3>Helpful technology enables everyone to pursue their goals</h3>
+            <p>Watch the film and learn more about Google's commitment to accessibility and inclusion.</p>
+            <a href="#" class="learn-more-btn">Learn more</a>
+        </div>
+    </section>
+
+    <!-- Section 3: Inclusive Products -->
+    <section class="section-container">
+        <div class="section-title">
+            <h2>Inclusive products and features</h2>
+        </div>
+        <div class="section-content">
+            <div class="section-item">
+                <img src="project1.jpg" alt="Project 1">
+                <h3>Ways to find and support inclusive spaces on Google Maps and Search</h3>
+                <p>Discover businesses and organizations that are committed to inclusivity.</p>
+            </div>
+            <div class="section-item">
+                <img src="project2.jpg" alt="Project 2">
+                <h3>Improved camera technology that accurately photographs diverse skin tones</h3>
+                <p>Ensuring everyone is represented fairly and authentically in images.</p>
+            </div>
+            <div class="section-item">
+                <img src="project3.jpg" alt="Project 3">
+                <h3>An Android tool that enables people with communication difficulties to connect in real time</h3>
+                <p>Breaking down barriers to communication for everyone.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Product Inclusion Quote -->
+    <section class="section-container">
+        <div class="section-item">
+            <p>"With product inclusion, it's really looking end to end at the design and development process and saying: Who else needs to be in the room? Who else do we need to have perspective from? And I think co-creating is really integral to building a product that actually suits the world."</p>
+            <div style="display: flex; align-items: center; margin-top: 20px;">
+                <img src="project1.jpg" alt="Project 1" style="width: 80px; height: 80px; border-radius: 50%;">
+                <div style="margin-left: 15px;">
+                    <h3>ANNIE-JEAN BAPTISTE (SHE/HER)</h3>
+                    <p>HEAD OF PRODUCT INCLUSION & EQUITY, GOOGLE</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Bringing the Best of Google to Android Devices -->
+    <section class="section-container">
+        <div class="section-content" style="justify-content: center;">
+            <div class="section-item" style="flex-basis: 50%; text-align: center;">
+                <img src="project1.jpg" alt="Project 1">
+                <h2>Bringing the best of Google to Android Devices</h2>
+                <p>Android makes it easy to use your favorite apps and services across your phone, tablet, watch and more.</p>
+                <a href="#" class="learn-more-btn">Explore the latest</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Phones -->
+    <section class="section-container">
+        <div class="section-content">
+            <div class="section-item">
+                <img src="project2.jpg" alt="Project 2">
+                <h3>Phones</h3>
+                <p>Use your Android phone to unlock your Chromebook, control your TV, and adjust your smart home devices.</p>
+                <a href="#" class="learn-more-btn">Learn more</a>
+            </div>
+            <div class="section-item">
+                <img src="project3.jpg" alt="Project 3">
+                <h3>Tablets</h3>
+                <p>Enjoy your favorite apps on a bigger screen, reply to texts, and share files seamlessly between your Android devices.</p>
+                <a href="#" class="learn-more-btn">Learn more</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>© 2024 Rezwan Ahammed. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const sideDrawer = document.getElementById("sideDrawer");
+
+        function toggleDrawer() {
+            sideDrawer.classList.toggle("open");
+        }
+    </script>
+</body>
 </html>
