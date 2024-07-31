@@ -21,6 +21,11 @@
             color: #333;
             overflow-x: hidden;
         }
+        
+        a{
+        text-decoration: none;
+        
+        }
 
         /* Header */
         header {
@@ -44,6 +49,12 @@
             font-size: 24px;
             margin: 0;
         }
+        
+        @media (max-width: 768px) {
+    .side-drawer {
+        padding-top: 80px; /* Adjust based on your header height */
+    }
+}
 
         /* Menu Button */
         .menu-btn {
@@ -54,10 +65,10 @@
         .side-drawer {
             position: fixed;
             top: 0;
-            left: -250px;
-            width: 250px;
+            left: -300px;
+            width: 300px;
             height: 100%;
-            background-color: #fff;
+            background-color: rgba(255, 255, 255, 1); /* Added background color with alpha */
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             transition: left 0.3s;
             z-index: 100;
@@ -126,46 +137,6 @@
 
         .side-drawer ul li:hover ul { /* Show submenu on hover */
             display: block;
-        }
-
-        /* Hero Section */
-        .hero {
-            background: url('hero-bg.jpg') no-repeat center center/cover;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 0 20px;
-            color: #fff;
-            margin-top: 60px; /* Adjust for header height */
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .hero p {
-            font-size: 20px;
-            margin-bottom: 20px;
-        }
-
-        .hero .btn {
-            display: inline-block;
-            background: #333;
-            color: #fff;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .hero .btn:hover {
-            background: #555;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
 
         /* Section Container */
@@ -395,7 +366,7 @@
             nav {
                 display: none;
             }
-        
+        }
     </style>
 </head>
 <body>
@@ -427,13 +398,13 @@
             </div>
             <div class="section-content">
                 <div class="section-item">
-                    <p>Intellimate</p>
+                    <a href="intellimate.html"><p>Intellimate</p></a>
                 </div>
                 <div class="section-item">
-                    <p>TGC</p>
+                    <a href="tgc.html"><p>TGC</p></a>
                 </div>
                 <div class="section-item">
-                    <p>Imagimate</p>
+                    <a href="imaginate.html"><p>Imagimate</p></a>
                 </div>
             </div>
         </div>
@@ -472,19 +443,19 @@
         </div>
         <div class="section-content">
             <div class="section-item">
-                <img src="intellimate.jpg" alt="Intellimate">
+                <img src="https://rezwan-ahammed.github.io/rezwan/Designer.jpeg" alt="Intellimate">
                 <h3>Intellimate</h3>
                 <p>An API-based AI chatbot for intelligent conversations.</p>
                 <a href="#" class="learn-more-btn">Learn more</a>
             </div>
             <div class="section-item">
-                <img src="tgc.jpg" alt="TGC">
+                <img src="https://rezwan-ahammed.github.io/rezwan/tgc.png" alt="TGC">
                 <h3>TGC</h3>
                 <p>A mobile app for Thakurgaon Government College.</p>
                 <a href="#" class="learn-more-btn">Learn more</a>
             </div>
             <div class="section-item">
-                <img src="imagimate.jpg" alt="Imagimate">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqveswxWlmINoiI2gm4HPZxa4Z0lbzViASTg&usqp=CAU" alt="Imagimate">
                 <h3>Imagimate</h3>
                 <p>An API-based image generator AI.</p>
                 <a href="#" class="learn-more-btn">Learn more</a>
@@ -511,17 +482,17 @@
         </div>
         <div class="section-content">
             <div class="section-item">
-                <img src="web-dev.jpg" alt="Web Development">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOFdOTGsIR8kUbv8Ba7rpFx3QRQZVLAjTHQA&usqp=CAU" alt="Web Development">
                 <h3>Web Development</h3>
                 <p>Proficient in HTML, CSS, JavaScript, and various web frameworks.</p>
             </div>
             <div class="section-item">
-                <img src="mobile-dev.jpg" alt="Mobile Development">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSG3j0aRtzuVjp3eaVCk60Db7Nkn8zrjzBTIg&s" alt="Mobile Development">
                 <h3>Mobile Development</h3>
                 <p>Experienced in building cross-platform mobile applications.</p>
             </div>
             <div class="section-item">
-                <img src="ai-ml.jpg" alt="AI and Machine Learning">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0dMssnx-KuKcG9jzaQujYZa6Gn3aDTZWuE2Eq2300vO2IpGG1-6B539U&s=10" alt="AI and Machine Learning">
                 <h3>AI and Machine Learning</h3>
                 <p>Knowledgeable in implementing AI and ML solutions.</p>
             </div>
@@ -546,7 +517,7 @@
     <section class="section-container">
         <div class="section-content" style="justify-content: center;">
             <div class="section-item" style="flex-basis: 50%; text-align: center;">
-                <img src="featured-project.jpg" alt="Featured Project">
+                <img src="https://rezwan-ahammed.github.io/rezwan/Designer.jpeg" alt="Featured Project">
                 <h2>Featured Project: Intellimate</h2>
                 <p>An advanced AI chatbot that leverages cutting-edge natural language processing techniques.</p>
                 <a href="#" class="learn-more-btn">Explore the project</a>
@@ -558,13 +529,13 @@
     <section class="section-container">
         <div class="section-content">
             <div class="section-item">
-                <img src="tgc.jpg" alt="TGC">
+                <img src="https://rezwan-ahammed.github.io/rezwan/tgc.png" alt="TGC">
                 <h3>TGC Mobile App</h3>
                 <p>A comprehensive mobile application for Thakurgaon Government College students and faculty.</p>
                 <a href="#" class="learn-more-btn">Learn more</a>
             </div>
             <div class="section-item">
-                <img src="imagimate.jpg" alt="Imagimate">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqveswxWlmINoiI2gm4HPZxa4Z0lbzViASTg&usqp=CAU" alt="Imagimate">
                 <h3>Imagimate</h3>
                 <p>An AI-powered image generation tool that creates unique visuals based on text prompts.</p>
                 <a href="#" class="learn-more-btn">Learn more</a>
@@ -580,11 +551,25 @@
     </footer>
 
     <script>
-        const sideDrawer = document.getElementById("sideDrawer");
+    const sideDrawer = document.getElementById("sideDrawer");
+    const menuBtn = document.querySelector(".menu-btn");
 
-        function toggleDrawer() {
-            sideDrawer.classList.toggle("open");
+    function toggleDrawer() {
+    sideDrawer.classList.toggle("open");
+    menuBtn.classList.toggle("open");
+}
+
+    // Close side drawer when clicking outside of it
+    document.addEventListener('click', function(event) {
+        if (!sideDrawer.contains(event.target) && !menuBtn.contains(event.target) && sideDrawer.classList.contains("open")) {
+            sideDrawer.classList.remove("open");
         }
-    </script>
+    });
+
+    // Prevent the drawer from closing when clicking inside it
+    sideDrawer.addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+</script>
 </body>
 </html>
