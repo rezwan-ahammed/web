@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Search</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mt-4">Student Search</h2>
+        <form method="post" accept-charset="utf-8" id="studentSearchForm">
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="education_level_id">Education Level</label>
+                        <select class="form-control" id="education_level_id">
+                            <option value="">Select One</option>
+                            <option value="4">Higher Secondary</option>
+                            <option value="5">Degree (Pass)</option>
+                            <option value="6">Under Graduate(Honours)</option>
+                            <option value="7">Post Graduate ( Masters )</option>
+                            <option value="9">Preliminary Post Graduate</option>
+                            <option value="10">Post Graduate (Private)</option>
+                            <option value="11">Degree (Private)</option>
+                            <option value="12">Preliminary Post Graduate (Private)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="department_id">Department</label>
+                        <select class="form-control" id="department_id">
+                            <option value="">Select One</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="class_name_id">Class Name</label>
+                        <select class="form-control" id="class_name_id">
+                            <option value="">Select One</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="session_id">Session</label>
+                        <select class="form-control" id="session_id">
+                            <option value="">Select One</option>
+                            <option value="1">2024-2025</option>
+                            <option value="2">2019-2020</option>
+                            <option value="3">2018-2019</option>
+                            <option value="4">2017-2018</option>
+                            <option value="5">2020-2021</option>
+                            <option value="6">2021-2022</option>
+                            <option value="7">2022-2023</option>
+                            <option value="8">2023-2024</option>
+                            <option value="9">2013-2014</option>
+                            <option value="10">2014-2015</option>
+                            <option value="11">2015-2016</option>
+                            <option value="12">2016-2017</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <button type="button" class="btn btn-primary" onclick="searchStudents()">Search</button>
+                </div>
+            </div>
+        </form>
+        <div class="mt-4">
+            <table id="studentTable" class="table table-striped table-bordered" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SL</th>
+                        <th>Student Name</th>
+                        <th>Father Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#studentTable').DataTable();
+
+            $('#education_level_id').change(function () {
+                var selectedLevel = $(this).val();
+                loadDepartments(selectedLevel);
+                // Reset dependent select lists
+                $('#department_id').val('');
+                $('#class_name_id').val('');
+            });
+
+            $('#department_id').change(function () {
+                var selectedDepartment = $(this).val();
+                loadClasses(selectedDepartment);
+                // Reset dependent select lists
+                $('#class_name_id').val('');
+            });
+        });
+
+        function loadDepartments(educationLevelId) {
+            if (educationLevelId) {
+                $.ajax({
+                    url: 'https://tgc.edu.bd/Home/getDepartmentsByLevel', // Replace with your actual API endpoint
+                    type: 'POST',
+                    data: { education_level_id: educationLevelId },
+                    success: function(response) {
+                        $('#department_id').empty();
+                        $('#department_id').append('<option value="">Select One</option>');
+                        $.each(response, function(i, department) {
+                            $('#department_id').append('<option value="' + department.id + '">' + department.name + '</option>');
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching departments:', error);
+                    }
+                });
+            } else {
+                $('#department_id').empty();
+                $('#department_id').append('<option value="">Select One</option>');
+            }
+        }
+
+        function loadClasses(departmentId) {
+            if (departmentId) {
+                $.ajax({
+                    url: 'https://tgc.edu.bd/Home/getClassesByDepartment', // Replace with your actual API endpoint
+                    type: 'POST',
+                    data: { department_id: departmentId },
+                    success: function(response) {
+                        $('#class_name_id').empty();
+                        $('#class_name_id').append('<option value="">Select One</option>');
+                        $.each(response, function(i, class) {
+                            $('#class_name_id').append('<option value="' + class.id + '">' + class.name + '</option>');
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching classes:', error);
+                    }
+                });
+            } else {
+                $('#class_name_id').empty();
+                $('#class_name_id').append('<option value="">Select One</option>');
+            }
+        }
+
+        function searchStudents() {
+            const educationLevelId = $('#education_level_id').val();
+            const departmentId = $('#department_id').val();
+            const classNameId = $('#class_name_id').val();
+            const sessionId = $('#session_id').val();
+
+            // Check if all required fields are selected
+            if (!educationLevelId || !departmentId || !classNameId || !sessionId) {
+                alert("Please select all the required fields.");
+                return;
+            }
+
+            // Fetch students using AJAX
+            $.ajax({
+                url: 'https://tgc.edu.bd/Home/searchStudents', // Replace with your actual API endpoint
+                type: 'POST',
+                data: {
+                    education_level_id: educationLevelId,
+                    department_id: departmentId,
+                    class_name_id: classNameId,
+                    session_id: sessionId
+                },
+                success: function(response) {
+                    // Clear previous data in the table
+                    $('#studentTable').DataTable().clear().draw();
+
+                    // Add student data to the table
+                    if (response.length > 0) {
+                        $.each(response, function (i, student) {
+                            $('#studentTable').DataTable().row.add([
+                                i + 1,
+                                student.full_name_en,
+                                student.father_name_en
+                            ]).draw();
+                        });
+                    } else {
+                        alert("No students found for these filters.");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching students:', error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
