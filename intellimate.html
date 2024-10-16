@@ -294,6 +294,40 @@
                 right: 10px;
             }
         }
+		
+		   code {
+            color: #fff;
+            border-radius: 8px;
+            max-width: 900px;
+        }
+
+        pre {
+		    background-color: #2d2d2d;
+			padding: 8px;
+			border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+       
+        .copy-code {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #444;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .copy-code:hover {
+            background-color: #555;
+        }
 </style>
   </head>
 
@@ -469,7 +503,7 @@ function formatAndReplace(responseText) {
         const language = lines[0].trim() || 'plaintext';
         const codeContent = lines.slice(1).join('\n');
         const escapedCode = escapeHtml(codeContent);
-        return `<pre><code class="language-${language}">${escapedCode}</code></pre>`;
+        return `<pre><code class="language-${language}"></br>${escapedCode}</code></pre>`;
     });
 
     const patterns = [
