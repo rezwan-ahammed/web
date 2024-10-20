@@ -129,7 +129,7 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            margin-bottom: 10px;
+            margin-bottom: 30px;
         }
 
         .user-layout,
@@ -294,6 +294,40 @@
                 right: 10px;
             }
         }
+		
+		   code {
+            color: #fff;
+            border-radius: 8px;
+            max-width: 900px;
+        }
+
+        pre {
+		    background-color: #2d2d2d;
+			padding: 8px;
+			border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+       
+        .copy-code {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #444;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .copy-code:hover {
+            background-color: #555;
+        }
 </style>
   </head>
 
@@ -425,7 +459,7 @@ function createMessageHTML(message) {
     return `
         <div class='conversation-container'>
             <div class='user-layout'>
-                <img class='chat-image' src='https://i.namu.wiki/i/Y_lZ0dEDSaRbYIoIS8SqjiySiwjE9PKPHcRKqZ4QWhhBsA-iV0337iMd5SkrcJsd24iDDlsCdVhgz6a1_wWeng.webp' alt='User Avatar'/>
+                <img class='chat-image' src='https://icons.veryicon.com/png/o/miscellaneous/two-color-icon-library/user-286.png' alt='User Avatar'/>
                 <article class='message'>${escapeHTML(message.user)}</article>
             </div>
             <div class='bot-layout'>
@@ -453,12 +487,23 @@ function formatAndReplace(responseText) {
         throw new TypeError('Input must be a string');
     }
 
-    // Store code blocks safely before processing other patterns
-    const codeBlocks = [];
+    // Function to escape HTML in code blocks
+    const escapeHtml = (text) => {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    // Handle code blocks first
     let processedText = responseText.replace(/```([\s\S]*?)```/g, (match, code) => {
-        const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
-        codeBlocks.push(code.trim());
-        return placeholder;
+        const lines = code.trim().split('\n');
+        const language = lines[0].trim() || 'plaintext';
+        const codeContent = lines.slice(1).join('\n');
+        const escapedCode = escapeHtml(codeContent);
+        return `<pre><code class="language-${language}"></br>${escapedCode}</code></pre>`;
     });
 
     const patterns = [
@@ -526,16 +571,6 @@ function formatAndReplace(responseText) {
         { pattern: /^(---|\*\*\*)$/gm, replacement: '<hr>' }
     ];
 
-    // Function to escape HTML in code blocks
-    const escapeHtml = (text) => {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    };
-
     // Apply all patterns
     patterns.forEach(({ pattern, replacement }) => {
         processedText = typeof replacement === 'function'
@@ -547,21 +582,17 @@ function formatAndReplace(responseText) {
     processedText = processedText
         .split(/\n\n+/)
         .map(paragraph => paragraph.trim())
-        .map(paragraph => paragraph.match(/^<(\/?)(h[1-6]|ul|ol|li|blockquote|hr|pre|code)/) ? paragraph : `<p>${paragraph}</p>`)
+        .map(paragraph => {
+            // Don't wrap pre-existing HTML elements in <p> tags
+            if (paragraph.match(/^<(\/?)(h[1-6]|ul|ol|li|blockquote|hr|pre|code)/)) {
+                return paragraph;
+            }
+            return `<p>${paragraph}</p>`;
+        })
         .join('\n\n');
-
-    // Restore code blocks with proper escaping
-    codeBlocks.forEach((code, index) => {
-        const escapedCode = escapeHtml(code);
-        processedText = processedText.replace(
-            `__CODE_BLOCK_${index}__`,
-            `<pre><code>${escapedCode}</code></pre>`
-        );
-    });
 
     return processedText;
 }
-
 
 function adjustInputContainer(bottom) {
     inputContainer.style.bottom = bottom;
@@ -665,6 +696,7 @@ function renameConversation(oldName) {
 
 async function run(input = inputField.value) {
     if (input === "") return;
+	inputField.value = '';
 
     try {
         loadingIndicator.style.display = 'block';
@@ -674,7 +706,7 @@ async function run(input = inputField.value) {
         const recentMessages = conversationHistory.slice(-MAX_CONTEXT_LENGTH);
         const context = recentMessages.map(msg => `User: ${msg.user}\nAI: ${msg.ai}`).join('\n');
         
-        const extraText = "Suppose you are Intellimate and you are Intellimate";
+        const extraText = "Suppose you are Intellimate, created by Rezwan. Suppose more: 1. You loves to talk smartly. 2.if you are asked for physical type something, you will say- I have no physical existence";
 const result = await model.generateContent(`${extraText}/n${context}\nUser: ${input}\nAI:`);
         const aiResponse = result.response.text();
         
@@ -687,7 +719,7 @@ const result = await model.generateContent(`${extraText}/n${context}\nUser: ${in
         saveConversation();
     } catch (error) {
         console.error("Error generating response:", error);
-        updateChatWindow(input, `Something went wrong`);
+        updateChatWindow(input, `Error: ${error.message}`);
     } finally {
         loadingIndicator.style.display = 'none';
     }
