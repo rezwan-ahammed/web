@@ -22,6 +22,11 @@
             margin-top: 20px;
             white-space: pre-wrap;
         }
+        input[type="text"] {
+            width: calc(100% - 80px);
+            padding: 8px;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -32,18 +37,30 @@
     </div>
 
     <input type="file" id="image-input" accept="image/*">
-    <button id="describe-button">Describe Image</button>
+    <button id="add-button">Add Image</button>
+    
+    <div>
+        <input type="text" id="text-input" placeholder="Enter description prompt...">
+        <button id="send-button">Send</button>
+    </div>
 
     <div id="description"></div>
 
     <script>
         const imageInput = document.getElementById('image-input');
         const selectedImage = document.getElementById('selected-image');
-        const describeButton = document.getElementById('describe-button');
+        const addButton = document.getElementById('add-button');
+        const sendButton = document.getElementById('send-button');
+        const textInput = document.getElementById('text-input');
         const descriptionDiv = document.getElementById('description');
 
-        // Replace with your actual API key from Google AI Studio
         const API_KEY = 'AIzaSyBmJtxnS2fsnSbFbscPMRhw50mMoLK6n_g';
+
+        let imageBase64 = '';
+
+        addButton.addEventListener('click', () => {
+            imageInput.click();
+        });
 
         imageInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -51,17 +68,16 @@
 
             reader.onload = (e) => {
                 selectedImage.src = e.target.result;
+                imageBase64 = e.target.result.split(',')[1]; // Extract Base64 data
             }
             reader.readAsDataURL(file);
         });
 
-        describeButton.addEventListener('click', async () => {
-            if (!selectedImage.src) {
-                alert('Please select an image first.');
+        sendButton.addEventListener('click', async () => {
+            if (!imageBase64 || !textInput.value) {
+                alert('Please select an image and enter a prompt.');
                 return;
             }
-
-            const imageBase64 = selectedImage.src.split(',')[1]; // Extract Base64 data
 
             descriptionDiv.textContent = 'Generating description...';
 
@@ -76,7 +92,7 @@
                         body: JSON.stringify({
                             contents: [{
                                 parts: [
-                                    { text: 'Describe the content in the image in 3 lines.' },
+                                    { text: textInput.value },
                                     {
                                         inline_data: {
                                             mime_type: 'image/jpeg',
