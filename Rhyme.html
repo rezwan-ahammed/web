@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Intellimate Chat</title>
+    <!-- Google Fonts & Material Icons -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lobster+Two&family=Roboto:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <!-- Firebase Storage SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<style>
+      :root {
+        --user-bubble-bg: #ffffff;
+        --ai-bubble-bg: #f7f7f7;
+        --header-height: 60px;
+        --input-height: 80px;
+        --transition-speed: 0.3s;
+		--primary-color: #4285f4;
+            --secondary-color: #f2f2f2;
+            --text-color: #333;
+            --font-family: 'Roboto', 'Noto Serif Bengali', sans-serif;
+            --ripple-color: rgba(0, 0, 0, 0.2); 
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        overflow: hidden;
+      }
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: var(--header-height);
+        background: #fff;
+        color: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+      }
+      .header .app-name {
+        font-family: 'Lobster Two', cursive;
+        font-size: 1.8em;
+      }
+      .header .header-buttons {
+        display: flex;
+        gap: 10px;
+      }
+      .header button {
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+      }
+      .header button::after {
+        content: "";
+        position: absolute;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        transform: scale(0);
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: transform var(--transition-speed), opacity var(--transition-speed);
+      }
+      .header button:active::after {
+        transform: scale(2);
+        opacity: 1;
+        transition: 0s;
+      }
+      /* Navigation Drawer */
+      .nav-drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 280px;
+        background: #fff;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        transform: translateX(-100%);
+        transition: transform var(--transition-speed);
+        z-index: 1100;
+        display: flex;
+        flex-direction: column;
+      }
+      .nav-drawer.open {
+        transform: translateX(0);
+      }
+      .nav-drawer header {
+        padding: 20px;
+        background: var(--primary-color);
+        color: #fff;
+        font-size: 1.4em;
+      }
+      .nav-drawer .conversation-list {
+        flex: 1;
+        overflow-y: auto;
+      }
+      .nav-drawer .conversation {
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .nav-drawer .conversation:hover {
+        background: var(--secondary-color);
+      }
+      .nav-drawer .conversation .actions button {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        margin-left: 5px;
+      }
+      /* Overlay for drawer */
+      .drawer-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity var(--transition-speed);
+        z-index: 1050;
+      }
+      .drawer-overlay.open {
+        opacity: 1;
+        visibility: visible;
+      }
+      /* Chat Window */
+      .chat-window {
+        position: absolute;
+        top: var(--header-height);
+        bottom: var(--input-height);
+        left: 0;
+        right: 0;
+        overflow-y: auto;
+        padding: 20px;
+		margin-top: 20px;
+        scroll-behavior: smooth;
+      }
+      .message {
+        max-width: 70%;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        animation: fadeIn 0.3s forwards;
+      }
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+      .message.ai {
+        background: var(--ai-bubble-bg);
+        align-self: flex-start;
+      }
+      .message.user {
+        background: var(--user-bubble-bg);
+        align-self: flex-end;
+      }
+      /* Input Container */
+      .input-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--input-height);
+        background: #fff;
+        display: flex;
+        align-items: center;
+        padding: 10px 20px;
+        border-top: 1px solid #eee;
+        z-index: 1000;
+      }
+      .input-container textarea {
+        flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 15px;
+            outline: none;
+            background: #eeeeee;
+			font-family: 'Roboto', sans-serif;
+			vertical-align:center;
+      }
+      .input-container textarea:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 5px rgba(66, 133, 244, 0.5);
+      }
+      .input-container .button-group {
+        display: flex;
+        gap: 10px;
+        margin-left: 10px;
+      }
+      .input-container button {
+        background: var(--primary-color);
+        border: none;
+        color: #fff;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .input-container button .material-icons {
+        font-size: 15px;
+      }
+      /* Hide default file input */
+      #imageInput {
+        display: none;
+      }
+      /* Responsive */
+      @media (max-width: 600px) {
+        .header {
+          padding: 0 10px;
+        }
+        .chat-window {
+          padding: 10px;
+        }
+        .nav-drawer {
+          width: 240px;
+        }
+      }
+</style>
+<script>
+      // Firebase configuration (replace with your project config)
+      const firebaseConfig = {
+        apiKey: "AIzaSyDXqScO7vUMlRMJTY0I4U65JBQFuj9KXG8",
+        authDomain: "knowledgia-10976.firebaseapp.com",
+        databaseURL: "https://knowledgia-10976-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "knowledgia-10976",
+        storageBucket: "knowledgia-10976.firebasestorage.app",
+        messagingSenderId: "895390922073",
+        appId: "1:895390922073:android:442157240f9af52ec90848"
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const storage = firebase.storage();
+</script>
+  </head>
+  <body>
+    <!-- Navigation Drawer -->
+    <div class="nav-drawer" id="navDrawer">
+      <header>Conversations</header>
+      <div class="conversation-list" id="conversationList">
+        <!-- Conversation items loaded from localStorage -->
+      </div>
+    </div>
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <h2 class="app-name"> RhymePlays</h2>
+      <div class="header-buttons">
+        <button id="newConvBtn" title="New Conversation">
+          <span class="material-icons">add</span>
+        </button>
+        <button id="toggleDrawerBtn" title="Menu">
+          <span class="material-icons">menu</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat Window -->
+    <div class="chat-window" id="chatWindow">
+      <!-- Chat messages will be dynamically inserted here -->
+    </div>
+
+    <!-- Input Container -->
+    <div class="input-container">
+      <textarea id="chatInput" placeholder="Type your message..."></textarea>
+      <div class="button-group">
+        <button id="sendBtn" title="Send">
+          <span class="material-icons">send</span>
+        </button>
+      </div>
+      <input type="file" id="imageInput" accept="image/*" />
+    </div>
+
+<script>
+      // --- Conversation Management ---
+      let conversations = [];
+      let currentConversationId = null;
+
+      function loadConversations() {
+        const stored = localStorage.getItem('intellimate-conversations');
+        conversations = stored ? JSON.parse(stored) : [];
+        renderConversationList();
+      }
+
+      function saveConversations() {
+        localStorage.setItem('intellimate-conversations', JSON.stringify(conversations));
+      }
+
+      function renderConversationList() {
+        const list = document.getElementById('conversationList');
+        list.innerHTML = '';
+        conversations.forEach(conv => {
+          const convEl = document.createElement('div');
+          convEl.className = 'conversation';
+          convEl.dataset.id = conv.id;
+          convEl.innerHTML = `<span>${conv.name}</span>
+            <div class="actions">
+              <button class="renameBtn" title="Rename"><span class="material-icons">edit</span></button>
+              <button class="deleteBtn" title="Delete"><span class="material-icons">delete</span></button>
+            </div>`;
+          list.appendChild(convEl);
+        });
+      }
+
+      function createNewConversation() {
+        const id = Date.now();
+        const newConv = { id, name: 'New Conversation', messages: [] };
+        conversations.push(newConv);
+        currentConversationId = id;
+        saveConversations();
+        renderConversationList();
+        renderChatMessages(newConv.messages);
+      }
+
+      // --- Chat UI Functions ---
+      const chatWindow = document.getElementById('chatWindow');
+      function renderChatMessages(messages) {
+        chatWindow.innerHTML = '';
+        messages.forEach(msg => addMessageToChat(msg, false));
+        scrollChatToBottom();
+      }
+
+      function addMessageToChat(message, animate = true) {
+        const msgEl = document.createElement('div');
+        msgEl.className = 'message ' + message.role;
+        msgEl.innerHTML = message.content;
+        if (!animate) msgEl.style.opacity = 1;
+        chatWindow.appendChild(msgEl);
+        scrollChatToBottom();
+      }
+
+      function scrollChatToBottom() {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+
+      // --- Navigation Drawer ---
+      const navDrawer = document.getElementById('navDrawer');
+      const drawerOverlay = document.getElementById('drawerOverlay');
+      function toggleDrawer() {
+        navDrawer.classList.toggle('open');
+        drawerOverlay.classList.toggle('open');
+      }
+      drawerOverlay.addEventListener('click', toggleDrawer);
+      document.getElementById('toggleDrawerBtn').addEventListener('click', toggleDrawer);
+      document.getElementById('newConvBtn').addEventListener('click', () => {
+        createNewConversation();
+        toggleDrawer();
+      });
+      document.getElementById('conversationList').addEventListener('click', (e) => {
+        const convEl = e.target.closest('.conversation');
+        if (!convEl) return;
+        const convId = Number(convEl.dataset.id);
+        if (e.target.closest('.renameBtn')) {
+          const newName = prompt('Enter new name for conversation:');
+          if (newName) {
+            conversations = conversations.map(c => {
+              if (c.id === convId) { c.name = newName; }
+              return c;
+            });
+            saveConversations();
+            renderConversationList();
+          }
+        } else if (e.target.closest('.deleteBtn')) {
+          if (confirm('Delete this conversation?')) {
+            conversations = conversations.filter(c => c.id !== convId);
+            if (currentConversationId === convId) {
+              currentConversationId = null;
+              chatWindow.innerHTML = '';
+            }
+            saveConversations();
+            renderConversationList();
+          }
+        } else {
+          currentConversationId = convId;
+          const conv = conversations.find(c => c.id === convId);
+          if (conv) renderChatMessages(conv.messages);
+          toggleDrawer();
+        }
+      });
+
+      // --- Chat Functionality & API Call ---
+      const chatInput = document.getElementById('chatInput');
+      document.getElementById('sendBtn').addEventListener('click', sendMessage);
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // --- Image Upload via Firebase Storage with Progress Feedback ---
+      const imageBtn = document.getElementById('imageBtn');
+      const imageInput = document.getElementById('imageInput');
+      imageBtn.addEventListener('click', () => imageInput.click());
+      imageInput.addEventListener('change', handleImageUpload);
+
+      function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        // Insert temporary "Uploading image..." message
+        const tempMsg = { role: 'user', content: `<strong>You:</strong> Uploading image...` };
+        addMessageToChat(tempMsg);
+        saveMessageToConversation(tempMsg);
+
+        const storageRef = firebase.storage().ref();
+        const fileRef = storageRef.child('images/' + Date.now() + '-' + file.name);
+        fileRef.put(file)
+          .then(snapshot => snapshot.ref.getDownloadURL())
+          .then(downloadURL => {
+            // Remove the "Uploading image..." message (for simplicity, we clear and re-render)
+            const conv = conversations.find(c => c.id === currentConversationId);
+            if (conv) {
+              // Remove the last message if it's the "Uploading image..." message
+              if (conv.messages[conv.messages.length - 1].content.includes("Uploading image")) {
+                conv.messages.pop();
+              }
+              // Create a new image message with the obtained URL
+              const imageMsg = { 
+                role: 'user', 
+                content: `<strong>You:</strong> <br><img src="${downloadURL}" alt="User Image" style="max-width: 100%; border-radius: 8px;">` 
+              };
+              addMessageToChat(imageMsg);
+              conv.messages.push(imageMsg);
+              saveConversations();
+            }
+          })
+          .catch(error => {
+            console.error("Error uploading image:", error);
+            // Remove the temporary message and show an error message instead
+            const conv = conversations.find(c => c.id === currentConversationId);
+            if (conv) {
+              if (conv.messages[conv.messages.length - 1].content.includes("Uploading image")) {
+                conv.messages.pop();
+              }
+              const errorMsg = { 
+                role: 'user', 
+                content: `<strong>You:</strong> Image upload failed: ${error.message}` 
+              };
+              addMessageToChat(errorMsg);
+              conv.messages.push(errorMsg);
+              saveConversations();
+            }
+          });
+        // Reset file input for next upload
+        imageInput.value = "";
+      }
+
+      function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        chatInput.value = '';
+        // Append user text message to UI and conversation
+        const userMsg = { role: 'user', content: `<strong>You:</strong> ${text}` };
+        addMessageToChat(userMsg);
+        saveMessageToConversation(userMsg);
+        autoRenameConversation(text);
+
+        // Display a loading message for the AI response
+        const loadingMsg = { role: 'ai', content: "<strong>RhymePlays:</strong></br> Processing..." };
+        addMessageToChat(loadingMsg);
+        saveMessageToConversation(loadingMsg);
+
+        // Prepare API data (with long system prompt)
+        const userMessageObject = {
+          role: "user",
+          content: [{
+            type: "text",
+            text: text
+          }]
+        };
+        const data = {
+          model: "meta-llama/Llama-Vision-Free",
+          messages: [
+            {
+              role: "system",
+              content: "suppose your name is Rhyme. Nickname Rhymeplays. You are a hantai Lover. and also love Japanese anime. You are biology eexpert. You know everything of Bioloy"
+            },
+            userMessageObject
+          ],
+          max_tokens: 512,
+          temperature: 0.7,
+          top_p: 0.7,
+          top_k: 50,
+          repetition_penalty: 1,
+          stop: ["<|eot_id|>", "<|eom_id|>"],
+          stream: false
+        };
+
+        // API details (replace with your actual API key and URL)
+        const apiUrl = "https://api.together.xyz/v1/chat/completions";
+        const apiKey = "56a6b2e8470b71a1f477d749788925e59541ad0f4306a27c38f51302d8990621";
+
+        fetch(apiUrl, {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey
+          },
+          body: JSON.stringify(data)
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok: " + response.statusText);
+            }
+            return response.json();
+          })
+          .then(result => {
+            if (chatWindow.lastChild) chatWindow.lastChild.remove();
+            const botMessage = (result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content)
+              ? result.choices[0].message.content
+              : "No response from API.";
+            const aiMsg = { role: 'ai', content: `<strong>RhymePlays:</strong></br> ${botMessage}` };
+            addMessageToChat(aiMsg);
+            saveMessageToConversation(aiMsg);
+          })
+          .catch(error => {
+            console.error("Error sending message:", error);
+            if (chatWindow.lastChild) chatWindow.lastChild.remove();
+            const errMsg = { role: 'ai', content: `<strong>RhymePlays:</strong></br> Error sending message: ${error.message}` };
+            addMessageToChat(errMsg);
+            saveMessageToConversation(errMsg);
+          });
+      }
+
+      // Auto rename conversation based on first user message if still default
+      function autoRenameConversation(text) {
+        const conv = conversations.find(c => c.id === currentConversationId);
+        if (conv && conv.name === 'New Conversation') {
+          const snippet = text.split(' ').slice(0, 5).join(' ');
+          conv.name = snippet + (text.split(' ').length > 5 ? '...' : '');
+          saveConversations();
+          renderConversationList();
+        }
+      }
+
+      function saveMessageToConversation(message) {
+        if (!currentConversationId) {
+          createNewConversation();
+        }
+        const conv = conversations.find(c => c.id === currentConversationId);
+        if (conv) {
+          conv.messages.push(message);
+          saveConversations();
+        }
+      }
+
+      // --- Initialization ---
+      loadConversations();
+      if (!conversations.length) {
+        createNewConversation();
+      } else if (currentConversationId === null) {
+        currentConversationId = conversations[0].id;
+        renderChatMessages(conversations[0].messages);
+      }
+</script>
+  </body>
+</html>
