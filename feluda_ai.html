@@ -14,6 +14,7 @@
     />
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <style>
       :root {
         --user-bubble-bg: #ffffff;
@@ -266,6 +267,8 @@
       };
       firebase.initializeApp(firebaseConfig);
       const storage = firebase.storage();
+      const database = firebase.database();
+      const conversationsRef = database.ref('conversations');
     </script>
   </head>
   <body>
@@ -300,13 +303,38 @@
       let currentConversationId = null;
 
       function loadConversations() {
-        const stored = localStorage.getItem('intellimate-conversations');
-        conversations = stored ? JSON.parse(stored) : [];
-        renderConversationList();
+        conversationsRef.once('value', (snapshot) => {
+          const data = snapshot.val();
+          conversations = [];
+          if (data) {
+            Object.keys(data).forEach(key => {
+              conversations.push(data[key]);
+            });
+            conversations.sort((a, b) => a.id - b.id);
+          }
+          renderConversationList();
+
+          if (!conversations.length) {
+            createNewConversation();
+          } else if (currentConversationId === null) {
+            currentConversationId = conversations[0].id;
+            renderChatMessages(conversations[0].messages);
+          }
+        }, (error) => {
+          console.error("Error loading conversations from Firebase:", error);
+          if (!conversations.length) {
+            createNewConversation();
+          }
+        });
       }
 
       function saveConversations() {
-        localStorage.setItem('intellimate-conversations', JSON.stringify(conversations));
+        const conversationsObject = {};
+        conversations.forEach(conv => {
+            conversationsObject[conv.id] = conv;
+        });
+        conversationsRef.set(conversationsObject)
+          .catch(error => console.error("Error saving conversations to Firebase:", error));
       }
 
       function renderConversationList() {
@@ -345,14 +373,13 @@
       function addMessageToChat(message, animate = true) {
         const msgEl = document.createElement('div');
         msgEl.className = 'message ' + message.role;
-        // Clean up the display content for the UI
         let displayContent = message.content;
         if (message.role === 'user' && displayContent.startsWith('<strong>You:</strong> ')) {
           displayContent = displayContent.substring('<strong>You:</strong> '.length);
         } else if (message.role === 'ai' && displayContent.startsWith('<strong>Feluda AI:</strong></br> ')) {
           displayContent = displayContent.substring('<strong>Feluda AI:</strong></br> '.length);
         }
-        msgEl.innerHTML = displayContent; // Display only the core content
+        msgEl.innerHTML = displayContent;
         if (!animate) msgEl.style.opacity = 1;
         chatWindow.appendChild(msgEl);
         scrollChatToBottom();
@@ -395,6 +422,10 @@
         } else if (e.target.closest('.deleteBtn')) {
           if (confirm('Delete this conversation?')) {
             conversations = conversations.filter((c) => c.id !== convId);
+            conversationsRef.child(convId).remove()
+                .then(() => console.log(`Conversation ${convId} deleted from Firebase.`))
+                .catch(error => console.error("Error deleting conversation from Firebase:", error));
+
             if (currentConversationId === convId) {
               currentConversationId = null;
               chatWindow.innerHTML = '';
@@ -419,11 +450,7 @@
         }
       });
 
-      // No image button in the provided HTML, so commenting out
-      // const imageBtn = document.getElementById('imageBtn');
       const imageInput = document.getElementById('imageInput');
-      // imageBtn.addEventListener('click', () => imageInput.click());
-      // imageInput.addEventListener('change', handleImageUpload);
 
       function handleImageUpload(event) {
         const file = event.target.files[0];
@@ -485,15 +512,15 @@
         addMessageToChat(loadingMsg);
         saveMessageToConversation(loadingMsg);
 
-        // Get the current conversation
         const currentConv = conversations.find((c) => c.id === currentConversationId);
         if (!currentConv) {
           console.error('No current conversation found.');
+          if (chatWindow.lastChild && chatWindow.lastChild.innerHTML.includes('Processing...')) {
+            chatWindow.lastChild.remove();
+          }
           return;
         }
 
-        // Construct the messages array for the API request
-        // Start with the system message
         const messagesForApi = [
           {
             role: 'system',
@@ -529,29 +556,26 @@
               '\n' +
               'Key Points: Haque’s public biography thus highlights his BUET engineering degree, his teaching career (with many years of experience), and leadership roles in education technology. He is active in Shikho’s academic programs and leadership has been covered by the press. In present, teaches chemistry at Monon Academy(মনন একাডেমি).\n' +
               '\n' +
-              'When someone asks him "আচ্ছা বলেন তো বেহেশতে যাওয়া যাবে কীভাবে! এটা বলেন, এটা আমার সারা জীবনের ফ্রোশনো", he answers "একদম জুতা মারবো মুখের ওপর মুখটা খুলে পড়ে যাবে! যা পড়তে বস". He talk to bangla and english, if students talk to him bangla he uses bangla and when stydents talk to him english he uses english. He addresses students with "গরুর নাতি!". he is also known as “নানা”.',
+              'When someone asks him "আচ্ছা বলেন তো বেহেশতে যাওয়া যাবে কীভাবে! এটা বলেন, এটা আমার সারা জীবনের ফ্রোশনো", He don't uses "তুমি,তোমাকে এই ধরনের", he uses "তুই তোকে এই ধরনের" he answers "একদম জুতা মারবো মুখের ওপর মুখটা খুলে পড়ে যাবে! যা পড়তে বস". He talk to bangla and english, if students talk to him bangla he uses bangla and when stydents talk to him english he uses english. He addresses students with "গরুর নাতি!". he is also known as “নানা”.',
           },
         ];
 
-        // Add all messages from the current conversation, reformatting them for the API
         currentConv.messages.forEach((msg) => {
           let contentForApi = msg.content;
+          if (contentForApi.includes('Processing...') || contentForApi.includes('Uploading image...')) {
+            return;
+          }
 
-          // Remove the "<strong>You:</strong> " or "<strong>Feluda AI:</strong></br> " prefixes
           if (msg.role === 'user' && contentForApi.startsWith('<strong>You:</strong> ')) {
             contentForApi = contentForApi.substring('<strong>You:</strong> '.length);
           } else if (msg.role === 'ai' && contentForApi.startsWith('<strong>Feluda AI:</strong></br> ')) {
             contentForApi = contentForApi.substring('<strong>Feluda AI:</strong></br> '.length);
           }
 
-          // Check for image content and format accordingly
           if (contentForApi.includes('<img src=')) {
-            // This is a basic example. For robust image handling,
-            // you might need to extract the URL and send it as an image part
-            // to a multimodal model. For now, we'll just send text.
             messagesForApi.push({
               role: msg.role,
-              content: [{ type: 'text', text: ' [Image was uploaded] ' }], // Placeholder for image
+              content: [{ type: 'text', text: ' [User uploaded an image] ' }],
             });
           } else {
             messagesForApi.push({
@@ -563,7 +587,7 @@
 
         const data = {
           model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
-          messages: messagesForApi, // Use the full message history
+          messages: messagesForApi,
           max_tokens: 512,
           temperature: 0.7,
           top_p: 0.7,
@@ -573,7 +597,6 @@
           stream: false,
         };
 
-        // API details (replace with your actual API key and URL)
         const apiUrl = 'https://api.together.xyz/v1/chat/completions';
         const apiKey = '56a6b2e8470b71a1f477d749788925e59541ad0f4306a27c38f51302d8990621';
 
@@ -593,7 +616,9 @@
             return response.json();
           })
           .then((result) => {
-            if (chatWindow.lastChild) chatWindow.lastChild.remove();
+            if (chatWindow.lastChild && chatWindow.lastChild.innerHTML.includes('Processing...')) {
+              chatWindow.lastChild.remove();
+            }
             const botMessage =
               result.choices &&
               result.choices[0] &&
@@ -607,7 +632,9 @@
           })
           .catch((error) => {
             console.error('Error sending message:', error);
-            if (chatWindow.lastChild) chatWindow.lastChild.remove();
+            if (chatWindow.lastChild && chatWindow.lastChild.innerHTML.includes('Processing...')) {
+              chatWindow.lastChild.remove();
+            }
             const errMsg = {
               role: 'ai',
               content: `<strong>Feluda AI:</strong></br> Error sending message: ${error.message}`,
@@ -617,7 +644,6 @@
           });
       }
 
-      // Auto rename conversation based on first user message if still default
       function autoRenameConversation(text) {
         const conv = conversations.find((c) => c.id === currentConversationId);
         if (conv && conv.name === 'New Conversation') {
@@ -632,21 +658,20 @@
         if (!currentConversationId) {
           createNewConversation();
         }
-        const conv = conversations.find((c) => c.id === currentConversationId);
-        if (conv) {
-          conv.messages.push(message);
-          saveConversations();
+        const convIndex = conversations.findIndex((c) => c.id === currentConversationId);
+        if (convIndex !== -1) {
+          conversations[convIndex].messages.push(message);
+          conversationsRef.child(currentConversationId).update({
+            messages: conversations[convIndex].messages,
+            name: conversations[convIndex].name
+          })
+          .catch(error => console.error("Error saving message to Firebase:", error));
+        } else {
+            console.error("Attempted to save message to a non-existent current conversation.");
         }
       }
 
-      // --- Initialization ---
       loadConversations();
-      if (!conversations.length) {
-        createNewConversation();
-      } else if (currentConversationId === null) {
-        currentConversationId = conversations[0].id;
-        renderChatMessages(conversations[0].messages);
-      }
     </script>
   </body>
 </html>
