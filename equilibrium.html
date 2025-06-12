@@ -2,69 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Secure PDF Print</title>
+  <title>Chemical Equilibrium – Secure Print</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   <script>
-    // Set the worker source
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
   </script>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 50px;
-    }
-
-    #printBtn {
-      padding: 10px 20px;
-      font-size: 18px;
-      cursor: pointer;
-    }
-  </style>
 </head>
 <body>
-  <h1>Chemical Equilibrium v1</h1>
+  <h1>Chemical Equilibrium</h1>
   <button id="printBtn">Print</button>
 
   <script>
-    const url = 'https://rezwan-ahammed.github.io/rezwan/As%20Book_Chemical%20Equilibrium_Ac_E1_250307_Merged.pdf';
+    const pdfUrl = 'https://rezwan-ahammed.github.io/rezwan/As%20Book_Chemical%20Equilibrium_Ac_E1_250307_Merged.pdf';
 
     document.getElementById('printBtn').addEventListener('click', async () => {
-      const loadingTask = pdfjsLib.getDocument(url);
-      const pdf = await loadingTask.promise;
+      const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+
+      const canvases = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: context, viewport }).promise;
+        canvases.push(canvas);
+      }
 
       const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '100%';
-      iframe.style.bottom = '100%';
+      iframe.style.display = 'none';
       document.body.appendChild(iframe);
 
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
-      doc.write('<html><head><title>Print PDF</title></head><body></body></html>');
+      doc.write('<!DOCTYPE html><html><head><title>Print</title></head><body>');
+      canvases.forEach((c, i) => {
+        const dataUrl = c.toDataURL();
+        doc.write(`<img src="${dataUrl}" style="width:100%;margin-bottom:10px;">`);
+      });
+      doc.write('</body></html>');
       doc.close();
 
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1.5 });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        const context = canvas.getContext('2d');
-        await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-        const img = document.createElement('img');
-        img.src = canvas.toDataURL();
-        img.style.display = 'block';
-        img.style.pageBreakAfter = 'always';
-
-        doc.body.appendChild(img);
-      }
-
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
+      iframe.onload = () => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      };
     });
   </script>
 </body>
