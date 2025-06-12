@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure PDF Print</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    #pdf-container {
+      display: none;
+    }
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Print My Document</h1>
+  <button id="printBtn">Print</button>
+  
+  <div id="pdf-container"></div>
+
+  <script>
+    const url = 'https://firebasestorage.googleapis.com/v0/b/mathemate-software.appspot.com/o/As Book_Chemical Equilibrium_Ac_E1_250307_Merged.pdf?alt=media&token=72861e4a-83c1-4dea-b835-424da391719c'; // Replace with your PDF path
+    const container = document.getElementById('pdf-container');
+
+    document.getElementById('printBtn').addEventListener('click', async () => {
+      const pdf = await pdfjsLib.getDocument(url).promise;
+
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      const canvasPromises = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        canvasPromises.push(pdf.getPage(i).then(page => {
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          return page.render({ canvasContext: context, viewport }).promise.then(() => canvas);
+        }));
+      }
+
+      const canvases = await Promise.all(canvasPromises);
+
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      canvases.forEach(canvas => {
+        doc.body.appendChild(canvas);
+        canvas.style.display = 'block';
+      });
+      doc.close();
+
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    });
+  </script>
+</body>
+</html>
