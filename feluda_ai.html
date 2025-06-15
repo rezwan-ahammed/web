@@ -374,11 +374,9 @@
       <input type="file" id="imageInput" accept="image/*" />
     </div>
   <script>
-  // --- OpenRouter Configuration (NEW) ---
-const OPENROUTER_API_KEY = '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'; // <--- IMPORTANT: Replace with your actual OpenRouter API Key
+  const OPENROUTER_API_KEY = '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';
 const OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1';
-const OPENROUTER_GEMINI_MODEL = 'deepseek/deepseek-chat-v3-0324:free'; // The specific Gemini model on OpenRouter
-// -------------------------------------------------------------------
+const OPENROUTER_GEMINI_MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
 
 let conversations = [];
@@ -603,22 +601,17 @@ function sendMessage() {
     return;
   }
 
-  // User message handling
   const userMsgContent = text ? `<strong>You:</strong> ${text}` : `<strong>You:</strong> <br><img src="${URL.createObjectURL(imageFile)}" alt="User Image" style="max-width: 100%; border-radius: 8px;">`;
   const userMessage = { role: 'user', content: userMsgContent };
 
-  // Add user message to display and save to conversation immediately
   addMessageToChat(userMessage);
-  saveMessageToConversation(userMessage); // Save user message immediately
+  saveMessageToConversation(userMessage);
 
   autoRenameConversation(text || 'Image Sent');
 
-  // Add the loading message ONLY to the display, NOT to the conversation history
   const loadingMsg = { role: 'ai', content: '<strong>Feluda AI:</strong></br> Processing...' };
-  addMessageToChat(loadingMsg); // Only add to the UI
+  addMessageToChat(loadingMsg);
 
-  // Store a reference to the actual DOM element for the loading message
-  // so we can easily remove it later.
   const loadingMsgElement = chatWindow.lastChild;
 
 
@@ -629,25 +622,20 @@ function sendMessage() {
     fileRef.put(imageFile)
       .then((snapshot) => snapshot.ref.getDownloadURL())
       .then((downloadURL) => {
-        // Find and replace the user message in the current conversation with the actual image URL
-        // We saved the user message already, so we just need to update its content.
-        const lastUserMsgIndex = currentConv.messages.length - 1; // It should be the last message added
+        const lastUserMsgIndex = currentConv.messages.length - 1;
         if (lastUserMsgIndex !== -1 && currentConv.messages[lastUserMsgIndex].role === 'user') {
           currentConv.messages[lastUserMsgIndex].content = `<strong>You:</strong> <br><img src="${downloadURL}" alt="User Image" style="max-width: 100%; border-radius: 8px;">`;
-          // Update the chat window display for this specific message as well
           const chatMessages = chatWindow.getElementsByClassName('message');
           if (chatMessages.length > lastUserMsgIndex) {
             chatMessages[lastUserMsgIndex].innerHTML = `<strong>You:</strong> <br><img src="${downloadURL}" alt="User Image" style="max-width: 100%; border-radius: 8px;">`;
           }
         }
-        saveConversations(); // Save with updated image URL
+        saveConversations();
 
-        // Now send to API with updated conversation history
-        sendToGeminiAPI(currentConv.messages, loadingMsgElement); // Pass the loading message element
+        sendToGeminiAPI(currentConv.messages, loadingMsgElement);
       })
       .catch((error) => {
         console.error('Error uploading image:', error);
-        // Remove the loading message element directly from the DOM
         if (loadingMsgElement && loadingMsgElement.parentNode) {
           loadingMsgElement.remove();
         }
@@ -658,9 +646,8 @@ function sendMessage() {
         addMessageToChat(errorMsg);
         saveMessageToConversation(errorMsg);
 
-        // If image upload failed, still send text if present
         if (text) {
-          sendToGeminiAPI(currentConv.messages, null); // Don't pass a loading element if it was removed
+          sendToGeminiAPI(currentConv.messages, null);
         }
       })
       .finally(() => {
@@ -668,28 +655,30 @@ function sendMessage() {
       });
 
   } else if (text) {
-    // For text-only messages, immediately save user message (already done above)
-    sendToGeminiAPI(currentConv.messages, loadingMsgElement); // Pass the loading message element
+    sendToGeminiAPI(currentConv.messages, loadingMsgElement);
   }
-  chatInput.value = ''; // Clear input after sending
+  chatInput.value = '';
 }
 
-// Modify removeLastLoadingMessage to accept the element directly
 function removeLastLoadingMessage(loadingMsgElement) {
   if (loadingMsgElement && loadingMsgElement.parentNode) {
     loadingMsgElement.remove();
   }
-  // No need to remove from currentConv.messages here if it was never added
 }
 
 async function sendToGeminiAPI(conversationMessages, loadingMsgElement) {
-  // Construct messages for the OpenRouter API
   const messagesForApi = [];
 
-  // Add the system instruction message first
+  // --- Start: Logging for API Key Debugging ---
+  console.log('--- API Request Debugging ---');
+  console.log('OPENROUTER_API_KEY:', OPENROUTER_API_KEY ? `${OPENROUTER_API_KEY.substring(0, 10)}...${OPENROUTER_API_KEY.substring(OPENROUTER_API_KEY.length - 5)}` : 'API Key is undefined/empty');
+  console.log('Authorization Header Value being sent:', `Bearer ${OPENROUTER_API_KEY}`);
+  console.log('API URL:', OPENROUTER_API_BASE + '/chat/completions');
+  // --- End: Logging for API Key Debugging ---
+
   messagesForApi.push({
-    role: 'user', // Use 'user' role for initial system prompt with Gemini on OpenRouter
-    content: [ // Content is an array for multi-modal
+    role: 'user',
+    content: [
       {
         type: 'text',
         text: 'Feluda AI:\n' +
@@ -729,21 +718,17 @@ async function sendToGeminiAPI(conversationMessages, loadingMsgElement) {
     ]
   });
 
-  // Add the initial model response as a placeholder for context
   messagesForApi.push({
-    role: 'assistant', // Changed from 'model' to 'assistant' for OpenRouter/OpenAI compatibility
+    role: 'assistant',
     content: [{
       type: 'text',
       text: 'Okay, গরুর নাতি!'
     }],
   });
 
-  // Process existing conversation messages
   for (const msg of conversationMessages) {
     let contentForApi = msg.content;
 
-    // Skip temporary messages from being sent to the API
-    // No longer need to check for 'Processing...' here as it's not saved
     if (contentForApi.includes('Uploading image...')) {
       continue;
     }
@@ -758,7 +743,6 @@ async function sendToGeminiAPI(conversationMessages, loadingMsgElement) {
     if (contentForApi.includes('<img src=')) {
       const imgMatch = contentForApi.match(/<img src="([^"]+)"/);
       if (imgMatch && imgMatch[1]) {
-        // OpenRouter image format (NEW)
         parts.push({
           type: 'image_url',
           image_url: {
@@ -781,29 +765,28 @@ async function sendToGeminiAPI(conversationMessages, loadingMsgElement) {
     }
 
     messagesForApi.push({
-      role: msg.role === 'user' ? 'user' : 'assistant', // 'model' to 'assistant' for OpenRouter (NEW)
-      content: parts, // 'parts' to 'content' for OpenRouter (NEW)
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: parts,
     });
   }
 
-  // Define the request payload for OpenRouter (MODIFIED)
   const data = {
-    model: OPENROUTER_GEMINI_MODEL, // Use the OpenRouter Gemini model (NEW)
-    messages: messagesForApi, // Use 'messages' instead of 'contents' (NEW)
-    temperature: 0.7, // These can be directly in the main object for OpenRouter (NEW)
-    top_p: 0.7, // renamed from topP (NEW)
-    top_k: 50, // renamed from topK (NEW)
-    max_tokens: 10000, // renamed from maxOutputTokens (NEW)
+    model: OPENROUTER_GEMINI_MODEL,
+    messages: messagesForApi,
+    temperature: 0.7,
+    top_p: 0.7,
+    top_k: 50,
+    max_tokens: 10000,
   };
 
-  const apiUrl = `${OPENROUTER_API_BASE}/chat/completions`; // OpenRouter chat completions endpoint (NEW)
+  const apiUrl = `${OPENROUTER_API_BASE}/chat/completions`;
 
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}` // OpenRouter authentication (NEW)
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`
       },
       body: JSON.stringify(data),
     });
@@ -815,7 +798,6 @@ async function sendToGeminiAPI(conversationMessages, loadingMsgElement) {
 
     const result = await response.json();
 
-    // Remove the "Processing..." message from display using the passed element
     removeLastLoadingMessage(loadingMsgElement);
 
     const botMessage =
@@ -823,18 +805,17 @@ async function sendToGeminiAPI(conversationMessages, loadingMsgElement) {
       result.choices[0] &&
       result.choices[0].message &&
       result.choices[0].message.content ?
-      result.choices[0].message.content : // OpenRouter response structure (NEW)
+      result.choices[0].message.content :
       'No response from API or content blocked.';
     const aiMsg = {
       role: 'ai',
       content: `<strong>Feluda AI:</strong></br> ${botMessage}`
     };
     addMessageToChat(aiMsg);
-    saveMessageToConversation(aiMsg); // Now save the actual AI response
+    saveMessageToConversation(aiMsg);
 
   } catch (error) {
     console.error('Error sending message to OpenRouter API:', error);
-    // Remove the "Processing..." message if an error occurs
     removeLastLoadingMessage(loadingMsgElement);
     const errMsg = {
       role: 'ai',
