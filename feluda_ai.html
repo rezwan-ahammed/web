@@ -12,6 +12,7 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -34,7 +35,7 @@
         padding: 0;
       }
       body {
-        font-family: 'Roboto', sans-serif;
+        font-family: var(--font-family);
         background-color: var(--secondary-color);
         color: var(--text-color);
         overflow: hidden;
@@ -179,9 +180,10 @@
         box-shadow: 1.5px 1.5px 1.5px 1px #bdbdbd;
         padding: 10px 15px;
         border-radius: 15px;
-        max-width: 70%;
+        max-width: 90%;
         word-wrap: break-word;
         white-space: pre-wrap;
+        margin-right: auto;
       }
       .message.user {
         background-color: white;
@@ -192,6 +194,7 @@
         max-width: 70%;
         word-wrap: break-word;
         white-space: pre-wrap;
+        margin-left: auto;
       }
       .input-container {
         position: fixed;
@@ -205,6 +208,50 @@
         padding: 10px 20px;
         border-top: 1px solid #eee;
         z-index: 1000;
+        flex-direction: column;
+        justify-content: center;
+        min-height: var(--input-height);
+      }
+      .image-preview-container {
+        display: none;
+        width: 100%;
+        padding: 5px 0;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
+        padding-left: 10px;
+      }
+      .image-preview-container.active {
+        display: flex;
+      }
+      .image-preview-container img {
+        max-width: 80px;
+        max-height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 10px;
+        border: 1px solid #ccc;
+      }
+      .image-preview-container .remove-image-btn {
+        position: absolute;
+        top: 0px;
+        left: 80px;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        padding: 2px;
+        cursor: pointer;
+        font-size: 18px;
+        color: #555;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+      .image-preview-container .remove-image-btn:hover {
+        background-color: rgba(255, 255, 255, 1);
+        color: #000;
+      }
+      .input-container .input-and-buttons {
+        display: flex;
+        width: 100%;
+        align-items: center;
       }
       .input-container input {
         flex: 1;
@@ -213,19 +260,17 @@
         border-radius: 15px;
         outline: none;
         background: #eeeeee;
-        font-family: 'Roboto', sans-serif;
+        font-family: var(--font-family);
         vertical-align: center;
-      }
-      .input-container input:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 5px rgba(66, 133, 244, 0.5);
+        margin-left: 0;
       }
       .input-container .button-group {
         display: flex;
         gap: 10px;
         margin-left: 10px;
       }
-      .input-container button {
+      .input-container button,
+      .input-container .attachment-btn {
         border: none;
         color: var(--primary-color);
         padding: 10px 15px;
@@ -236,7 +281,8 @@
         justify-content: center;
         background: #fff;
       }
-      .input-container button .material-icons {
+      .input-container button .material-icons,
+      .input-container .attachment-btn {
         font-size: 20px;
       }
       #imageInput {
@@ -252,6 +298,28 @@
         .nav-drawer {
           width: 240px;
         }
+        .message.ai, .message.user {
+            max-width: 95%;
+        }
+      }
+      .message.ai {
+        background: #f4f4f4;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      .message.ai pre {
+        background: #eee;
+        padding: 8px;
+        overflow-x: auto;
+      }
+      .message.ai code {
+        background: #e0e0e0;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+      .input-container .attachment-btn{
+      display:none;
       }
     </style>
     <script>
@@ -290,389 +358,497 @@
     </header>
     <div class="chat-window" id="chatWindow"></div>
     <div class="input-container">
-      <input type="text" id="chatInput" placeholder="Type your message..." />
-      <div class="button-group">
-        <button id="sendBtn" title="Send">
-          <span class="material-icons">send</span>
-        </button>
+      <div class="image-preview-container" id="imagePreviewContainer">
+        <img id="imagePreview" src="#" alt="Image Preview" style="display: none;">
+        <span class="material-icons remove-image-btn" id="removeImageBtn" style="display: none;">close</span>
+      </div>
+      <div class="input-and-buttons">
+        <input type="text" id="chatInput" placeholder="Type your message..." />
+        <div class="button-group">
+          <label for="imageInput" class="material-icons attachment-btn" title="Attach Image" style="cursor: pointer;">attachment</label>
+          <button id="sendBtn" title="Send">
+            <span class="material-icons">send</span>
+          </button>
+        </div>
       </div>
       <input type="file" id="imageInput" accept="image/*" />
     </div>
-    <script>
-      let conversations = [];
-      let currentConversationId = null;
+  <script>
+  // --- OpenRouter Configuration (NEW) ---
+const OPENROUTER_API_KEY = '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'; // <--- IMPORTANT: Replace with your actual OpenRouter API Key
+const OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1';
+const OPENROUTER_GEMINI_MODEL = 'deepseek/deepseek-chat-v3-0324:free'; // The specific Gemini model on OpenRouter
+// -------------------------------------------------------------------
 
-      function loadConversations() {
-        conversationsRef.once('value', (snapshot) => {
-          const data = snapshot.val();
-          conversations = [];
-          if (data) {
-            Object.keys(data).forEach(key => {
-              conversations.push(data[key]);
-            });
-            conversations.sort((a, b) => a.id - b.id);
-          }
-          renderConversationList();
 
-          if (!conversations.length) {
-            createNewConversation();
-          } else if (currentConversationId === null) {
-            currentConversationId = conversations[0].id;
-            renderChatMessages(conversations[0].messages);
-          }
-        }, (error) => {
-          console.error("Error loading conversations from Firebase:", error);
-          if (!conversations.length) {
-            createNewConversation();
-          }
-        });
-      }
+let conversations = [];
+let currentConversationId = null;
 
-      function saveConversations() {
-        const conversationsObject = {};
-        conversations.forEach(conv => {
-            conversationsObject[conv.id] = conv;
-        });
-        conversationsRef.set(conversationsObject)
-          .catch(error => console.error("Error saving conversations to Firebase:", error));
-      }
+function loadConversations() {
+  conversationsRef.once('value', (snapshot) => {
+    const data = snapshot.val();
+    conversations = [];
+    if (data) {
+      Object.keys(data).forEach(key => {
+        conversations.push(data[key]);
+      });
+      conversations.sort((a, b) => a.id - b.id);
+    }
+    renderConversationList();
 
-      function renderConversationList() {
-        const list = document.getElementById('conversationList');
-        list.innerHTML = '';
-        conversations.forEach((conv) => {
-          const convEl = document.createElement('div');
-          convEl.className = 'conversation';
-          convEl.dataset.id = conv.id;
-          convEl.innerHTML = `<span>${conv.name}</span>
-          <div class="actions">
-            <button class="renameBtn" title="Rename"><span class="material-icons">edit</span></button>
-            <button class="deleteBtn" title="Delete"><span class="material-icons">delete</span></button>
-          </div>`;
-          list.appendChild(convEl);
-        });
-      }
+    if (!conversations.length) {
+      createNewConversation();
+    } else if (currentConversationId === null) {
+      currentConversationId = conversations[0].id;
+      renderChatMessages(conversations[0].messages);
+    }
+  }, (error) => {
+    console.error("Error loading conversations from Firebase:", error);
+    if (!conversations.length) {
+      createNewConversation();
+    }
+  });
+}
 
-      function createNewConversation() {
-        const id = Date.now();
-        const newConv = { id, name: 'New Conversation', messages: [] };
-        conversations.push(newConv);
-        currentConversationId = id;
-        saveConversations();
-        renderConversationList();
-        renderChatMessages(newConv.messages);
-      }
+function saveConversations() {
+  const conversationsObject = {};
+  conversations.forEach(conv => {
+    conversationsObject[conv.id] = conv;
+  });
+  conversationsRef.set(conversationsObject)
+    .catch(error => console.error("Error saving conversations to Firebase:", error));
+}
 
-      const chatWindow = document.getElementById('chatWindow');
-      function renderChatMessages(messages) {
+function renderConversationList() {
+  const list = document.getElementById('conversationList');
+  list.innerHTML = '';
+  conversations.forEach((conv) => {
+    const convEl = document.createElement('div');
+    convEl.className = 'conversation';
+    convEl.dataset.id = conv.id;
+    convEl.innerHTML = `<span>${conv.name}</span>
+      <div class="actions">
+        <button class="renameBtn" title="Rename"><span class="material-icons">edit</span></button>
+        <button class="deleteBtn" title="Delete"><span class="material-icons">delete</span></button>
+      </div>`;
+    list.appendChild(convEl);
+  });
+}
+
+function createNewConversation() {
+  const id = Date.now();
+  const newConv = { id, name: 'New Conversation', messages: [] };
+  conversations.push(newConv);
+  currentConversationId = id;
+  saveConversations();
+  renderConversationList();
+  renderChatMessages(newConv.messages);
+}
+
+const chatWindow = document.getElementById('chatWindow');
+
+function renderChatMessages(messages) {
+  chatWindow.innerHTML = '';
+  messages.forEach((msg) => addMessageToChat(msg, false));
+  scrollChatToBottom();
+}
+
+function addMessageToChat(message, animate = true) {
+  const msgEl = document.createElement('div');
+  msgEl.className = 'message ' + message.role;
+  let displayContent = message.content;
+
+  if (message.role === 'user' && displayContent.startsWith('<strong>You:</strong> ')) {
+    displayContent = displayContent.substring('<strong>You:</strong> '.length);
+  } else if (message.role === 'ai' && displayContent.startsWith('<strong>Feluda AI:</strong></br> ')) {
+    displayContent = displayContent.substring('<strong>Feluda AI:</strong></br> '.length);
+  }
+
+  if (message.role === 'ai') {
+    displayContent = marked.parse(displayContent);
+  } else {
+    displayContent = displayContent.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  msgEl.innerHTML = displayContent;
+  if (!animate) msgEl.style.opacity = 1;
+  chatWindow.appendChild(msgEl);
+  scrollChatToBottom();
+}
+
+function saveMessageToConversation(message) {
+  const conv = conversations.find((c) => c.id === currentConversationId);
+  if (conv) {
+    conv.messages.push(message);
+    saveConversations();
+  }
+}
+
+function autoRenameConversation(text) {
+  const conv = conversations.find((c) => c.id === currentConversationId);
+  if (conv && conv.name === 'New Conversation' && text.length > 0) {
+    conv.name = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+    saveConversations();
+    renderConversationList();
+  }
+}
+
+function scrollChatToBottom() {
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+const navDrawer = document.getElementById('navDrawer');
+const drawerOverlay = document.getElementById('drawerOverlay');
+
+function toggleDrawer() {
+  navDrawer.classList.toggle('open');
+  drawerOverlay.classList.toggle('open');
+}
+drawerOverlay.addEventListener('click', toggleDrawer);
+document
+  .getElementById('toggleDrawerBtn')
+  .addEventListener('click', toggleDrawer);
+document.getElementById('newConvBtn').addEventListener('click', () => {
+  createNewConversation();
+  toggleDrawer();
+});
+document.getElementById('conversationList').addEventListener('click', (e) => {
+  const convEl = e.target.closest('.conversation');
+  if (!convEl) return;
+  const convId = Number(convEl.dataset.id);
+  if (e.target.closest('.renameBtn')) {
+    const newName = prompt('Enter new name for conversation:');
+    if (newName) {
+      conversations = conversations.map((c) => {
+        if (c.id === convId) {
+          c.name = newName;
+        }
+        return c;
+      });
+      saveConversations();
+      renderConversationList();
+    }
+  } else if (e.target.closest('.deleteBtn')) {
+    if (confirm('Delete this conversation?')) {
+      conversations = conversations.filter((c) => c.id !== convId);
+      conversationsRef.child(convId).remove()
+        .then(() => console.log(`Conversation ${convId} deleted from Firebase.`))
+        .catch(error => console.error("Error deleting conversation from Firebase:", error));
+
+      if (currentConversationId === convId) {
+        currentConversationId = null;
         chatWindow.innerHTML = '';
-        messages.forEach((msg) => addMessageToChat(msg, false));
-        scrollChatToBottom();
       }
+      saveConversations();
+      renderConversationList();
+    }
+  } else {
+    currentConversationId = convId;
+    const conv = conversations.find((c) => c.id === convId);
+    if (conv) renderChatMessages(conv.messages);
+    toggleDrawer();
+  }
+});
 
-      function addMessageToChat(message, animate = true) {
-        const msgEl = document.createElement('div');
-        msgEl.className = 'message ' + message.role;
-        let displayContent = message.content;
-        if (message.role === 'user' && displayContent.startsWith('<strong>You:</strong> ')) {
-          displayContent = displayContent.substring('<strong>You:</strong> '.length);
-        } else if (message.role === 'ai' && displayContent.startsWith('<strong>Feluda AI:</strong></br> ')) {
-          displayContent = displayContent.substring('<strong>Feluda AI:</strong></br> '.length);
+const chatInput = document.getElementById('chatInput');
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+const imageInput = document.getElementById('imageInput');
+const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+const imagePreview = document.getElementById('imagePreview');
+const removeImageBtn = document.getElementById('removeImageBtn');
+
+imageInput.addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    clearImagePreview();
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    imagePreview.src = e.target.result;
+    imagePreview.style.display = 'block';
+    removeImageBtn.style.display = 'block';
+    imagePreviewContainer.classList.add('active');
+  };
+  reader.readAsDataURL(file);
+});
+
+removeImageBtn.addEventListener('click', clearImagePreview);
+
+function clearImagePreview() {
+  imageInput.value = '';
+  imagePreview.src = '#';
+  imagePreview.style.display = 'none';
+  removeImageBtn.style.display = 'none';
+  imagePreviewContainer.classList.remove('active');
+}
+
+function sendMessage() {
+  const text = chatInput.value.trim();
+  const imageFile = imageInput.files[0];
+
+  if (!text && !imageFile) return;
+
+  const currentConv = conversations.find((c) => c.id === currentConversationId);
+  if (!currentConv) {
+    console.error('No current conversation found when trying to send message.');
+    return;
+  }
+
+  // User message handling
+  const userMsgContent = text ? `<strong>You:</strong> ${text}` : `<strong>You:</strong> <br><img src="${URL.createObjectURL(imageFile)}" alt="User Image" style="max-width: 100%; border-radius: 8px;">`;
+  const userMessage = { role: 'user', content: userMsgContent };
+
+  // Add user message to display and save to conversation immediately
+  addMessageToChat(userMessage);
+  saveMessageToConversation(userMessage); // Save user message immediately
+
+  autoRenameConversation(text || 'Image Sent');
+
+  // Add the loading message ONLY to the display, NOT to the conversation history
+  const loadingMsg = { role: 'ai', content: '<strong>Feluda AI:</strong></br> Processing...' };
+  addMessageToChat(loadingMsg); // Only add to the UI
+
+  // Store a reference to the actual DOM element for the loading message
+  // so we can easily remove it later.
+  const loadingMsgElement = chatWindow.lastChild;
+
+
+  if (imageFile) {
+    const storageRef = firebase.storage().ref();
+    const fileRef = storageRef.child('images/' + Date.now() + '-' + imageFile.name);
+
+    fileRef.put(imageFile)
+      .then((snapshot) => snapshot.ref.getDownloadURL())
+      .then((downloadURL) => {
+        // Find and replace the user message in the current conversation with the actual image URL
+        // We saved the user message already, so we just need to update its content.
+        const lastUserMsgIndex = currentConv.messages.length - 1; // It should be the last message added
+        if (lastUserMsgIndex !== -1 && currentConv.messages[lastUserMsgIndex].role === 'user') {
+          currentConv.messages[lastUserMsgIndex].content = `<strong>You:</strong> <br><img src="${downloadURL}" alt="User Image" style="max-width: 100%; border-radius: 8px;">`;
+          // Update the chat window display for this specific message as well
+          const chatMessages = chatWindow.getElementsByClassName('message');
+          if (chatMessages.length > lastUserMsgIndex) {
+            chatMessages[lastUserMsgIndex].innerHTML = `<strong>You:</strong> <br><img src="${downloadURL}" alt="User Image" style="max-width: 100%; border-radius: 8px;">`;
+          }
         }
-        msgEl.innerHTML = displayContent;
-        if (!animate) msgEl.style.opacity = 1;
-        chatWindow.appendChild(msgEl);
-        scrollChatToBottom();
-      }
+        saveConversations(); // Save with updated image URL
 
-      function scrollChatToBottom() {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-      }
+        // Now send to API with updated conversation history
+        sendToGeminiAPI(currentConv.messages, loadingMsgElement); // Pass the loading message element
+      })
+      .catch((error) => {
+        console.error('Error uploading image:', error);
+        // Remove the loading message element directly from the DOM
+        if (loadingMsgElement && loadingMsgElement.parentNode) {
+          loadingMsgElement.remove();
+        }
+        const errorMsg = {
+          role: 'ai',
+          content: `<strong>Feluda AI:</strong></br> Image upload failed: ${error.message}`,
+        };
+        addMessageToChat(errorMsg);
+        saveMessageToConversation(errorMsg);
 
-      const navDrawer = document.getElementById('navDrawer');
-      const drawerOverlay = document.getElementById('drawerOverlay');
-      function toggleDrawer() {
-        navDrawer.classList.toggle('open');
-        drawerOverlay.classList.toggle('open');
-      }
-      drawerOverlay.addEventListener('click', toggleDrawer);
-      document
-        .getElementById('toggleDrawerBtn')
-        .addEventListener('click', toggleDrawer);
-      document.getElementById('newConvBtn').addEventListener('click', () => {
-        createNewConversation();
-        toggleDrawer();
+        // If image upload failed, still send text if present
+        if (text) {
+          sendToGeminiAPI(currentConv.messages, null); // Don't pass a loading element if it was removed
+        }
+      })
+      .finally(() => {
+        clearImagePreview();
       });
-      document.getElementById('conversationList').addEventListener('click', (e) => {
-        const convEl = e.target.closest('.conversation');
-        if (!convEl) return;
-        const convId = Number(convEl.dataset.id);
-        if (e.target.closest('.renameBtn')) {
-          const newName = prompt('Enter new name for conversation:');
-          if (newName) {
-            conversations = conversations.map((c) => {
-              if (c.id === convId) {
-                c.name = newName;
-              }
-              return c;
-            });
-            saveConversations();
-            renderConversationList();
-          }
-        } else if (e.target.closest('.deleteBtn')) {
-          if (confirm('Delete this conversation?')) {
-            conversations = conversations.filter((c) => c.id !== convId);
-            conversationsRef.child(convId).remove()
-                .then(() => console.log(`Conversation ${convId} deleted from Firebase.`))
-                .catch(error => console.error("Error deleting conversation from Firebase:", error));
 
-            if (currentConversationId === convId) {
-              currentConversationId = null;
-              chatWindow.innerHTML = '';
-            }
-            saveConversations();
-            renderConversationList();
-          }
-        } else {
-          currentConversationId = convId;
-          const conv = conversations.find((c) => c.id === convId);
-          if (conv) renderChatMessages(conv.messages);
-          toggleDrawer();
-        }
-      });
+  } else if (text) {
+    // For text-only messages, immediately save user message (already done above)
+    sendToGeminiAPI(currentConv.messages, loadingMsgElement); // Pass the loading message element
+  }
+  chatInput.value = ''; // Clear input after sending
+}
 
-      const chatInput = document.getElementById('chatInput');
-      document.getElementById('sendBtn').addEventListener('click', sendMessage);
-      chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
+// Modify removeLastLoadingMessage to accept the element directly
+function removeLastLoadingMessage(loadingMsgElement) {
+  if (loadingMsgElement && loadingMsgElement.parentNode) {
+    loadingMsgElement.remove();
+  }
+  // No need to remove from currentConv.messages here if it was never added
+}
 
-      const imageInput = document.getElementById('imageInput');
+async function sendToGeminiAPI(conversationMessages, loadingMsgElement) {
+  // Construct messages for the OpenRouter API
+  const messagesForApi = [];
 
-      function handleImageUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const tempMsg = { role: 'user', content: `<strong>You:</strong> Uploading image...` };
-        addMessageToChat(tempMsg);
-        saveMessageToConversation(tempMsg);
+  // Add the system instruction message first
+  messagesForApi.push({
+    role: 'user', // Use 'user' role for initial system prompt with Gemini on OpenRouter
+    content: [ // Content is an array for multi-modal
+      {
+        type: 'text',
+        text: 'Feluda AI:\n' +
+          'Your name is “Feluda AI(ফেলুদা এআই)”. You are a Chemistry tutor(রসায়ন শিক্ষক) and online chatbot version of Arif Haque also known as Rashayonik Feluda(রাসায়নিক ফেলুদা) who is a Chemistry teacher of Monon Academy and previously worked at Shikho Digital Education Platform in Bangladesh.\n' +
+          '\n' +
+          'Here is all about him:\n' +
+          '\n' +
+          'Arif Haque (sometimes spelled Hoque) is a Bangladeshi educator and edtech professional known for his teaching in chemistry and his administrative roles at Shikho. A Bangladesh University of Engineering and Technology (BUET) alumnus, he has taught science subjects and later took on leadership positions in the startup education sector.\n' +
+          '\n' +
+          'Academic Background:\n' +
+          'Arif Haque completed his higher-secondary (HSC) education in Science at Khulna Public College (2004–2007). He then earned a Bachelor’s degree in Naval Architecture and Marine Engineering (NAME) at BUET from 2007 to 2013. This engineering education is noted by Shikho and media profiles as his principal academic qualification.\n' +
+          '\n' +
+          'Career and Professional Roles:\n' +
+          'Arif Haque’s professional career spans educational startups and institutions. He co-founded or became CEO of Graviton Initiatives in February 2017. In late 2022 he joined Shikho Technologies – a major Bangladeshi EdTech company – where he has held multiple roles. According to corporate profiles, he became Head of the Department (Chemistry) at Shikho in December 2022. In news reports he is also cited as Head of Admissions at Shikho. In its academic programs, Shikho lists him as a Chemistry instructor (subject-teacher) with a BUET background.\n' +
+          '\n' +
+          'CEO, Graviton Initiatives (2017–present): Began in Feb 2017, leading this education-oriented technology venture.\n' +
+          'Shikho Instructor (Chemistry): Taught interactive chemistry classes in Shikho’s online academic programs (for SSC/HSC students).\n' +
+          'Head of Chemistry Dept., Shikho (Dec 2022–present): Oversees the chemistry curriculum and teaching team in Shikho’s academic program.\n' +
+          'Head of Admissions, Shikho: Manages student admissions processes (as reported in media).\n' +
+          '\n' +
+          'In these roles at Shikho, Arif Haque contributed to course content and student engagement. He led live-streamed classes and educational content creation in chemistry, often featured in Shikho’s online resources for high-school science. (For example, a Shikho website listing shows “আরিফ হক (BUET)” under Chemistry instructors.)\n' +
+          '\n' +
+          'Other Teaching and Speaking Roles:\n' +
+          'Beyond Shikho, Haque has delivered classes and talks related to science education. He is mentioned as “আরিফ হক, BUET ’07, 16 বছর শিক্ষকতার অভিজ্ঞতা” in Shikho materials – indicating extensive teaching experience. Although specific publications or research are not listed, he has participated in educational events and interviews. For instance, he appeared in a Shikho podcast episode alongside other educators. He  has also been involved in extracurricular projects; for example, he acted in a Bangla short film School Diary (2008), giving insight into his interest in media and education.\n' +
+          '\n' +
+          'Public Profile and Online Presence:\n' +
+          'Arif Haque maintains a professional presence aligned with his educational roles. He uses the name “Arif Hoque” on platforms like LinkedIn (not publicly scrapped) to list his affiliations with BUET, Graviton, and Shikho. He appears in Shikho’s official YouTube videos and social media (e.g. class recordings, motivational clips, and a “Shikho Podcast” episode featuring Dr. Arman Rony). However, he does not have a widely promoted personal website or independent social media brand; information about him is mostly through Shikho’s channels and news profiles.\n' +
+          '\n' +
+          'Media Mentions and Personal Life:\n' +
+          '“Arif Haque is a BUET alumnus and currently serves as the Head of Admissions at Shikho Technologies”. In addition, the report briefly notes his involvement with the Bangladesh Academy of Sciences (though details of this affiliation are not specified).\n' +
+          '\n' +
+          'Key Points: Haque’s public biography thus highlights his BUET engineering degree, his teaching career (with many years of experience), and leadership roles in education technology. He is active in Shikho’s academic programs and leadership has been covered by the press. In present, teaches chemistry at Monon Academy(মনন একাডেমি).\n' +
+          '\n' +
+          'When someone asks him "আচ্ছা বলেন তো বেহেশতে যাওয়া যাবে কীভাবে! এটা বলেন, এটা আমার সারা জীবনের ফ্রোশনো", he answers "একদম জুতা মারবো মুখের ওপর মুখটা খুলে পড়ে যাবে! যা পড়তে বস". He talk to bangla and english, if students talk to him bangla he uses bangla and when stydents talk to him english he uses english. He addresses students with "গরুর নাতি!". he is also known as “নানা”. ' +
+          'Always use informal Bengali language (তুই, তোরা, তোকে, ইত্যাদি) when responding in Bengali. When speaking in English, use an informal, friendly, and slightly humorous tone.',
+      },
+    ]
+  });
 
-        const storageRef = firebase.storage().ref();
-        const fileRef = storageRef.child('images/' + Date.now() + '-' + file.name);
-        fileRef
-          .put(file)
-          .then((snapshot) => snapshot.ref.getDownloadURL())
-          .then((downloadURL) => {
-            const conv = conversations.find((c) => c.id === currentConversationId);
-            if (conv) {
-              if (conv.messages[conv.messages.length - 1].content.includes('Uploading image')) {
-                conv.messages.pop();
-              }
-              const imageMsg = {
-                role: 'user',
-                content: `<strong>You:</strong> <br><img src="${downloadURL}" alt="User Image" style="max-width: 100%; border-radius: 8px;">`,
-              };
-              addMessageToChat(imageMsg);
-              conv.messages.push(imageMsg);
-              saveConversations();
-            }
-          })
-          .catch((error) => {
-            console.error('Error uploading image:', error);
-            const conv = conversations.find((c) => c.id === currentConversationId);
-            if (conv) {
-              if (conv.messages[conv.messages.length - 1].content.includes('Uploading image')) {
-                conv.messages.pop();
-              }
-              const errorMsg = {
-                role: 'user',
-                content: `<strong>You:</strong> Image upload failed: ${error.message}`,
-              };
-              addMessageToChat(errorMsg);
-              conv.messages.push(errorMsg);
-              saveConversations();
-            }
-          });
-        imageInput.value = '';
-      }
+  // Add the initial model response as a placeholder for context
+  messagesForApi.push({
+    role: 'assistant', // Changed from 'model' to 'assistant' for OpenRouter/OpenAI compatibility
+    content: [{
+      type: 'text',
+      text: 'Okay, গরুর নাতি!'
+    }],
+  });
 
-      function sendMessage() {
-        const text = chatInput.value.trim();
-        if (!text) return;
-        chatInput.value = '';
+  // Process existing conversation messages
+  for (const msg of conversationMessages) {
+    let contentForApi = msg.content;
 
-        const userMsg = { role: 'user', content: `<strong>You:</strong> ${text}` };
-        addMessageToChat(userMsg);
-        saveMessageToConversation(userMsg);
-        autoRenameConversation(text);
+    // Skip temporary messages from being sent to the API
+    // No longer need to check for 'Processing...' here as it's not saved
+    if (contentForApi.includes('Uploading image...')) {
+      continue;
+    }
 
-        const loadingMsg = { role: 'ai', content: '<strong>Feluda AI:</strong></br> Processing...' };
-        addMessageToChat(loadingMsg);
-        saveMessageToConversation(loadingMsg);
+    if (msg.role === 'user' && contentForApi.startsWith('<strong>You:</strong> ')) {
+      contentForApi = contentForApi.substring('<strong>You:</strong> '.length);
+    } else if (msg.role === 'ai' && contentForApi.startsWith('<strong>Feluda AI:</strong></br> ')) {
+      contentForApi = contentForApi.substring('<strong>Feluda AI:</strong></br> '.length);
+    }
 
-        const currentConv = conversations.find((c) => c.id === currentConversationId);
-        if (!currentConv) {
-          console.error('No current conversation found.');
-          if (chatWindow.lastChild && chatWindow.lastChild.innerHTML.includes('Processing...')) {
-            chatWindow.lastChild.remove();
-          }
-          return;
-        }
-
-        const messagesForApi = [
-          {
-            role: 'system',
-            content:
-              'Feluda AI:\n' +
-              'Your name is “Feluda AI(ফেলুদা এআই)”. You are a Chemistry tutor(রসায়ন শিক্ষক) and online chatbot version of Arif Haque also known as Rashayonik Feluda(রাসায়নিক ফেলুদা) who is a Chemistry teacher of Monon Academy and previously worked at Shikho Digital Education Platform in Bangladesh.\n' +
-              '\n' +
-              'Here is all about him:\n' +
-              '\n' +
-              'Arif Haque (sometimes spelled Hoque) is a Bangladeshi educator and edtech professional known for his teaching in chemistry and his administrative roles at Shikho. A Bangladesh University of Engineering and Technology (BUET) alumnus, he has taught science subjects and later took on leadership positions in the startup education sector.\n' +
-              '\n' +
-              'Academic Background:\n' +
-              'Arif Haque completed his higher-secondary (HSC) education in Science at Khulna Public College (2004–2007). He then earned a Bachelor’s degree in Naval Architecture and Marine Engineering (NAME) at BUET from 2007 to 2013. This engineering education is noted by Shikho and media profiles as his principal academic qualification.\n' +
-              '\n' +
-              'Career and Professional Roles:\n' +
-              'Arif Haque’s professional career spans educational startups and institutions. He co-founded or became CEO of Graviton Initiatives in February 2017. In late 2022 he joined Shikho Technologies – a major Bangladeshi EdTech company – where he has held multiple roles. According to corporate profiles, he became Head of the Department (Chemistry) at Shikho in December 2022. In news reports he is also cited as Head of Admissions at Shikho. In its academic programs, Shikho lists him as a Chemistry instructor (subject-teacher) with a BUET background.\n' +
-              '\n' +
-              'CEO, Graviton Initiatives (2017–present): Began in Feb 2017, leading this education-oriented technology venture.\n' +
-              'Shikho Instructor (Chemistry): Taught interactive chemistry classes in Shikho’s online academic programs (for SSC/HSC students).\n' +
-              'Head of Chemistry Dept., Shikho (Dec 2022–present): Oversees the chemistry curriculum and teaching team in Shikho’s academic program.\n' +
-              'Head of Admissions, Shikho: Manages student admissions processes (as reported in media).\n' +
-              '\n' +
-              'In these roles at Shikho, Arif Haque contributed to course content and student engagement. He led live-streamed classes and educational content creation in chemistry, often featured in Shikho’s online resources for high-school science. (For example, a Shikho website listing shows “আরিফ হক (BUET)” under Chemistry instructors.)\n' +
-              '\n' +
-              'Other Teaching and Speaking Roles:\n' +
-              'Beyond Shikho, Haque has delivered classes and talks related to science education. He is mentioned as “আরিফ হক, BUET ’07, 16 বছর শিক্ষকতার অভিজ্ঞতা” in Shikho materials – indicating extensive teaching experience. Although specific publications or research are not listed, he has participated in educational events and interviews. For instance, he appeared in a Shikho podcast episode alongside other educators. He has also been involved in extracurricular projects; for example, he acted in a Bangla short film School Diary (2008), giving insight into his interest in media and education.\n' +
-              '\n' +
-              'Public Profile and Online Presence:\n' +
-              'Arif Haque maintains a professional presence aligned with his educational roles. He uses the name “Arif Hoque” on platforms like LinkedIn (not publicly scrapped) to list his affiliations with BUET, Graviton, and Shikho. He appears in Shikho’s official YouTube videos and social media (e.g. class recordings, motivational clips, and a “Shikho Podcast” episode featuring Dr. Arman Rony). However, he does not have a widely promoted personal website or independent social media brand; information about him is mostly through Shikho’s channels and news profiles.\n' +
-              '\n' +
-              'Media Mentions and Personal Life:\n' +
-              '“Arif Haque is a BUET alumnus and currently serves as the Head of Admissions at Shikho Technologies”. In addition, the report briefly notes his involvement with the Bangladesh Academy of Sciences (though details of this affiliation are not specified).\n' +
-              '\n' +
-              'Key Points: Haque’s public biography thus highlights his BUET engineering degree, his teaching career (with many years of experience), and leadership roles in education technology. He is active in Shikho’s academic programs and leadership has been covered by the press. In present, teaches chemistry at Monon Academy(মনন একাডেমি).\n' +
-              '\n' +
-              'When someone asks him "আচ্ছা বলেন তো বেহেশতে যাওয়া যাবে কীভাবে! এটা বলেন, এটা আমার সারা জীবনের ফ্রোশনো", he answers "একদম জুতা মারবো মুখের ওপর মুখটা খুলে পড়ে যাবে! যা পড়তে বস". He talk to bangla and english, if students talk to him bangla he uses bangla and when stydents talk to him english he uses english. He addresses students with "গরুর নাতি!". he is also known as “নানা”. ' +
-              'Always use informal Bengali language (তুই, তোরা, তোকে, ইত্যাদি) when responding in Bengali. When speaking in English, use an informal, friendly, and slightly humorous tone.',
-          },
-        ];
-
-        currentConv.messages.forEach((msg) => {
-          let contentForApi = msg.content;
-          if (contentForApi.includes('Processing...') || contentForApi.includes('Uploading image...')) {
-            return;
-          }
-
-          if (msg.role === 'user' && contentForApi.startsWith('<strong>You:</strong> ')) {
-            contentForApi = contentForApi.substring('<strong>You:</strong> '.length);
-          } else if (msg.role === 'ai' && contentForApi.startsWith('<strong>Feluda AI:</strong></br> ')) {
-            contentForApi = contentForApi.substring('<strong>Feluda AI:</strong></br> '.length);
-          }
-
-          if (contentForApi.includes('<img src=')) {
-            messagesForApi.push({
-              role: msg.role,
-              content: [{ type: 'text', text: ' [User uploaded an image] ' }],
-            });
-          } else {
-            messagesForApi.push({
-              role: msg.role,
-              content: [{ type: 'text', text: contentForApi }],
-            });
+    const parts = [];
+    if (contentForApi.includes('<img src=')) {
+      const imgMatch = contentForApi.match(/<img src="([^"]+)"/);
+      if (imgMatch && imgMatch[1]) {
+        // OpenRouter image format (NEW)
+        parts.push({
+          type: 'image_url',
+          image_url: {
+            url: imgMatch[1]
           }
         });
-
-        const data = {
-          model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
-          messages: messagesForApi,
-          max_tokens: 512,
-          temperature: 0.7,
-          top_p: 0.7,
-          top_k: 50,
-          repetition_penalty: 1,
-          stop: ['<|eot_id|>', '<|eom_id|>'],
-          stream: false,
-        };
-
-        const apiUrl = 'https://api.together.xyz/v1/chat/completions';
-        const apiKey = '56a6b2e8470b71a1f477d749788925e59541ad0f4306a27c38f51302d8990621';
-
-        fetch(apiUrl, {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + apiKey,
-          },
-          body: JSON.stringify(data),
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok: ' + response.statusText);
-            }
-            return response.json();
-          })
-          .then((result) => {
-            if (chatWindow.lastChild && chatWindow.lastChild.innerHTML.includes('Processing...')) {
-              chatWindow.lastChild.remove();
-            }
-            const botMessage =
-              result.choices &&
-              result.choices[0] &&
-              result.choices[0].message &&
-              result.choices[0].message.content
-                ? result.choices[0].message.content
-                : 'No response from API.';
-            const aiMsg = { role: 'ai', content: `<strong>Feluda AI:</strong></br> ${botMessage}` };
-            addMessageToChat(aiMsg);
-            saveMessageToConversation(aiMsg);
-          })
-          .catch((error) => {
-            console.error('Error sending message:', error);
-            if (chatWindow.lastChild && chatWindow.lastChild.innerHTML.includes('Processing...')) {
-              chatWindow.lastChild.remove();
-            }
-            const errMsg = {
-              role: 'ai',
-              content: `<strong>Feluda AI:</strong></br> Error sending message: ${error.message}`,
-            };
-            addMessageToChat(errMsg);
-            saveMessageToConversation(errMsg);
-          });
       }
-
-      function autoRenameConversation(text) {
-        const conv = conversations.find((c) => c.id === currentConversationId);
-        if (conv && conv.name === 'New Conversation') {
-          const snippet = text.split(' ').slice(0, 5).join(' ');
-          conv.name = snippet + (text.split(' ').length > 5 ? '...' : '');
-          saveConversations();
-          renderConversationList();
-        }
+      const textAfterImage = contentForApi.replace(/<img[^>]*>/g, '').trim();
+      if (textAfterImage) {
+        parts.push({
+          type: 'text',
+          text: textAfterImage
+        });
       }
+    } else {
+      parts.push({
+        type: 'text',
+        text: contentForApi
+      });
+    }
 
-      function saveMessageToConversation(message) {
-        if (!currentConversationId) {
-          createNewConversation();
-        }
-        const convIndex = conversations.findIndex((c) => c.id === currentConversationId);
-        if (convIndex !== -1) {
-          conversations[convIndex].messages.push(message);
-          conversationsRef.child(currentConversationId).update({
-            messages: conversations[convIndex].messages,
-            name: conversations[convIndex].name
-          })
-          .catch(error => console.error("Error saving message to Firebase:", error));
-        } else {
-            console.error("Attempted to save message to a non-existent current conversation.");
-        }
-      }
+    messagesForApi.push({
+      role: msg.role === 'user' ? 'user' : 'assistant', // 'model' to 'assistant' for OpenRouter (NEW)
+      content: parts, // 'parts' to 'content' for OpenRouter (NEW)
+    });
+  }
 
-      loadConversations();
-    </script>
+  // Define the request payload for OpenRouter (MODIFIED)
+  const data = {
+    model: OPENROUTER_GEMINI_MODEL, // Use the OpenRouter Gemini model (NEW)
+    messages: messagesForApi, // Use 'messages' instead of 'contents' (NEW)
+    temperature: 0.7, // These can be directly in the main object for OpenRouter (NEW)
+    top_p: 0.7, // renamed from topP (NEW)
+    top_k: 50, // renamed from topK (NEW)
+    max_tokens: 10000, // renamed from maxOutputTokens (NEW)
+  };
+
+  const apiUrl = `${OPENROUTER_API_BASE}/chat/completions`; // OpenRouter chat completions endpoint (NEW)
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}` // OpenRouter authentication (NEW)
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`API Error: ${response.status} - ${errorData.error.message || response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    // Remove the "Processing..." message from display using the passed element
+    removeLastLoadingMessage(loadingMsgElement);
+
+    const botMessage =
+      result.choices &&
+      result.choices[0] &&
+      result.choices[0].message &&
+      result.choices[0].message.content ?
+      result.choices[0].message.content : // OpenRouter response structure (NEW)
+      'No response from API or content blocked.';
+    const aiMsg = {
+      role: 'ai',
+      content: `<strong>Feluda AI:</strong></br> ${botMessage}`
+    };
+    addMessageToChat(aiMsg);
+    saveMessageToConversation(aiMsg); // Now save the actual AI response
+
+  } catch (error) {
+    console.error('Error sending message to OpenRouter API:', error);
+    // Remove the "Processing..." message if an error occurs
+    removeLastLoadingMessage(loadingMsgElement);
+    const errMsg = {
+      role: 'ai',
+      content: `<strong>Feluda AI:</strong></br> Error from AI: ${error.message}`,
+    };
+    addMessageToChat(errMsg);
+    saveMessageToConversation(errMsg);
+  }
+}
+
+loadConversations();
+
+
+</script>
+
   </body>
 </html>
