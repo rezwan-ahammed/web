@@ -10,7 +10,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Tiro+Bangla:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Tiro+Bangla:wght@400;700&family=Dancing+Script:wght=700&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -115,16 +115,12 @@
             </div>
             
             <div>
-                <label for="profession-search" class="text-lg font-bold text-gray-300">পেশা:</label>
-                <div id="custom-profession-select" class="relative mt-2">
-                    <div class="w-full p-4 form-input rounded-lg text-lg flex items-center justify-between cursor-pointer custom-select-button">
-                        <input type="text" id="profession-search" placeholder="-- পেশা খুঁজুন বা বাছাই করুন --" class="bg-transparent w-full focus:outline-none">
-                        <svg class="w-6 h-6 text-gray-500 transition-transform" id="profession-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    </div>
-                    <div id="profession-options" class="absolute z-10 w-full mt-1 bg-[#010409] border border-gray-700 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto custom-scrollbar">
-                    </div>
-                    <input type="hidden" id="profession" name="profession">
+                <label for="profession-display" class="text-lg font-bold text-gray-300">পেশা:</label>
+                <div id="profession-select-trigger" class="w-full mt-2 p-4 form-input rounded-lg text-lg flex items-center justify-between cursor-pointer">
+                    <span id="profession-display" class="text-gray-400">-- পেশা নির্বাচন করুন --</span>
+                    <svg class="w-6 h-6 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </div>
+                <input type="hidden" id="profession" name="profession">
             </div>
 
             <div>
@@ -137,6 +133,23 @@
             </button>
         </form>
     </main>
+
+    <div id="profession-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="profession-modal-backdrop"></div>
+        <div class="modal-panel bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl relative border border-gray-700 max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white">পেশা নির্বাচন করুন</h3>
+                <button id="close-profession-modal-btn" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4">
+                <input type="text" id="profession-search-modal" placeholder="পেশা খুঁজুন..." class="w-full p-3 form-input rounded-lg text-lg">
+            </div>
+            <div id="profession-options-modal" class="flex-1 overflow-y-auto custom-scrollbar py-1">
+                </div>
+        </div>
+    </div>
 
     <div id="receipt-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="modal-backdrop"></div>
@@ -228,79 +241,95 @@ document.addEventListener('DOMContentLoaded', () => {
         'influencer': { name: 'সরকারপন্থী ইউটিউবার/ইনফ্লুয়েন্সার', rate: 0.13, message: 'আপনার ডিজিটাল চিৎকারে নিন্দুকের গলা শুকিয়ে যায়। চালিয়ে যান, দলের ডিজিটাল উইং আপনার সাথে আছে।' },
         'expat': { name: 'বিদেশে অবস্থানরত রেমিট্যান্স বিপ্লবী', rate: 0.20, message: 'দেশের মাটি থেকে দূরে থেকেও দেশের জন্য আপনার মন কাঁদে। আপনার পাঠানো রেমিট্যান্স দলের ফান্ডে শক্তি জোগাবে।' },
         'citizen': { name: 'উন্নয়নের সাক্ষী সাধারণ নাগরিক', rate: 0.10, message: 'উন্নয়নের নীরব সাক্ষী হিসেবে আপনার এই ত্যাগ স্বর্ণাক্ষরে লেখা থাকবে। ধন্যবাদ।' },
-        'retired': { name: 'অবসরপ্রাপ্ত লীগখর (দলীয় বোঝা)', rate: 0.30, message: 'মাঙ্গের নাতি এতো টাকা মারছিস যে ইলন মাস্কও তোদের কাছে কম। আর চাঁদা দেয়ার বেলায় পিছনে?' }
+        'retired': { name: 'অবসরপ্রাপ্ত লীগখর (দলীয় বোঝা)', rate: 0.30, message: 'মাঙ্গের নাতি এতো টাকা মারছিস যে ইলন মাস্কও তোদের কাছে কম। আর চাঁদা দেয়ার বেলায় পিছনে?' },
+        'teacher_private': { name: 'প্রাইভেট স্কুলের মালিক-শিক্ষক', rate: 0.14, message: 'শিক্ষার আলো ছড়ানোর পাশাপাশি দলের পথেও আপনার উজ্জ্বল উপস্থিতি কাম্য।' },
+        'businessman_small': { name: 'ক্ষুদ্র ও মাঝারি ব্যবসায়ী (সিন্ডিকেট প্রভাবিত)', rate: 0.15, message: 'ছোট হোক বা বড়, দেশের অর্থনীতি আপনার হাতেই সুরক্ষিত। দলের তহবিলে আপনার অবদানও মূল্যবান।' },
+        'farmer_big': { name: 'বড় মাপের ভূমিদস্যু/কৃষক', rate: 0.10, message: 'ফসল ফলানোর পাশাপাশি ক্ষমতার ফসলও আপনি ভালোই বোঝেন। দলের জন্য এই সামান্য ত্যাগ বড় প্রাপ্তি।' },
+        'fisherman_trawler': { name: 'ট্রলার মালিক/জেলে (অবৈধ নেট)', rate: 0.17, message: 'গভীর সমুদ্রের রহস্যের মতো আপনার আয়ও রহস্যাবৃত। দলের জন্য এই মাছ ধরা সার্থক হোক।' },
+        'bureaucrat_influential': { name: 'প্রভাবশালী আমলা (ক্ষমতার কেন্দ্রবিন্দু)', rate: 0.28, message: 'আপনার কলমের খোঁচায় দেশের গতিপথ পরিবর্তিত হয়। দলের গতিপথ ঠিক রাখতে আপনার সমর্থন জরুরি।' },
+        'union_leader': { name: 'শ্রমিক ইউনিয়নের নেতা (চাঁদাবাজ)', rate: 0.21, message: 'শ্রমিকদের অধিকার আদায়ের পাশাপাশি নিজের অধিকারও আপনি আদায় করেন। দলের এই চাঁদা শ্রমিক কল্যাণে ব্যবহৃত হবে।' },
+        'real_estate_developer': { name: 'জমির দালাল/রিয়েল এস্টেট ব্যবসায়ী', rate: 0.24, message: 'জমির দাম বাড়ার সাথে সাথে দলের তহবিলের দামও বাড়ুক। আপনার বিনিয়োগ সুদূরপ্রসারী।' },
+        'social_worker': { name: 'এনজিও কর্মী (বিদেশী ফান্ড বিশেষজ্ঞ)', rate: 0.08, message: 'মানবতার সেবায় আপনার নিবেদন প্রশ্নাতীত। দলের প্রতিও আপনার মানবিক দৃষ্টিভঙ্গি প্রয়োজন।' },
+        'film_producer': { name: 'সিনেমা প্রযোজক (ব্ল্যাক মানি বিশেষজ্ঞ)', rate: 0.27, message: 'আপনার ছবিতে যেমন টাকার খেলা, তেমনি দলের তহবিলেও আপনার উপস্থিতি দারুণ প্রভাব ফেলবে।' },
+        'sports_organizer': { name: 'ক্রীড়া সংগঠক (জুয়াড়ি)', rate: 0.19, message: 'খেলাধুলায় যেমন জেতা-হারা থাকে, তেমনি দলের প্রতি আপনার আনুগত্যে কোনো হার নেই।' },
+        'religious_leader': { name: 'প্রভাবশালী ধর্মীয় নেতা (ওয়াজ ব্যবসায়ী)', rate: 0.16, message: 'ধর্মীয় সহনশীলতা ও দলের প্রতি আপনার নিষ্ঠা প্রশংসার যোগ্য। এই চাঁদা আপনার সুনাম বৃদ্ধি করবে।' },
+        'politician_junior': { name: 'ওয়ার্ড পর্যায়ের নেতা (তেলবাজ)', rate: 0.10, message: 'দলের জন্য আপনার অক্লান্ত পরিশ্রম অমূল্য। এই চাঁদা আপনার পদোন্নতির সিঁড়ি।' },
+        'land_grabber': { name: 'ভূমিদস্যু/দখলদার', rate: 0.32, message: 'জমির মালিকানা বদলে দিতে আপনার জুড়ি নেই। দলের তহবিলের মালিকানাও আপনার হাতেই নিরাপদ।' },
+        'drug_dealer': { name: 'মাদক কারবারি (আন্তর্জাতিক চক্র)', rate: 0.40, message: 'আপনার নেটওয়ার্কের বিস্তৃতি বিস্ময়কর। দলের নেটওয়ার্কের জন্য আপনার এই চাঁদা জীবন রক্ষাকারী।' },
+        'smuggler': { name: 'চোরাকারবারি (বর্ডার ও সমুদ্রপথ বিশেষজ্ঞ)', rate: 0.38, message: 'আপনি সীমান্তের ওপারেও দলের প্রভাব বিস্তার করেন। আপনার এই ত্যাগ দলের সীমান্ত রক্ষা করবে।' },
+        'banker_private': { name: 'বেসরকারি ব্যাংকের এমডি/চেয়ারম্যান (ঋণ জালিয়াতি)', rate: 0.30, message: 'আর্থিক খাতে আপনার দক্ষতা দলকে সমৃদ্ধ করবে। আপনার আমানত দলের জন্য এক বিশাল শক্তি।' },
+        'media_owner': { name: 'গণমাধ্যম মালিক (খবর বিক্রেতা)', rate: 0.25, message: 'খবরের ভেতরের খবর আপনিই জানেন। দলের প্রতি আপনার খবরদারি অমূল্য।' },
+        'student_male': { name: 'ছাত্র (ভবিষ্যৎ কর্ণধার)', rate: 0.02, message: 'জ্ঞানের আলোয় উদ্ভাসিত আপনার ভবিষ্যৎ। দলের জন্য আপনার এই সামান্য ত্যাগ অনুপ্রেরণা জোগাবে।' },
+        'student_female': { name: 'ছাত্রী (আগামী দিনের নেত্রী)', rate: 0.02, message: 'শিক্ষায় আপনার অগ্রযাত্রা দেশের জন্য গর্ব। দলের প্রতি আপনার সমর্থন উজ্জ্বল ভবিষ্যৎ গড়বে।' },
+        'chhatra_league': { name: 'ছাত্রলীগ কর্মী (ক্যাম্পাসের প্রাণ)', rate: 0.05, message: 'ক্যাম্পাসে আপনার প্রভাব প্রশ্নাতীত। দলের জন্য আপনার এই ত্যাগ সাংগঠনিক শক্তি বৃদ্ধি করবে।' }
     };
 
     const form = document.getElementById('chada-form');
     const nameInput = document.getElementById('name');
     const incomeInput = document.getElementById('income');
     const calculateBtn = document.getElementById('calculate-btn');
-    const modal = document.getElementById('receipt-modal');
+    const receiptModal = document.getElementById('receipt-modal');
     const closeModalBtn = document.getElementById('close-modal-btn');
     const downloadBtn = document.getElementById('download-btn');
     const downloadSpinner = document.getElementById('download-spinner');
     const downloadText = document.getElementById('download-text');
     const receiptContent = document.getElementById('receipt-content');
-    const customSelect = document.getElementById('custom-profession-select');
-    const professionSearchInput = document.getElementById('profession-search');
+    
+    // Profession Modal Elements
+    const professionSelectTrigger = document.getElementById('profession-select-trigger');
+    const professionDisplay = document.getElementById('profession-display');
     const professionHiddenInput = document.getElementById('profession');
-    const professionOptionsContainer = document.getElementById('profession-options');
-    const professionChevron = document.getElementById('profession-chevron');
+    const professionModal = document.getElementById('profession-modal');
+    const professionModalBackdrop = document.getElementById('profession-modal-backdrop');
+    const closeProfessionModalBtn = document.getElementById('close-profession-modal-btn');
+    const professionSearchModalInput = document.getElementById('profession-search-modal');
+    const professionOptionsModalContainer = document.getElementById('profession-options-modal');
 
-    const populateProfessions = (filter = '') => {
-        professionOptionsContainer.innerHTML = '';
+    const populateProfessionsModal = (filter = '') => {
+        professionOptionsModalContainer.innerHTML = '';
         const filteredKeys = Object.keys(professionData).filter(key => 
             professionData[key].name.toLowerCase().includes(filter.toLowerCase())
         );
         if (filteredKeys.length === 0) {
-            professionOptionsContainer.innerHTML = `<div class="p-3 text-gray-500">কোনো ফলাফল পাওয়া যায়নি।</div>`;
+            professionOptionsModalContainer.innerHTML = `<div class="p-3 text-gray-500 italic text-center">কোনো ফলাফল পাওয়া যায়নি।</div>`;
         } else {
             filteredKeys.forEach(key => {
                 const option = document.createElement('div');
                 option.textContent = professionData[key].name;
                 option.dataset.value = key;
-                option.className = 'p-3 hover:bg-blue-600/50 cursor-pointer transition-colors text-gray-300';
+                option.className = 'px-4 py-2 hover:bg-blue-600/50 cursor-pointer transition-colors text-gray-300';
                 option.addEventListener('click', () => {
-                    professionSearchInput.value = professionData[key].name;
+                    professionDisplay.textContent = professionData[key].name;
                     professionHiddenInput.value = key;
-                    professionOptionsContainer.classList.add('hidden');
-                    professionChevron.classList.remove('rotate-180');
+                    professionModal.classList.add('hidden');
                     validateInputs();
                 });
-                professionOptionsContainer.appendChild(option);
+                professionOptionsModalContainer.appendChild(option);
             });
         }
     };
 
-    professionSearchInput.addEventListener('keyup', () => populateProfessions(professionSearchInput.value));
+    // Open profession modal
+    professionSelectTrigger.addEventListener('click', () => {
+        professionModal.classList.remove('hidden');
+        populateProfessionsModal(''); // Populate all options initially
+        professionSearchModalInput.value = ''; // Clear search input
+        professionSearchModalInput.focus(); // Focus search input
+    });
+
+    // Close profession modal
+    closeProfessionModalBtn.addEventListener('click', () => professionModal.classList.add('hidden'));
+    professionModalBackdrop.addEventListener('click', () => professionModal.classList.add('hidden'));
     
-    professionSearchInput.addEventListener('focus', () => {
-        populateProfessions(professionSearchInput.value);
-        professionOptionsContainer.classList.remove('hidden');
-        professionChevron.classList.add('rotate-180');
-    });
-
-    document.querySelector('.custom-select-button').addEventListener('click', (e) => {
-        if (e.target.id !== 'profession-search') {
-            professionOptionsContainer.classList.toggle('hidden');
-            professionChevron.classList.toggle('rotate-180');
-            if (!professionOptionsContainer.classList.contains('hidden')) { professionSearchInput.focus(); }
-        }
-    });
-
-    window.addEventListener('click', (e) => {
-        if (!customSelect.contains(e.target)) {
-            professionOptionsContainer.classList.add('hidden');
-            professionChevron.classList.remove('rotate-180');
-        }
-    });
+    // Search in profession modal
+    professionSearchModalInput.addEventListener('keyup', () => populateProfessionsModal(professionSearchModalInput.value));
 
     const validateInputs = () => {
         calculateBtn.disabled = !(nameInput.value.trim() && professionHiddenInput.value && parseFloat(incomeInput.value) > 0);
     };
 
     [nameInput, incomeInput].forEach(el => el.addEventListener('input', validateInputs));
-    validateInputs();
+    validateInputs(); // Initial validation
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -325,14 +354,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('receipt-opinion').textContent = message;
         
         const opinionEl = document.getElementById('receipt-opinion');
-        opinionEl.classList.toggle('text-red-400', professionKey === 'retired');
-        opinionEl.classList.toggle('text-gray-300', professionKey !== 'retired');
+        opinionEl.classList.toggle('text-red-400', ['retired', 'drug_dealer', 'smuggler', 'land_grabber'].includes(professionKey));
+        opinionEl.classList.toggle('text-gray-300', !['retired', 'drug_dealer', 'smuggler', 'land_grabber'].includes(professionKey));
         
-        modal.classList.remove('hidden');
+        receiptModal.classList.remove('hidden');
     });
 
-    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
-    document.getElementById('modal-backdrop').addEventListener('click', () => modal.classList.add('hidden'));
+    closeModalBtn.addEventListener('click', () => receiptModal.classList.add('hidden'));
+    document.getElementById('modal-backdrop').addEventListener('click', () => receiptModal.classList.add('hidden'));
 
     downloadBtn.addEventListener('click', () => {
         const filename = `Chada-Receipt-${document.getElementById('receipt-id').textContent}.pdf`;
@@ -358,13 +387,15 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadSpinner.classList.add('hidden');
             downloadText.textContent = 'PDF ডাউনলোড করুন';
             receiptContent.classList.remove('pdf-mode');
-            qrCodeEl.src = '';
+            qrCodeEl.src = ''; // Clear QR code source after download
         }).catch(err => {
+            console.error("PDF generation failed:", err); // Log the error for debugging
+            alert("PDF জেনারেশনে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"); // User-friendly alert
             downloadBtn.disabled = false;
             downloadSpinner.classList.add('hidden');
             downloadText.textContent = 'আবার চেষ্টা করুন';
             receiptContent.classList.remove('pdf-mode');
-            qrCodeEl.src = '';
+            qrCodeEl.src = ''; // Clear QR code source
         });
     });
 });
