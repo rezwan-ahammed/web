@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>জাতীয় চাঁদা সমন্বয় কর্তৃপক্ষ (V3 - PDF Enhanced)</title>
+    
+    <!-- JS Library for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Tiro+Bangla:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0D1117;
+            --border-color: #30363D;
+            --primary-accent: #58A6FF;
+            --text-main: #C9D1D9;
+            --text-secondary: #8B949E;
+            --danger-text: #F87171;
+            --success-glow: 0 0 15px rgba(34, 197, 94, 0.6);
+        }
+        body {
+            font-family: 'Inter', 'Hind Siliguri', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+        }
+        .font-display { font-family: 'Tiro Bangla', serif; }
+        .font-signature { font-family: 'Dancing Script', cursive; }
+
+        .form-input {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            transition: all 0.2s ease-in-out;
+        }
+        .form-input:focus, .custom-select-button:focus-within {
+            background-color: #010409;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+            outline: none;
+        }
+        .btn-primary:disabled {
+            background-color: #21262D;
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+        .receipt-watermark {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="200" height="100"><text x="50" y="30" font-size="10" fill="%2330363D" text-anchor="middle" style="font-family:Tiro Bangla, serif;" transform="rotate(-30, 50, 30)">গোপনীয়</text></svg>');
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .modal-backdrop { animation: fadeIn 0.3s ease-out; }
+        .modal-panel { animation: slideIn 0.3s ease-out; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        /* Scrollbar styles */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-dark); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--primary-accent); }
+
+        /* --- PDF Generation Styles --- */
+        .pdf-only { display: none; }
+        .pdf-mode {
+            background-color: white !important;
+            color: black !important;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="400" height="200"><text x="50" y="30" font-size="20" fill="%23E5E7EB" text-anchor="middle" style="font-family:Tiro Bangla, serif;" transform="rotate(-30, 50, 30)">গোপনীয়</text></svg>') !important;
+        }
+        .pdf-mode .pdf-only { display: block; }
+        .pdf-mode .modal-header-logo { display: flex !important; }
+        .pdf-mode .text-white { color: black !important; }
+        .pdf-mode .text-gray-300, .pdf-mode .text-gray-400 { color: #374151 !important; }
+        .pdf-mode .text-blue-300 { color: #2563EB !important; }
+        .pdf-mode .text-green-400 { color: #16A34A !important; text-shadow: none !important; }
+        .pdf-mode .border-gray-600, .pdf-mode .border-gray-700, .pdf-mode .border-gray-800 { border-color: #D1D5DB !important; }
+        .pdf-mode .bg-black\/20, .pdf-mode .bg-gray-800\/50, .pdf-mode .bg-slate-900 { background-color: #F9FAFB !important; }
+        .pdf-mode .receipt-content-wrapper { border: 10px double #4B5563; padding: 0.5in; }
+        .pdf-mode .hide-on-pdf { display: none; }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row">
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-72 bg-black/30 backdrop-blur-sm border-b md:border-b-0 md:border-r border-gray-800 p-6 flex-shrink-0">
+        <div class="flex items-center gap-3 mb-6 md:mb-10">
+            <svg class="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M2 7L12 12M22 7L12 12M12 22V12M17 4.5L7 9.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <div>
+                <h1 class="font-display text-xl font-bold text-white">জাতীয় চাঁদা সমন্বয় কর্তৃপক্ষ</h1>
+                <p class="text-xs text-gray-500">স্বেচ্ছায় আত্মত্যাগ প্রকল্প</p>
+            </div>
+        </div>
+        <div class="hidden md:block">
+             <h2 class="font-display text-lg text-blue-300 font-semibold mb-3">লক্ষ্য ও উদ্দেশ্য</h2>
+            <ul class="space-y-3 text-sm text-gray-400">
+                <li class="flex gap-3"><span class="text-blue-400">✓</span><span>দলীয় তহবিলের কৌশলগত রিজার্ভ গঠন।</span></li>
+                <li class="flex gap-3"><span class="text-blue-400">✓</span><span>'ভিশন ২০৪১' এর আলোকে লন্ডন মহাপরিকল্পনা বাস্তবায়ন।</span></li>
+                <li class="flex gap-3"><span class="text-blue-400">✓</span><span>ত্যাগকারী কর্মীদের ডিজিটাল ডাটাবেজ তৈরি ও স্বীকৃতি প্রদান।</span></li>
+            </ul>
+        </div>
+        <div class="mt-auto text-center text-xs text-gray-600 hidden md:block">
+            <p>"আপনার ত্যাগই আমাদের শক্তি"</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 md:p-10">
+        <header class="mb-10">
+            <h1 class="font-display text-4xl md:text-5xl font-bold text-white">চাঁদা প্রদানকারী তথ্য ফর্ম</h1>
+            <p class="text-lg text-gray-400 mt-2">আপনার সামান্য আত্মত্যাগ, একটি উজ্জ্বল ভবিষ্যতের সোপান।</p>
+        </header>
+        
+        <form id="chada-form" class="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 sm:p-8 max-w-2xl space-y-6">
+            <div>
+                <label for="name" class="text-lg font-bold text-gray-300">ত্যাগকারীর নাম:</label>
+                <input type="text" id="name" placeholder="আপনার পূর্ণ নাম লিখুন..." class="w-full mt-2 p-4 form-input rounded-lg text-lg">
+            </div>
+            
+            <!-- Custom Profession Select -->
+            <div>
+                <label for="profession-search" class="text-lg font-bold text-gray-300">পেশা:</label>
+                <div id="custom-profession-select" class="relative mt-2">
+                    <div class="w-full p-4 form-input rounded-lg text-lg flex items-center justify-between cursor-pointer custom-select-button">
+                        <input type="text" id="profession-search" placeholder="-- পেশা খুঁজুন বা বাছাই করুন --" class="bg-transparent w-full focus:outline-none">
+                        <svg class="w-6 h-6 text-gray-500 transition-transform" id="profession-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div id="profession-options" class="absolute z-10 w-full mt-1 bg-[#010409] border border-gray-700 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto custom-scrollbar">
+                        <!-- Options will be populated by JS -->
+                    </div>
+                    <input type="hidden" id="profession" name="profession">
+                </div>
+            </div>
+
+            <div>
+                <label for="income" class="text-lg font-bold text-gray-300">মাসিক আয় (টাকায়):</label>
+                <input type="number" id="income" placeholder="গোপনীয়তা রক্ষা করা হবে..." class="w-full mt-2 p-4 form-input rounded-lg text-lg">
+            </div>
+            
+            <button id="calculate-btn" type="submit" class="w-full bg-blue-600 text-white font-bold text-xl py-4 rounded-lg shadow-lg hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-all">
+                হিসাব চূড়ান্ত করুন
+            </button>
+        </form>
+    </main>
+
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="modal-backdrop"></div>
+        <div class="modal-panel bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl relative border border-gray-700 max-h-[90vh] flex flex-col">
+            <!-- Receipt Content -->
+            <div id="receipt-content" class="receipt-watermark overflow-y-auto custom-scrollbar">
+                <div class="receipt-content-wrapper p-4 sm:p-6 md:p-10">
+                    <!-- PDF-only Header -->
+                    <div class="modal-header-logo pb-4 border-b-2 border-dashed border-gray-600 mb-6 hidden items-center gap-4">
+                         <svg class="w-16 h-16 text-blue-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M2 7L12 12M22 7L12 12M12 22V12M17 4.5L7 9.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                        <div>
+                            <h2 class="font-display text-3xl font-bold">জাতীয় চাঁদা সমন্বয় কর্তৃপক্ষ</h2>
+                            <p class="text-lg">স্বেচ্ছায় আত্মত্যাগ প্রকল্প</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center pb-4 sm:pb-6 border-b-2 border-dashed border-gray-600 hide-on-pdf">
+                         <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-blue-300">আত্মত্যাগের ডিজিটাল স্বীকৃতিপত্র</h2>
+                    </div>
+
+                    <div class="my-6 space-y-2 text-base sm:text-lg">
+                        <p><strong>নাম:</strong> <span id="receipt-name" class="font-semibold text-white"></span></p>
+                        <p><strong>পেশা:</strong> <span id="receipt-profession" class="font-semibold text-white"></span></p>
+                        <p><strong>ডকুমেন্ট আইডি:</strong> <span id="receipt-id" class="font-mono text-xs sm:text-sm"></span></p>
+                        <p><strong>স্বীকৃতির তারিখ:</strong> <span id="receipt-date" class="text-sm sm:text-base"></span></p>
+                    </div>
+                    <div class="bg-black/20 border border-gray-700 rounded-lg p-4 sm:p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 text-base sm:text-lg">
+                            <div class="space-y-1">
+                                <p class="text-gray-400">মাসিক আয়:</p>
+                                <p class="text-xl sm:text-2xl font-semibold text-white" id="receipt-income"></p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-gray-400" id="receipt-chada-label"></p>
+                                <p class="text-xl sm:text-2xl font-semibold text-blue-300" id="receipt-chada"></p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-700">
+                            <p class="text-gray-400">হাতে থাকবে (মাস চালানোর জন্য):</p>
+                            <p class="text-2xl sm:text-3xl font-bold text-green-400" id="receipt-remaining" style="text-shadow: var(--success-glow);"></p>
+                        </div>
+                    </div>
+                    <div class="mt-4 sm:mt-6 bg-gray-800/50 p-3 sm:p-4 rounded-lg border border-gray-700">
+                        <p class="font-display text-base sm:text-lg text-gray-300 mb-1">কর্তৃপক্ষের মতামত:</p>
+                        <p id="receipt-opinion" class="text-base sm:text-lg italic"></p>
+                    </div>
+
+                    <!-- PDF-only Footer -->
+                    <div class="pdf-only mt-10 pt-6 border-t-2 border-dashed border-gray-600">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <img id="receipt-qr-code" src="" alt="QR Code" class="w-24 h-24">
+                            </div>
+                            <div class="text-center mr-8">
+                                <p class="font-signature text-3xl">Official Signature</p>
+                                <p class="text-sm font-bold border-t border-black mt-2 pt-1">ভারপ্রাপ্ত কর্মকর্তা</p>
+                                <p class="text-xs">(সিলমোহর)</p>
+                            </div>
+                        </div>
+                        <p class="text-center text-xs text-gray-500 mt-6">এটি একটি কম্পিউটার-জেনারেটেড স্বীকৃতিপত্র।</p>
+                    </div>
+
+                </div>
+            </div>
+            <!-- Modal Actions -->
+            <div class="bg-gray-900/50 p-4 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 rounded-b-2xl border-t border-gray-800 flex-shrink-0">
+                <button id="close-modal-btn" class="py-2 px-5 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors order-2 sm:order-1">বন্ধ করুন</button>
+                <button id="download-btn" class="py-2 px-5 bg-green-600 hover:bg-green-500 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 w-full sm:w-48 order-1 sm:order-2">
+                    <svg id="download-spinner" class="w-5 h-5 hidden spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2V6M12 18V22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span id="download-text">PDF ডাউনলোড করুন</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const professionData = {
+        'businessman': { name: 'আমদানি-রপ্তানি সিন্ডিকেট মহারথী', rate: 0.25, message: 'বাজার নিয়ন্ত্রণে আপনার ভূমিকা অতুলনীয়। দলের তহবিল নিয়ন্ত্রণেও আপনার সাহায্য কাম্য।' },
+        'contractor': { name: 'টেন্ডার বিশেষজ্ঞ ঠিকাদার', rate: 0.20, message: 'উন্নয়নের মহাসড়কে আপনার অবদান অনস্বীকার্য। এই চাঁদা আপনার ভবিষ্যৎ প্রকল্পের নিশ্চয়তা প্রদান করবে।' },
+        'doctor': { name: 'প্রাইভেট ক্লিনিক কমিশন বিশেষজ্ঞ ডাক্তার', rate: 0.18, message: 'আপনার ডায়াগনস্টিক রিপোর্ট নির্ভুল, দলের প্রতি আপনার আনুগত্যও তাই। এই ত্যাগ প্রশংসার যোগ্য।' },
+        'engineer': { name: 'প্রকল্পের ব্যয়-বৃদ্ধিকারী ইঞ্জিনিয়ার', rate: 0.22, message: 'আপনার নকশায় দেশের উন্নয়ন ত্বরান্বিত হয়। দলের তহবিলও আপনার দক্ষতায় সমৃদ্ধ হবে।' },
+        'govt_employee': { name: 'ফাইল-ধীরকরণ সরকারি কর্মকর্তা', rate: 0.12, message: 'দেশের সেবায় আপনার ধীরস্থির মনোভাব দলের জন্য আশীর্বাদ। এই চাঁদা আপনার বিভাগীয় পদোন্নতিতে সহায়ক হবে।' },
+        'police': { name: 'বন্ধুভাবাপন্ন পাড়ার \'বিকাশ\' অফিসার', rate: 0.17, message: 'আইনের প্রতি আপনার শ্রদ্ধা এবং দলের প্রতি আপনার আনুগত্য দুটোই সমান গুরুত্বপূর্ণ। চালিয়ে যান।' },
+        'lawyer': { name: 'মামলার তারিখ-বৃদ্ধিকারী সিনিয়র আইনজীবী', rate: 0.16, message: 'আইনের মারপ্যাঁচে আপনার দক্ষতা দলকে বহুবার বিপদমুক্ত করেছে। এই চাঁদা আপনার প্রতি কৃতজ্ঞতা মাত্র।' },
+        'journalist': { name: 'বিশেষ এসাইনমেন্টপ্রাপ্ত \'পজিটিভ\' রিপোর্টার', rate: 0.10, message: 'আপনার কলমে ফুটে ওঠে উন্নয়নের জয়গান। এই চাঁদা আপনার সত্যনিষ্ঠার পুরস্কার।' },
+        'student_leader': { name: 'বিশ্ববিদ্যালয় হল-নিয়ন্ত্রক ছাত্রনেতা', rate: 0.15, message: 'ক্যাম্পাসে আপনার বিচক্ষণতা প্রশংসার যোগ্য। আপনার এই চাঁদা মিছিলের রসদ জোগাবে।' },
+        'chairman': { name: 'ইউনিয়ন পরিষদ চেয়ারম্যান (প্রকল্পখেকো)', rate: 0.28, message: 'গ্রামীণ উন্নয়নে আপনার ক্ষুধাই মূল চালিকাশক্তি। এই চাঁদা আপনার পরবর্তী মেয়াদের নিশ্চয়তা দেবে।' },
+        'transport_leader': { name: 'পরিবহন সিন্ডিকেট নেতা', rate: 0.23, message: 'রাস্তা যার, আইন তার। আপনার নিয়ন্ত্রণে রাজপথ সুরক্ষিত। দলের রাস্তাও মসৃণ রাখা আপনার দায়িত্ব।' },
+        'godfather': { name: 'এলাকার রাজনৈতিক \'বড় ভাই\'', rate: 0.35, message: 'আপনার ইশারায় এলাকার পরিস্থিতি শান্ত থাকে। দলের কেন্দ্রীয় পরিস্থিতি শান্ত রাখতে আপনার আর্থিক ইশারার প্রয়োজন।' },
+        'loan_defaulter': { name: 'খেলাপী ঋণ বিশেষজ্ঞ', rate: 0.26, message: 'ব্যাংকের টাকা জনগণের টাকা। আপনি শুধু সেই টাকা নিজের কাছে সুরক্ষিত রাখছেন। দলের এই দুর্দিনে আপনার সাহায্যের বিকল্প নেই।' },
+        'q_leaker': { name: 'প্রশ্নফাঁস সিন্ডিকেট প্রধান', rate: 0.19, message: 'আপনার জ্ঞান বিতরণে আগামী প্রজন্ম ঋণী। এই চাঁদা আপনার নেটওয়ার্ককে আরও সুরক্ষিত করবে।' },
+        'influencer': { name: 'সরকারপন্থী ইউটিউবার/ইনফ্লুয়েন্সার', rate: 0.13, message: 'আপনার ডিজিটাল চিৎকারে নিন্দুকের গলা শুকিয়ে যায়। চালিয়ে যান, দলের ডিজিটাল উইং আপনার সাথে আছে।' },
+        'expat': { name: 'বিদেশে অবস্থানরত রেমিট্যান্স বিপ্লবী', rate: 0.20, message: 'দেশের মাটি থেকে দূরে থেকেও দেশের জন্য আপনার মন কাঁদে। আপনার পাঠানো রেমিট্যান্স দলের ফান্ডে শক্তি জোগাবে।' },
+        'citizen': { name: 'উন্নয়নের সাক্ষী সাধারণ নাগরিক', rate: 0.10, message: 'উন্নয়নের নীরব সাক্ষী হিসেবে আপনার এই ত্যাগ স্বর্ণাক্ষরে লেখা থাকবে। ধন্যবাদ।' },
+        'retired': { name: 'অবসরপ্রাপ্ত লীগখর (দলীয় বোঝা)', rate: 0.30, message: 'মাঙ্গের নাতি এতো টাকা মারছিস যে ইলন মাস্কও তোদের কাছে কম। আর চাঁদা দেয়ার বেলায় পিছনে?' }
+    };
+
+    const form = document.getElementById('chada-form');
+    const nameInput = document.getElementById('name');
+    const incomeInput = document.getElementById('income');
+    const calculateBtn = document.getElementById('calculate-btn');
+    const modal = document.getElementById('receipt-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const downloadSpinner = document.getElementById('download-spinner');
+    const downloadText = document.getElementById('download-text');
+    const receiptContent = document.getElementById('receipt-content');
+
+    // --- Custom Profession Select Logic ---
+    const customSelect = document.getElementById('custom-profession-select');
+    const professionSearchInput = document.getElementById('profession-search');
+    const professionHiddenInput = document.getElementById('profession');
+    const professionOptionsContainer = document.getElementById('profession-options');
+    const professionChevron = document.getElementById('profession-chevron');
+
+    const populateProfessions = (filter = '') => {
+        professionOptionsContainer.innerHTML = '';
+        const filteredKeys = Object.keys(professionData).filter(key => 
+            professionData[key].name.toLowerCase().includes(filter.toLowerCase())
+        );
+        if (filteredKeys.length === 0) {
+            professionOptionsContainer.innerHTML = `<div class="p-3 text-gray-500">কোনো ফলাফল পাওয়া যায়নি।</div>`;
+        } else {
+            filteredKeys.forEach(key => {
+                const option = document.createElement('div');
+                option.textContent = professionData[key].name;
+                option.dataset.value = key;
+                option.className = 'p-3 hover:bg-blue-600/50 cursor-pointer transition-colors text-gray-300';
+                option.addEventListener('click', () => {
+                    professionSearchInput.value = professionData[key].name;
+                    professionHiddenInput.value = key;
+                    professionOptionsContainer.classList.add('hidden');
+                    professionChevron.classList.remove('rotate-180');
+                    validateInputs();
+                });
+                professionOptionsContainer.appendChild(option);
+            });
+        }
+    };
+    professionSearchInput.addEventListener('keyup', () => populateProfessions(professionSearchInput.value));
+    professionSearchInput.addEventListener('focus', () => {
+        populateProfessions(professionSearchInput.value);
+        professionOptionsContainer.classList.remove('hidden');
+        professionChevron.classList.add('rotate-180');
+    });
+    document.querySelector('.custom-select-button').addEventListener('click', (e) => {
+        if (e.target.id !== 'profession-search') {
+            professionOptionsContainer.classList.toggle('hidden');
+            professionChevron.classList.toggle('rotate-180');
+            if (!professionOptionsContainer.classList.contains('hidden')) { professionSearchInput.focus(); }
+        }
+    });
+    window.addEventListener('click', (e) => {
+        if (!customSelect.contains(e.target)) {
+            professionOptionsContainer.classList.add('hidden');
+            professionChevron.classList.remove('rotate-180');
+        }
+    });
+
+    const validateInputs = () => {
+        calculateBtn.disabled = !(nameInput.value.trim() && professionHiddenInput.value && parseFloat(incomeInput.value) > 0);
+    };
+    [nameInput, incomeInput].forEach(el => el.addEventListener('input', validateInputs));
+    validateInputs();
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = nameInput.value;
+        const professionKey = professionHiddenInput.value;
+        const income = parseFloat(incomeInput.value);
+        if (!professionKey || !professionData[professionKey]) { alert('অনুগ্রহ করে তালিকা থেকে একটি বৈধ পেশা নির্বাচন করুন।'); return; }
+
+        const { rate, message } = professionData[professionKey];
+        const chada = income * rate;
+        const remaining = income - chada;
+        const formatBdt = (num) => `৳ ${num.toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        document.getElementById('receipt-name').textContent = name;
+        document.getElementById('receipt-profession').textContent = professionData[professionKey].name;
+        document.getElementById('receipt-id').textContent = `DCD-${Date.now()}`;
+        document.getElementById('receipt-date').textContent = new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('receipt-income').textContent = formatBdt(income);
+        document.getElementById('receipt-chada-label').textContent = `চাঁদার পরিমাণ (${(rate * 100).toLocaleString('bn-BD')}%)`;
+        document.getElementById('receipt-chada').textContent = formatBdt(chada);
+        document.getElementById('receipt-remaining').textContent = formatBdt(remaining);
+        document.getElementById('receipt-opinion').textContent = message;
+        
+        const opinionEl = document.getElementById('receipt-opinion');
+        opinionEl.classList.toggle('text-red-400', professionKey === 'retired');
+        opinionEl.classList.toggle('text-gray-300', professionKey !== 'retired');
+        
+        modal.classList.remove('hidden');
+    });
+
+    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('modal-backdrop').addEventListener('click', () => modal.classList.add('hidden'));
+
+    downloadBtn.addEventListener('click', () => {
+        const filename = `Chada-Receipt-${document.getElementById('receipt-id').textContent}.pdf`;
+        
+        // --- PDF Enhancement ---
+        const qrCodeEl = document.getElementById('receipt-qr-code');
+        const docId = document.getElementById('receipt-id').textContent;
+        const qrData = `DocID: ${docId}\nName: ${document.getElementById('receipt-name').textContent}\nAmount: ${document.getElementById('receipt-chada').textContent}`;
+        qrCodeEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(qrData)}&qzone=1`;
+        
+        receiptContent.classList.add('pdf-mode');
+        
+        downloadBtn.disabled = true;
+        downloadSpinner.classList.remove('hidden');
+        downloadText.textContent = 'প্রসেসিং...';
+
+        html2pdf().from(receiptContent).set({
+            margin: 0,
+            filename: filename,
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).save().then(() => {
+            downloadBtn.disabled = false;
+            downloadSpinner.classList.add('hidden');
+            downloadText.textContent = 'PDF ডাউনলোড করুন';
+            receiptContent.classList.remove('pdf-mode');
+            qrCodeEl.src = '';
+        }).catch(err => {
+            console.error("PDF generation error:", err);
+            downloadBtn.disabled = false;
+            downloadSpinner.classList.add('hidden');
+            downloadText.textContent = 'আবার চেষ্টা করুন';
+            receiptContent.classList.remove('pdf-mode');
+            qrCodeEl.src = '';
+        });
+    });
+});
+</script>
+
+</body>
+</html>
