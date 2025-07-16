@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>জাতীয় চাঁদা সমন্বয় কর্তৃপক্ষ (V3 - PDF Enhanced)</title>
+    <title>জাতীয় চাঁদা সমন্বয় কর্তৃপক্ষ (Final Version)</title>
     
-    <!-- JS Library for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Tiro+Bangla:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
@@ -33,7 +29,6 @@
         }
         .font-display { font-family: 'Tiro Bangla', serif; }
         .font-signature { font-family: 'Dancing Script', cursive; }
-
         .form-input {
             background-color: var(--bg-dark);
             border: 1px solid var(--border-color);
@@ -61,13 +56,11 @@
         .spinner { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
-        /* Scrollbar styles */
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-dark); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--primary-accent); }
 
-        /* --- PDF Generation Styles --- */
         .pdf-only { display: none; }
         .pdf-mode {
             background-color: white !important;
@@ -88,7 +81,6 @@
 </head>
 <body class="flex flex-col md:flex-row">
 
-    <!-- Sidebar -->
     <aside class="w-full md:w-72 bg-black/30 backdrop-blur-sm border-b md:border-b-0 md:border-r border-gray-800 p-6 flex-shrink-0">
         <div class="flex items-center gap-3 mb-6 md:mb-10">
             <svg class="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M2 7L12 12M22 7L12 12M12 22V12M17 4.5L7 9.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
@@ -110,7 +102,6 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="flex-1 p-6 md:p-10">
         <header class="mb-10">
             <h1 class="font-display text-4xl md:text-5xl font-bold text-white">চাঁদা প্রদানকারী তথ্য ফর্ম</h1>
@@ -123,7 +114,6 @@
                 <input type="text" id="name" placeholder="আপনার পূর্ণ নাম লিখুন..." class="w-full mt-2 p-4 form-input rounded-lg text-lg">
             </div>
             
-            <!-- Custom Profession Select -->
             <div>
                 <label for="profession-search" class="text-lg font-bold text-gray-300">পেশা:</label>
                 <div id="custom-profession-select" class="relative mt-2">
@@ -132,7 +122,6 @@
                         <svg class="w-6 h-6 text-gray-500 transition-transform" id="profession-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                     </div>
                     <div id="profession-options" class="absolute z-10 w-full mt-1 bg-[#010409] border border-gray-700 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto custom-scrollbar">
-                        <!-- Options will be populated by JS -->
                     </div>
                     <input type="hidden" id="profession" name="profession">
                 </div>
@@ -149,14 +138,11 @@
         </form>
     </main>
 
-    <!-- Receipt Modal -->
     <div id="receipt-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="modal-backdrop"></div>
         <div class="modal-panel bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl relative border border-gray-700 max-h-[90vh] flex flex-col">
-            <!-- Receipt Content -->
             <div id="receipt-content" class="receipt-watermark overflow-y-auto custom-scrollbar">
                 <div class="receipt-content-wrapper p-4 sm:p-6 md:p-10">
-                    <!-- PDF-only Header -->
                     <div class="modal-header-logo pb-4 border-b-2 border-dashed border-gray-600 mb-6 hidden items-center gap-4">
                          <svg class="w-16 h-16 text-blue-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M2 7L12 12M22 7L12 12M12 22V12M17 4.5L7 9.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
                         <div>
@@ -196,7 +182,6 @@
                         <p id="receipt-opinion" class="text-base sm:text-lg italic"></p>
                     </div>
 
-                    <!-- PDF-only Footer -->
                     <div class="pdf-only mt-10 pt-6 border-t-2 border-dashed border-gray-600">
                         <div class="flex justify-between items-center">
                             <div>
@@ -210,10 +195,8 @@
                         </div>
                         <p class="text-center text-xs text-gray-500 mt-6">এটি একটি কম্পিউটার-জেনারেটেড স্বীকৃতিপত্র।</p>
                     </div>
-
                 </div>
             </div>
-            <!-- Modal Actions -->
             <div class="bg-gray-900/50 p-4 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 rounded-b-2xl border-t border-gray-800 flex-shrink-0">
                 <button id="close-modal-btn" class="py-2 px-5 bg-gray-600 hover:bg-gray-500 rounded-lg transition-colors order-2 sm:order-1">বন্ধ করুন</button>
                 <button id="download-btn" class="py-2 px-5 bg-green-600 hover:bg-green-500 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 w-full sm:w-48 order-1 sm:order-2">
@@ -258,8 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadSpinner = document.getElementById('download-spinner');
     const downloadText = document.getElementById('download-text');
     const receiptContent = document.getElementById('receipt-content');
-
-    // --- Custom Profession Select Logic ---
     const customSelect = document.getElementById('custom-profession-select');
     const professionSearchInput = document.getElementById('profession-search');
     const professionHiddenInput = document.getElementById('profession');
@@ -290,12 +271,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     };
+
     professionSearchInput.addEventListener('keyup', () => populateProfessions(professionSearchInput.value));
+    
     professionSearchInput.addEventListener('focus', () => {
         populateProfessions(professionSearchInput.value);
         professionOptionsContainer.classList.remove('hidden');
         professionChevron.classList.add('rotate-180');
     });
+
     document.querySelector('.custom-select-button').addEventListener('click', (e) => {
         if (e.target.id !== 'profession-search') {
             professionOptionsContainer.classList.toggle('hidden');
@@ -303,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!professionOptionsContainer.classList.contains('hidden')) { professionSearchInput.focus(); }
         }
     });
+
     window.addEventListener('click', (e) => {
         if (!customSelect.contains(e.target)) {
             professionOptionsContainer.classList.add('hidden');
@@ -313,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const validateInputs = () => {
         calculateBtn.disabled = !(nameInput.value.trim() && professionHiddenInput.value && parseFloat(incomeInput.value) > 0);
     };
+
     [nameInput, incomeInput].forEach(el => el.addEventListener('input', validateInputs));
     validateInputs();
 
@@ -350,8 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     downloadBtn.addEventListener('click', () => {
         const filename = `Chada-Receipt-${document.getElementById('receipt-id').textContent}.pdf`;
-        
-        // --- PDF Enhancement ---
         const qrCodeEl = document.getElementById('receipt-qr-code');
         const docId = document.getElementById('receipt-id').textContent;
         const qrData = `DocID: ${docId}\nName: ${document.getElementById('receipt-name').textContent}\nAmount: ${document.getElementById('receipt-chada').textContent}`;
@@ -376,7 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
             receiptContent.classList.remove('pdf-mode');
             qrCodeEl.src = '';
         }).catch(err => {
-            console.error("PDF generation error:", err);
             downloadBtn.disabled = false;
             downloadSpinner.classList.add('hidden');
             downloadText.textContent = 'আবার চেষ্টা করুন';
