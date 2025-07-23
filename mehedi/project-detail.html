@@ -7,7 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js" defer></script>
-    <style>/* Master Stylesheet (Same as index.html) */:root{--bg-color:#F8F9FA;--primary-text-color:#121212;--secondary-text-color:#595959;--accent-color:#3D52F3;--border-color:rgba(0,0,0,0.07);--header-bg:rgba(248,249,250,0.7);--shadow-color:rgba(0,0,0,0.04)}*,*:before,*:after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:'Plus Jakarta Sans',sans-serif;background-color:var(--bg-color);color:var(--primary-text-color);line-height:1.7;overflow-x:hidden}body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background:linear-gradient(320deg,#E4DFFF 0%,#F5FAFF 50%,#DDEEFF 100%);animation:gradient-animation 20s ease-in-out infinite;background-size:200% 200%}@keyframes gradient-animation{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}.container{max-width:1200px;margin:0 auto;padding:0 2rem}.main-header{position:sticky;top:0;width:100%;z-index:1000;background-color:var(--header-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-color)}.main-header .container{display:flex;justify-content:space-between;align-items:center;height:75px}.logo{font-size:1.6rem;font-weight:800;text-decoration:none;color:var(--primary-text-color)}.main-nav ul{list-style:none;display:flex}.main-nav li{margin-left:2.5rem}.main-nav a{text-decoration:none;color:var(--secondary-text-color);font-weight:500;transition:color .3s}.main-nav a:hover,.main-nav a.active{color:var(--primary-text-color)}.hidden{display:none!important}#page-loader{display:flex;align-items:center;justify-content:center;height:100vh;font-size:1.5rem;color:var(--secondary-text-color)}.project-header{text-align:center;padding:8rem 0 4rem 0}.project-header h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:800;margin-bottom:1rem}.project-header p{font-size:1.1rem;color:var(--secondary-text-color);text-transform:uppercase;letter-spacing:1px}.project-hero-image{margin-bottom:5rem}.project-hero-image img{width:100%;height:auto;border-radius:12px;box-shadow:0 10px 40px var(--shadow-color)}.project-body{max-width:900px;margin:auto;padding-bottom:5rem}.project-body p{font-size:1.15rem;line-height:1.8;color:var(--secondary-text-color);margin-bottom:1.5rem}.gallery h2{font-size:2rem;font-weight:700;margin-bottom:2rem;text-align:center}.gallery-grid{display:grid;grid-template-columns:1fr;gap:2rem;padding-bottom:5rem}.gallery-grid img{width:100%;border-radius:8px}.next-project-link{display:block;text-align:center;padding:5rem 0;border-top:1px solid var(--border-color);text-decoration:none;transition:background-color .3s}.next-project-link:hover{background-color:rgba(0,0,0,0.02)}.next-project-link span{color:var(--secondary-text-color);font-size:1rem;text-transform:uppercase;letter-spacing:1px}.next-project-link h3{font-size:2.5rem;color:var(--primary-text-color);margin-top:0.5rem}.main-footer{text-align:center;padding:4rem 0;color:var(--secondary-text-color)}</style>
+    <style>
+        /* Master Stylesheet - Consistent with all other professional pages */
+        :root{--bg-color:#F8F9FA;--primary-text-color:#121212;--secondary-text-color:#595959;--accent-color:#3D52F3;--border-color:rgba(0,0,0,0.07);--header-bg:rgba(248,249,250,0.7);--shadow-color:rgba(0,0,0,0.04)}*,*:before,*:after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:'Plus Jakarta Sans',sans-serif;background-color:var(--bg-color);color:var(--primary-text-color);line-height:1.7;overflow-x:hidden}body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background:linear-gradient(320deg,#E4DFFF 0%,#F5FAFF 50%,#DDEEFF 100%);animation:gradient-animation 20s ease-in-out infinite;background-size:200% 200%}@keyframes gradient-animation{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}.container{width:100%;max-width:1200px;margin:0 auto;padding:0 1.5rem}.main-header{position:sticky;top:0;width:100%;z-index:1000;background-color:var(--header-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-color)}.main-header .container{display:flex;justify-content:space-between;align-items:center;height:70px}.logo{font-size:1.5rem;font-weight:800;text-decoration:none;color:var(--primary-text-color)}.main-nav ul{list-style:none;display:flex}.main-nav li{margin-left:2rem}.main-nav a{text-decoration:none;color:var(--secondary-text-color);font-weight:500;transition:color .3s}.main-nav a:hover,.main-nav a.active{color:var(--primary-text-color)}.hidden{display:none!important}#page-loader{display:flex;align-items:center;justify-content:center;height:100vh;font-size:1.5rem;color:var(--secondary-text-color)}.project-header{text-align:center;padding:6rem 0 4rem 0}.project-header h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:800;margin-bottom:1rem}.project-header p{font-size:1.1rem;color:var(--secondary-text-color);text-transform:uppercase;letter-spacing:1px}.project-hero-image{margin-bottom:5rem}.project-hero-image img{width:100%;height:auto;border-radius:12px;box-shadow:0 10px 40px var(--shadow-color)}.project-body{max-width:900px;margin:auto;padding-bottom:5rem}.project-body p{font-size:1.15rem;line-height:1.8;color:var(--secondary-text-color);margin-bottom:1.5rem}.gallery h2{font-size:2rem;font-weight:700;margin-bottom:2rem;text-align:center}.gallery-grid{display:grid;grid-template-columns:1fr;gap:2rem;padding-bottom:5rem}.gallery-grid img{width:100%;border-radius:8px}.next-project-link{display:block;text-align:center;padding:5rem 0;border-top:1px solid var(--border-color);text-decoration:none;transition:background-color .3s}.next-project-link:hover{background-color:rgba(0,0,0,0.02)}.next-project-link span{color:var(--secondary-text-color);font-size:1rem;text-transform:uppercase;letter-spacing:1px}.next-project-link h3{font-size:2.5rem;color:var(--primary-text-color);margin-top:0.5rem}.main-footer{text-align:center;padding:4rem 0;color:var(--secondary-text-color)}@media(max-width:480px){.container{padding:0 1rem}.main-nav li{margin-left:1.5rem}.project-header{padding:5rem 0 3rem 0}}
+    </style>
 </head>
 <body>
     <div id="page-loader"><p>Loading Project...</p></div>
@@ -24,6 +27,69 @@
         </main>
         <footer class="main-footer"><p>© 2024 Mahammud Hasan Mahadi. All Rights Reserved.</p></footer>
     </div>
-    <script type="module">const firebaseConfig={apiKey:"AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ",authDomain:"mathemate-software.firebaseapp.com",databaseURL:"https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"mathemate-software",storageBucket:"mathemate-software.appspot.com",messagingSenderId:"780184955321",appId:"YOUR_WEB_APP_ID"};firebase.initializeApp(firebaseConfig);const database=firebase.database();const loader=document.getElementById('page-loader'),content=document.getElementById('page-content');const params=new URLSearchParams(window.location.search);const currentProjectId=params.get('id');if(!currentProjectId){loader.innerHTML="<p>Project not found.</p>"}else{const projectsRef=database.ref('projects');projectsRef.on('value',snapshot=>{const projects=snapshot.val();if(!projects||!projects[currentProjectId]){loader.innerHTML="<p>Could not load project.</p>";return}const currentProject=projects[currentProjectId];document.title=currentProject.title+" - Mahammud Hasan Mahadi";document.getElementById('project-title').textContent=currentProject.title;document.getElementById('project-category').textContent=currentProject.category;document.getElementById('project-description').textContent=currentProject.description;const heroContainer=document.getElementById('hero-image-container');if(currentProject.imageUrls&¤tProject.imageUrls.length>0){heroContainer.innerHTML=`<img src="${currentProject.imageUrls[0]}" alt="${currentProject.title} hero image">`}const galleryGrid=document.getElementById('gallery-grid');const galleryTitle=document.getElementById('gallery-title');galleryGrid.innerHTML='';if(currentProject.imageUrls&¤tProject.imageUrls.length>1){galleryTitle.classList.remove('hidden');for(let i=1;i<currentProject.imageUrls.length;i++){const img=document.createElement('img');img.src=currentProject.imageUrls[i];img.alt=`${currentProject.title} gallery image ${i+1}`;img.loading='lazy';galleryGrid.appendChild(img)}}const projectKeys=Object.keys(projects);const currentIndex=projectKeys.indexOf(currentProjectId);const nextProjectLink=document.getElementById('next-project');if(currentIndex<projectKeys.length-1){const nextProjectId=projectKeys[currentIndex+1];const nextProject=projects[nextProjectId];document.getElementById('next-project-title').textContent=nextProject.title;nextProjectLink.href=`project-detail.html?id=${nextProjectId}`;nextProjectLink.classList.remove('hidden')}else{nextProjectLink.classList.add('hidden')}loader.classList.add('hidden');content.classList.remove('hidden')},error=>{console.error("Firebase Read Error: ",error);loader.innerHTML="<p>Error loading project data.</p>"})}</script>
+    <script type="module">
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const loader = document.getElementById('page-loader');
+        const content = document.getElementById('page-content');
+        const params = new URLSearchParams(window.location.search);
+        const currentProjectId = params.get('id');
+
+        if (!currentProjectId) {
+            loader.innerHTML = "<p>Project not found. Please select a project from the work page.</p>";
+        } else {
+            const projectsRef = database.ref('projects');
+            projectsRef.on('value', (snapshot) => {
+                const projects = snapshot.val();
+                if (!projects || !projects[currentProjectId]) {
+                    loader.innerHTML = "<p>Sorry, this project could not be loaded.</p>";
+                    return;
+                }
+                const currentProject = projects[currentProjectId];
+                document.title = currentProject.title + " - Mahammud Hasan Mahadi";
+                document.getElementById('project-title').textContent = currentProject.title;
+                document.getElementById('project-category').textContent = currentProject.category;
+                document.getElementById('project-description').innerHTML = currentProject.description.replace(/\n/g, '<br>'); // Render line breaks
+                const heroContainer = document.getElementById('hero-image-container');
+                heroContainer.innerHTML = '';
+                if (currentProject.imageUrls && currentProject.imageUrls.length > 0) {
+                    heroContainer.innerHTML = `<img src="${currentProject.imageUrls[0]}" alt="${currentProject.title} hero image">`;
+                }
+                const galleryGrid = document.getElementById('gallery-grid');
+                const galleryTitle = document.getElementById('gallery-title');
+                galleryGrid.innerHTML = '';
+                if (currentProject.imageUrls && currentProject.imageUrls.length > 1) {
+                    galleryTitle.classList.remove('hidden');
+                    for (let i = 1; i < currentProject.imageUrls.length; i++) {
+                        const img = document.createElement('img');
+                        img.src = currentProject.imageUrls[i];
+                        img.alt = `${currentProject.title} gallery image ${i + 1}`;
+                        img.loading = 'lazy';
+                        galleryGrid.appendChild(img);
+                    }
+                } else {
+                    galleryTitle.classList.add('hidden');
+                }
+                const projectKeys = Object.keys(projects).reverse(); // Reverse to get chronological order
+                const currentIndex = projectKeys.indexOf(currentProjectId);
+                const nextProjectLink = document.getElementById('next-project');
+                if (currentIndex > -1 && currentIndex < projectKeys.length - 1) {
+                    const nextProjectId = projectKeys[currentIndex + 1];
+                    const nextProject = projects[nextProjectId];
+                    document.getElementById('next-project-title').textContent = nextProject.title;
+                    nextProjectLink.href = `project-detail.html?id=${nextProjectId}`;
+                    nextProjectLink.classList.remove('hidden');
+                } else {
+                    nextProjectLink.classList.add('hidden');
+                }
+                loader.classList.add('hidden');
+                content.classList.remove('hidden');
+            }, (error) => {
+                console.error("Firebase Read Error: ", error);
+                loader.innerHTML = "<p>Error loading project data. Check Firebase rules and configuration.</p>";
+            });
+        }
+    </script>
 </body>
 </html>
