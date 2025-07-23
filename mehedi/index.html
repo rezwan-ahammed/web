@@ -192,8 +192,10 @@
 
         .project-card img {
             width: 100%;
-            height: 260px;
-            object-fit: cover;
+            /* --- FIX: Enforce a consistent aspect ratio --- */
+            /* height: 260px;  <-- REMOVED: This caused distortion on resize. */
+            aspect-ratio: 4 / 3; /* <-- ADDED: Maintains a professional 4:3 ratio. */
+            object-fit: cover; /* <-- KEPT: Ensures the image fills the container without stretching. */
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -210,56 +212,21 @@
         }
 
         /* --- Responsive Design --- */
-        
-        /* Tablet and below */
         @media (max-width: 900px) {
-            .hero {
-                padding: 80px 0 60px 0;
-            }
-            .hero .container {
-                grid-template-columns: 1fr;
-                text-align: center;
-                gap: 2rem;
-            }
-            .hero-text {
-                order: 2; /* Text comes after image on mobile */
-            }
-            .hero-visual {
-                order: 1;
-                height: 300px; /* Reduced height for mobile */
-                margin: 0 auto 2rem auto;
-            }
-            .hero-text .subtitle {
-                margin: 0 auto 2.5rem auto;
-            }
+            .hero { padding: 80px 0 60px 0; }
+            .hero .container { grid-template-columns: 1fr; text-align: center; gap: 2rem; }
+            .hero-text { order: 2; }
+            .hero-visual { order: 1; height: 300px; margin: 0 auto 2rem auto; }
+            .hero-text .subtitle { margin: 0 auto 2.5rem auto; }
         }
 
-        /* Small mobile devices */
         @media (max-width: 480px) {
-            .container {
-                padding: 0 1rem;
-            }
-            .main-nav ul {
-                /* On very small screens you might want a hamburger menu, 
-                   but for now we just reduce spacing. */
-                gap: 0;
-            }
-            .main-nav li {
-                margin-left: 1.5rem;
-            }
-            .hero-text h1 {
-                font-size: 2.5rem; /* More manageable font size */
-            }
-            .hero-text .subtitle {
-                font-size: 1rem;
-            }
-            .section-heading h2 {
-                font-size: 2.2rem;
-            }
-            .project-grid {
-                grid-template-columns: 1fr; /* Force single column */
-                gap: 2rem;
-            }
+            .container { padding: 0 1rem; }
+            .main-nav li { margin-left: 1.5rem; }
+            .hero-text h1 { font-size: 2.5rem; }
+            .hero-text .subtitle { font-size: 1rem; }
+            .section-heading h2 { font-size: 2.2rem; }
+            .project-grid { grid-template-columns: 1fr; gap: 2rem; }
         }
 
     </style>
@@ -286,9 +253,7 @@
                     <p class="subtitle">Hi, I'm Mahammud Hasan Mahadi. A digital designer creating modern and intuitive web experiences.</p>
                     <a href="work.html" class="cta-button">Explore My Work</a>
                 </div>
-                <div class="hero-visual">
-                    <!-- Background image is set in CSS -->
-                </div>
+                <div class="hero-visual"></div>
             </div>
         </section>
 
@@ -297,9 +262,7 @@
                 <div class="section-heading">
                     <h2>Featured Work</h2>
                 </div>
-                <div id="project-feed" class="project-grid">
-                    <!-- Projects are dynamically loaded here by JavaScript -->
-                </div>
+                <div id="project-feed" class="project-grid"></div>
             </div>
         </section>
     </main>
@@ -309,21 +272,11 @@
     </footer>
 
     <script type="module">
-        const firebaseConfig = {
-            apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ",
-            authDomain: "mathemate-software.firebaseapp.com",
-            databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "mathemate-software",
-            storageBucket: "mathemate-software.appspot.com",
-            messagingSenderId: "780184955321",
-            appId: "YOUR_WEB_APP_ID" // Optional, but recommended
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const projectFeed = document.getElementById('project-feed');
-        
         const projectsRef = database.ref('projects').limitToFirst(3);
-        
         projectsRef.on('value', (snapshot) => {
             projectFeed.innerHTML = '';
             const projects = snapshot.val();
@@ -332,18 +285,8 @@
                     const card = document.createElement('a');
                     card.href = `project-detail.html?id=${key}`;
                     card.className = 'project-card';
-                    
-                    const thumbnailUrl = (project.imageUrls && project.imageUrls.length > 0)
-                        ? project.imageUrls[0]
-                        : 'https://via.placeholder.com/400x260/e0e0e0/333?text=No+Image';
-
-                    card.innerHTML = `
-                        <img src="${thumbnailUrl}" alt="${project.title}">
-                        <div class="project-card-info">
-                            <h3>${project.title}</h3>
-                            <p>${project.category}</p>
-                        </div>
-                    `;
+                    const thumbnailUrl = (project.imageUrls && project.imageUrls.length > 0) ? project.imageUrls[0] : 'https://via.placeholder.com/400x300/e0e0e0/333?text=No+Image';
+                    card.innerHTML = `<img src="${thumbnailUrl}" alt="${project.title}"><div class="project-card-info"><h3>${project.title}</h3><p>${project.category}</p></div>`;
                     projectFeed.appendChild(card);
                 });
             } else {
