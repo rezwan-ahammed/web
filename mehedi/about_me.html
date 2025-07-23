@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Jane Doe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Base CSS is identical to other pages */
+        :root {
+            --bg-color: #F8F9FA; --primary-text-color: #121212; --secondary-text-color: #595959;
+            --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.07);
+            --header-bg: rgba(248, 249, 250, 0.7); --shadow-color: rgba(0, 0, 0, 0.04);
+            --transition-speed: 0.4s;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color);
+            color: var(--primary-text-color); line-height: 1.6; overflow-x: hidden;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;
+            background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 50%, #DDEEFF 100%);
+            animation: gradient-animation 20s ease-in-out infinite; background-size: 200% 200%;
+        }
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+        .main-header {
+            position: sticky; top: 0; left: 0; width: 100%; z-index: 1000; background-color: var(--header-bg);
+            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color);
+        }
+        .main-header .container { display: flex; justify-content: space-between; align-items: center; height: 75px; }
+        .logo { font-size: 1.6rem; font-weight: 800; text-decoration: none; color: var(--primary-text-color); }
+        .main-nav ul { list-style: none; display: flex; }
+        .main-nav li { margin-left: 2.5rem; }
+        .main-nav a { text-decoration: none; color: var(--secondary-text-color); font-weight: 500; transition: color var(--transition-speed) ease; }
+        .main-nav a:hover, .main-nav a.active { color: var(--accent-color); }
+
+        /* ABOUT PAGE SPECIFIC STYLES */
+        .about-section { padding: 8rem 0; }
+        .about-section .container {
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            align-items: flex-start;
+            gap: 4rem;
+        }
+        .about-image {
+            width: 100%;
+            height: 400px;
+            background-color: #ddd; /* Placeholder color */
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .about-content h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 2rem;
+        }
+        .about-content p {
+            font-size: 1.1rem;
+            color: var(--secondary-text-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .skills-section { padding-bottom: 8rem; }
+        .skills-section .container { max-width: 1000px; text-align: center; }
+        .skills-section h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 3rem; }
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            text-align: left;
+        }
+        .skill-card {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 20px var(--shadow-color);
+        }
+        .skill-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .skill-card p { color: var(--secondary-text-color); font-size: 1rem; }
+        
+        @media (max-width: 900px) {
+            .about-section .container { grid-template-columns: 1fr; }
+        }
+
+        .main-footer { padding: 4rem 0; text-align: center; }
+        .main-footer p { color: var(--secondary-text-color); font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container">
+            <a href="index.html" class="logo">JD.</a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="work.html">Work</a></li>
+                    <li><a href="about.html" class="active">About</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="about-section">
+            <div class="container">
+                <img src="https://images.unsplash.com/photo-1557555187-23d685287bc3?q=80&w=2787&auto=format&fit=crop" alt="Jane Doe" class="about-image">
+                <div class="about-content">
+                    <h1>My mission is to create work that is both beautiful and effective.</h1>
+                    <p>From a young age, I've been fascinated by the intersection of art and technology. This passion led me to a career in digital design, where I focus on creating intuitive, user-centered experiences that help brands connect with their audiences in a meaningful way.</p>
+                    <p>I believe that great design is not just about aesthetics, but about solving problems and creating clarity. I approach every project with curiosity, empathy, and a commitment to excellence.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="skills-section">
+            <div class="container">
+                <h2>My Capabilities</h2>
+                <div class="skills-grid">
+                    <div class="skill-card">
+                        <h3>Branding & Identity</h3>
+                        <p>Logo design, style guides, and complete brand systems that communicate a clear message.</p>
+                    </div>
+                    <div class="skill-card">
+                        <h3>UI/UX Design</h3>
+                        <p>Crafting intuitive and engaging user interfaces for websites and mobile applications.</p>
+                    </div>
+                    <div class="skill-card">
+                        <h3>Digital Illustration</h3>
+                        <p>Custom illustrations and icon systems that add personality and distinction to any project.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>© 2024 Jane Doe. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

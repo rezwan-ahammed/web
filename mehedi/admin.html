@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Mahammud Hasan Mahadi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js" defer></script>
+    <style>
+        /* Clean, professional admin styles */
+        :root {
+            --admin-bg: #F4F7FC;
+            --admin-text: #1a1a1a;
+            --admin-subtle-text: #6c757d;
+            --admin-accent: #3D52F3;
+            --admin-accent-dark: #2335D8;
+            --admin-border: #dee2e6;
+            --admin-white: #ffffff;
+            --admin-danger: #e74c3c;
+            --admin-success: #22c55e
+        }
+        *,
+        *:before,
+        *:after {
+            box-sizing: border-box
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--admin-bg);
+            color: var(--admin-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem
+        }
+        .hidden {
+            display: none!important
+        }
+        #login-view {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            background-color: var(--admin-white);
+            border-radius: 8px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05)
+        }
+        .form-group {
+            margin-bottom: 1.5rem
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: .5rem;
+            font-weight: 500
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: .8rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--admin-border)
+        }
+        .btn {
+            width: 100%;
+            padding: .9rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color .3s ease
+        }
+        .btn-primary {
+            background-color: var(--admin-accent);
+            color: var(--admin-white)
+        }
+        .btn-primary:hover {
+            background-color: var(--admin-accent-dark)
+        }
+        #admin-dashboard-view {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            background-color: var(--admin-white);
+            border-radius: 8px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05)
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--admin-border);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem
+        }
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 3rem
+        }
+        .upload-section {
+            border: 2px dashed var(--admin-border);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1.5rem
+        }
+        #file-upload-label {
+            background-color: var(--admin-accent);
+            color: var(--admin-white);
+            padding: .7rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block
+        }
+        #image-preview-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem
+        }
+        #image-preview-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8f9fa;
+            padding: .5rem;
+            border-radius: 5px;
+            margin-bottom: .5rem;
+            font-size: .8rem;
+            color: var(--admin-success)
+        }
+    </style>
+</head>
+
+<body>
+    <div id="login-view">
+        <form id="login-form">
+            <h1>Admin Login</h1>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+    </div>
+    <div id="admin-dashboard-view" class="hidden">
+        <header class="admin-header">
+            <h1>Portfolio Dashboard</h1>
+            <button id="logout-btn" class="btn btn-danger" style="width:auto">Logout</button>
+        </header>
+        <div class="dashboard-content">
+            <section class="form-section">
+                <h2 id="form-title">Add New Project</h2>
+                <div class="upload-section">
+                    <p>Upload project images first.</p>
+                    <input type="file" id="file-upload" multiple accept="image/*" class="hidden">
+                    <label for="file-upload" id="file-upload-label">Choose Files</label>
+                    <progress id="upload-progress" value="0" max="100" class="hidden"></progress>
+                    <ul id="image-preview-list"></ul>
+                </div>
+                <form id="project-form">
+                    <input type="hidden" id="project-id">
+                    <div class="form-group">
+                        <label for="project-title">Title</label>
+                        <input type="text" id="project-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-category">Category</label>
+                        <input type="text" id="project-category" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-description">Description</label>
+                        <textarea id="project-description" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="submit-btn">Add Project</button>
+                    <button type="button" id="cancel-btn" class="btn hidden" style="background-color:var(--subtle);margin-top:0.5rem">Cancel Edit</button>
+                </form>
+            </section>
+            <section class="list-section">
+                <h2>Existing Projects</h2>
+                <div id="project-list">
+                    <ul></ul>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script type="module">
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ",
+            authDomain: "mathemate-software.firebaseapp.com",
+            databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mathemate-software",
+            storageBucket: "mathemate-software.appspot.com",
+            messagingSenderId: "780184955321",
+            appId: "YOUR_WEB_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        const storage = firebase.storage();
+        const projectsRef = database.ref('projects');
+        const loginView = document.getElementById('login-view'),
+            dashboardView = document.getElementById('admin-dashboard-view'),
+            loginForm = document.getElementById('login-form'),
+            logoutBtn = document.getElementById('logout-btn'),
+            projectForm = document.getElementById('project-form'),
+            projectList = document.querySelector('#project-list ul'),
+            fileUpload = document.getElementById('file-upload'),
+            progressEl = document.getElementById('upload-progress'),
+            imagePreviewList = document.getElementById('image-preview-list'),
+            formTitle = document.getElementById('form-title'),
+            submitBtn = document.getElementById('submit-btn'),
+            cancelBtn = document.getElementById('cancel-btn'),
+            projectIdField = document.getElementById('project-id');
+        let uploadedImageUrls = [];
+        auth.onAuthStateChanged(user =>
+        {
+            if (user)
+            {
+                loginView.classList.add('hidden');
+                dashboardView.classList.remove('hidden');
+                fetchProjects()
+            }
+            else
+            {
+                loginView.classList.remove('hidden');
+                dashboardView.classList.add('hidden')
+            }
+        });
+        loginForm.addEventListener('submit', e =>
+        {
+            e.preventDefault();
+            auth.signInWithEmailAndPassword(loginForm.email.value, loginForm.password.value)
+                .catch(err => alert(err.message))
+        });
+        logoutBtn.addEventListener('click', () => auth.signOut());
+        fileUpload.addEventListener('change', e =>
+        {
+            const files = e.target.files;
+            if (files.length === 0) return;
+            progressEl.classList.remove('hidden');
+            let uploadsCompleted = 0;
+            Array.from(files)
+                .forEach(file =>
+                {
+                    const fileName = `${Date.now()}-${file.name}`;
+                    const uploadTask = storage.ref(`projects/${fileName}`)
+                        .put(file);
+                    uploadTask.on('state_changed', snapshot =>
+                    {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressEl.value = progress
+                    }, error => console.erro
