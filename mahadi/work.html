@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Work - Mahammud Hasan Mahadi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js" defer></script>
+    <style>
+        /* Master Stylesheet - Consistent with index.html */
+        :root{--bg-color:#F8F9FA;--primary-text-color:#121212;--secondary-text-color:#595959;--accent-color:#3D52F3;--border-color:rgba(0,0,0,0.07);--header-bg:rgba(248,249,250,0.7);--shadow-color:rgba(0,0,0,0.04)}*,*:before,*:after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:'Plus Jakarta Sans',sans-serif;background-color:var(--bg-color);color:var(--primary-text-color);line-height:1.7;overflow-x:hidden}body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background:linear-gradient(320deg,#E4DFFF 0%,#F5FAFF 50%,#DDEEFF 100%);animation:gradient-animation 20s ease-in-out infinite;background-size:200% 200%}@keyframes gradient-animation{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}.container{width:100%;max-width:1200px;margin:0 auto;padding:0 1.5rem}.main-header{position:sticky;top:0;width:100%;z-index:1000;background-color:var(--header-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-color)}.main-header .container{display:flex;justify-content:space-between;align-items:center;height:70px}.logo{font-size:1.5rem;font-weight:800;text-decoration:none;color:var(--primary-text-color)}.main-nav ul{list-style:none;display:flex}.main-nav li{margin-left:2rem}.main-nav a{text-decoration:none;color:var(--secondary-text-color);font-weight:500;transition:color .3s}.main-nav a:hover,.main-nav a.active{color:var(--primary-text-color)}.page-header{text-align:center;padding:6rem 0 4rem 0}.page-header h1{font-size:clamp(2.8rem,5vw,4.5rem);font-weight:800}.portfolio-section{padding-bottom:8rem}.project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:2.5rem}.project-card{text-decoration:none;color:var(--text);display:block;overflow:hidden;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 5px 25px var(--shadow-color);transition:transform .3s,box-shadow .3s}.project-card:hover{transform:translateY(-5px);box-shadow:0 10px 35px rgba(0,0,0,0.08)}
+        
+        .project-card img {
+            width: 100%;
+            /* --- FIX: Enforce a consistent aspect ratio --- */
+            aspect-ratio: 4 / 3; /* <-- ADDED: Maintains a professional 4:3 ratio. */
+            object-fit: cover; /* <-- KEPT: Ensures the image fills the container without stretching. */
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .project-card-info{padding:1.5rem}.project-card-info h3{font-size:1.4rem;margin-bottom:.5rem}.project-card-info p{color:var(--secondary-text-color)}.main-footer{text-align:center;padding:4rem 0;border-top:1px solid var(--border-color);color:var(--secondary-text-color)}@media(max-width:480px){.container{padding:0 1rem}.main-nav li{margin-left:1.5rem}.page-header{padding:5rem 0 3rem 0}.project-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <header class="main-header"><div class="container"><a href="index.html" class="logo">MHM.</a><nav class="main-nav"><ul><li><a href="work.html" class="active">Work</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li></ul></nav></div></header>
+    <main>
+        <section class="page-header"><div class="container"><h1>All Projects</h1></div></section>
+        <section class="portfolio-section"><div class="container"><div id="project-feed" class="project-grid"></div></div></section>
+    </main>
+    <footer class="main-footer"><p>© 2024 Mahammud Hasan Mahadi. All Rights Reserved.</p></footer>
+    <script type="module">
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const projectFeed = document.getElementById('project-feed');
+        const projectsRef = database.ref('projects');
+        projectsRef.on('value', (snapshot) => {
+            projectFeed.innerHTML = '';
+            const projects = snapshot.val();
+            if (projects) {
+                const projectKeys = Object.keys(projects).reverse();
+                projectKeys.forEach(key => {
+                    const project = projects[key];
+                    const card = document.createElement('a');
+                    card.href = `project-detail.html?id=${key}`;
+                    card.className = 'project-card';
+                    const thumbnailUrl = (project.imageUrls && project.imageUrls.length > 0) ? project.imageUrls[0] : 'https://via.placeholder.com/400x300/e0e0e0/333?text=No+Image';
+                    card.innerHTML = `<img src="${thumbnailUrl}" alt="${project.title}"><div class="project-card-info"><h3>${project.title}</h3><p>${project.category}</p></div>`;
+                    projectFeed.appendChild(card);
+                });
+            } else {
+                projectFeed.innerHTML = "<p>No projects have been added yet.</p>";
+            }
+        });
+    </script>
+</body>
+</html>
