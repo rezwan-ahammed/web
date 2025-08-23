@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Mahammud Hasan Mahadi</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <!-- Firebase SDKs (Auth is not needed) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js" defer></script>
@@ -19,102 +19,194 @@
         *, *:before, *:after { box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--admin-bg); color: var(--admin-text); margin: 0; padding: 2rem; }
         .hidden { display: none !important; }
+
+        /* --- NEW: Main Layout --- */
+        .admin-container {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr; /* Two columns */
+            gap: 2rem;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .project-management-column, .content-editor-column {
+            background-color: var(--admin-white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.05);
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--admin-border);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        .column-header h2 { margin: 0; font-size: 1.5rem; }
+        #form-mode-indicator { font-size: 0.9rem; color: var(--admin-accent); font-weight: 700; }
+        .warning-text { color: var(--admin-danger); font-weight: 700; font-size: 1rem; text-align: center; padding-bottom: 2rem; }
+
+        /* --- NEW: Project List Cards --- */
+        #project-list { max-height: 80vh; overflow-y: auto; }
+        .project-list-card {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .project-list-card:not(:last-child) { border-bottom: 1px solid #f0f0f0; }
+        .project-list-card:hover { background-color: #f8f9fa; }
+        .project-list-card img {
+            width: 80px; height: 60px; object-fit: cover;
+            border-radius: 6px; margin-right: 1rem; border: 1px solid var(--admin-border);
+        }
+        .project-list-info { flex-grow: 1; }
+        .project-list-info h3 { margin: 0; font-size: 1.1rem; }
+        .project-list-info p { margin: 0; color: var(--admin-subtle-text); font-size: 0.9rem; }
+        .project-list-actions button { margin-left: 0.5rem; }
+
+        /* --- NEW: Content Editor & Form --- */
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input, .form-group textarea { width: 100%; padding: 0.8rem; font-size: 1rem; border-radius: 6px; border: 1px solid var(--admin-border); background: #fdfdfd; }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
+
+        /* --- NEW: Image Uploader --- */
+        .image-upload-area h3 { font-size: 1.2rem; margin-top: 0; margin-bottom: 1rem; }
+        #image-drop-zone { border: 2px dashed var(--admin-border); padding: 1.5rem; border-radius: 8px; text-align: center; cursor: pointer; transition: border-color 0.3s, background-color 0.3s; }
+        #image-drop-zone:hover { border-color: var(--admin-accent); background-color: #f8f9fa; }
+        #image-drop-zone p { margin: 0; color: var(--admin-subtle-text); }
+        #file-upload { display: none; }
+        #upload-progress { width: 100%; margin-top: 1rem; }
+
+        /* --- NEW: Image Preview Grid --- */
+        #image-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .preview-item {
+            position: relative;
+            border: 1px solid var(--admin-border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .preview-item img {
+            width: 100%; height: 80px; object-fit: cover; display: block;
+        }
+        .preview-item .remove-btn {
+            position: absolute; top: 4px; right: 4px; background-color: rgba(231, 76, 60, 0.8);
+            color: white; border: none; border-radius: 50%; width: 20px; height: 20px;
+            cursor: pointer; font-size: 12px; line-height: 20px; text-align: center;
+        }
+
+        /* General Button Styles */
         .btn { padding: 0.9rem; font-size: 1rem; font-weight: 500; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease; width: 100%; }
         .btn-primary { background-color: var(--admin-accent); color: var(--admin-white); }
         .btn-primary:hover { background-color: var(--admin-accent-dark); }
         .btn-danger { background-color: var(--admin-danger); color: var(--admin-white); font-size: 0.8rem; padding: 0.4rem 0.8rem; width: auto; }
         .btn-danger:hover { background-color: var(--admin-danger-dark); }
-        .btn-secondary { background-color: #6c757d; color: var(--admin-white); font-size: 0.8rem; padding: 0.4rem 0.8rem; width: auto; }
-        
-        #admin-dashboard-view { width: 100%; max-width: 1200px; margin: auto; padding: 2rem; background-color: var(--admin-white); border-radius: 8px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--admin-border); padding-bottom: 1rem; margin-bottom: 2rem; }
-        .admin-header h1 { margin: 0; }
-        .warning-text { color: var(--admin-danger); font-weight: 700; font-size: 1rem; }
-        .dashboard-content { display: grid; grid-template-columns: 1fr 2fr; gap: 3rem; }
-        .form-section h2, .list-section h2 { margin-top: 0; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 0.8rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .form-group input, .form-group textarea { width: 100%; padding: 0.8rem; font-size: 1rem; border-radius: 6px; border: 1px solid var(--admin-border); }
-        .form-group textarea { min-height: 120px; resize: vertical; }
-        .upload-section { border: 2px dashed var(--admin-border); padding: 1.5rem; border-radius: 8px; text-align: center; margin-bottom: 1.5rem; }
-        .upload-section p { margin: 0 0 1rem 0; color: var(--admin-subtle-text); }
-        #file-upload { display: none; }
-        #file-upload-label { background-color: var(--admin-accent); color: var(--admin-white); padding: 0.7rem 1.5rem; border-radius: 6px; cursor: pointer; display: inline-block; }
-        #upload-progress { width: 100%; margin: 1rem 0; }
-        #image-preview-list { list-style: none; padding: 0; margin-top: 1rem; }
-        #image-preview-list li { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 0.5rem; border-radius: 5px; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--admin-success); word-break: break-all; }
-        #project-list ul { list-style: none; padding: 0; }
-        #project-list li { display: flex; align-items: center; justify-content: space-between; padding: 1rem; border-radius: 6px; }
-        #project-list li:nth-child(odd) { background-color: #f8f9fa; }
-        @media (max-width: 900px) { .dashboard-content { grid-template-columns: 1fr; } }
+        .btn-secondary { background-color: #6c757d; color: var(--admin-white); }
+        .btn-edit { background-color: #f0f0f0; color: var(--admin-text); font-size: 0.8rem; padding: 0.4rem 0.8rem; width: auto; }
+
+        @media (max-width: 1024px) {
+            body { padding: 1rem; }
+            .admin-container { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div id="admin-dashboard-view">
-        <header class="admin-header">
-            <h1>Portfolio Dashboard</h1>
-            <span class="warning-text">⚠️ PUBLIC ACCESS MODE</span>
-        </header>
-        <div class="dashboard-content">
-            <section class="form-section">
+    <p class="warning-text">⚠️ PUBLIC ACCESS MODE - Handle with care.</p>
+    <div class="admin-container">
+        <!-- Left Column: Project Management -->
+        <section class="project-management-column">
+            <div class="column-header">
+                <h2>Project Management</h2>
+            </div>
+            <div id="project-list">
+                <!-- Project cards will be dynamically loaded here -->
+            </div>
+        </section>
+
+        <!-- Right Column: Content Editor -->
+        <section class="content-editor-column">
+            <div class="column-header">
                 <h2 id="form-title">Add New Project</h2>
-                <div class="upload-section">
-                    <p>Upload project images here first.</p>
-                    <input type="file" id="file-upload" multiple accept="image/*">
-                    <label for="file-upload" id="file-upload-label">Choose Files</label>
+                <span id="form-mode-indicator"></span>
+            </div>
+            <form id="project-form">
+                <input type="hidden" id="project-id">
+
+                <div class="image-upload-area">
+                    <h3>Project Images</h3>
+                    <div id="image-drop-zone">
+                        <input type="file" id="file-upload" multiple accept="image/*">
+                        <p>Drag & drop files here, or click to select.</p>
+                    </div>
                     <progress id="upload-progress" value="0" max="100" class="hidden"></progress>
-                    <ul id="image-preview-list"></ul>
+                    <div id="image-preview-grid"></div>
                 </div>
-                <form id="project-form">
-                    <input type="hidden" id="project-id">
-                    <div class="form-group"><label for="project-title">Title</label><input type="text" id="project-title" required></div>
-                    <div class="form-group"><label for="project-category">Category</label><input type="text" id="project-category" required></div>
-                    <div class="form-group"><label for="project-description">Description</label><textarea id="project-description" required></textarea></div>
+
+                <div class="form-group">
+                    <label for="project-title">Title</label>
+                    <input type="text" id="project-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="project-category">Category</label>
+                    <input type="text" id="project-category" placeholder="e.g., Branding, UI/UX Design" required>
+                </div>
+                <div class="form-group">
+                    <label for="project-description">Description</label>
+                    <textarea id="project-description" placeholder="Tell the story behind this project..." required></textarea>
+                </div>
+
+                <div class="form-buttons">
                     <button type="submit" class="btn btn-primary" id="submit-btn">Add Project</button>
                     <button type="button" class="btn btn-secondary hidden" id="cancel-btn">Cancel Edit</button>
-                </form>
-            </section>
-            <section class="list-section">
-                <h2>Existing Projects</h2>
-                <div id="project-list"><ul><!-- JS Loads Content Here --></ul></div>
-            </section>
-        </div>
+                </div>
+            </form>
+        </section>
     </div>
 
     <script type="module">
-        const firebaseConfig = {
-            apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ",
-            authDomain: "mathemate-software.firebaseapp.com",
-            databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "mathemate-software",
-            storageBucket: "mathemate-software.appspot.com",
-            messagingSenderId: "780184955321",
-            appId: "YOUR_WEB_APP_ID" // Optional, but recommended
-        };
+        // Firebase Configuration
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const storage = firebase.storage();
         const projectsRef = database.ref('projects');
 
+        // DOM Elements
         const projectForm = document.getElementById('project-form');
-        const projectList = document.querySelector('#project-list ul');
+        const projectList = document.getElementById('project-list');
         const fileUpload = document.getElementById('file-upload');
+        const dropZone = document.getElementById('image-drop-zone');
         const progressEl = document.getElementById('upload-progress');
-        const imagePreviewList = document.getElementById('image-preview-list');
+        const imagePreviewGrid = document.getElementById('image-preview-grid');
         const formTitle = document.getElementById('form-title');
         const submitBtn = document.getElementById('submit-btn');
         const cancelBtn = document.getElementById('cancel-btn');
         const projectIdField = document.getElementById('project-id');
-        let uploadedImageUrls = [];
+        const formModeIndicator = document.getElementById('form-mode-indicator');
 
-        fileUpload.addEventListener('change', (e) => {
-            const files = e.target.files;
+        // State
+        let isEditMode = false;
+
+        // --- Image Uploading & Preview ---
+        const handleFiles = (files) => {
             if (files.length === 0) return;
             progressEl.classList.remove('hidden');
-            let uploadsCompleted = 0;
+            progressEl.value = 0;
+            
             Array.from(files).forEach(file => {
                 const fileName = `${Date.now()}-${file.name}`;
                 const uploadTask = storage.ref(`projects/${fileName}`).put(file);
+
                 uploadTask.on('state_changed',
                     (snapshot) => {
                         progressEl.value = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -122,29 +214,63 @@
                     (error) => console.error("Upload Error:", error),
                     () => {
                         uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
-                            uploadedImageUrls.push(downloadURL);
-                            const li = document.createElement('li');
-                            li.textContent = `✅ ${file.name}`;
-                            imagePreviewList.appendChild(li);
-                            uploadsCompleted++;
-                            if (uploadsCompleted === files.length) {
-                                progressEl.classList.add('hidden');
+                            createImagePreview(downloadURL, true); // `true` for newly uploaded
+                            if (Array.from(files).indexOf(file) === files.length - 1) {
+                                setTimeout(() => progressEl.classList.add('hidden'), 500);
                             }
                         });
                     }
                 );
             });
+        };
+
+        const createImagePreview = (url, isNew) => {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            previewItem.dataset.url = url;
+            previewItem.innerHTML = `
+                <img src="${url}" alt="Project preview">
+                <button type="button" class="remove-btn" title="Remove image">×</button>
+            `;
+            imagePreviewGrid.appendChild(previewItem);
+        };
+
+        dropZone.addEventListener('click', () => fileUpload.click());
+        fileUpload.addEventListener('change', (e) => handleFiles(e.target.files));
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--admin-accent)'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--admin-border)'; });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--admin-border)'; handleFiles(e.dataTransfer.files); });
+
+        imagePreviewGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-btn')) {
+                e.target.parentElement.remove();
+            }
         });
 
+        // --- CRUD Operations ---
         const fetchProjects = () => {
-            projectsRef.on('value', snapshot => {
+            projectsRef.orderByKey().on('value', snapshot => {
                 projectList.innerHTML = '';
                 const projects = snapshot.val();
                 if (projects) {
-                    Object.entries(projects).forEach(([key, project]) => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `<div>${project.title}</div><div><button class="btn btn-secondary edit-btn" data-id="${key}" style="width:auto;margin-right:0.5rem">Edit</button><button class="btn btn-danger delete-btn" data-id="${key}">Delete</button></div>`;
-                        projectList.appendChild(li);
+                    const sortedKeys = Object.keys(projects).reverse();
+                    sortedKeys.forEach(key => {
+                        const project = projects[key];
+                        const card = document.createElement('div');
+                        card.className = 'project-list-card';
+                        const thumbnailUrl = (project.imageUrls && project.imageUrls.length > 0) ? project.imageUrls[0] : 'https://via.placeholder.com/80x60?text=N/A';
+                        card.innerHTML = `
+                            <img src="${thumbnailUrl}" alt="Thumbnail">
+                            <div class="project-list-info">
+                                <h3>${project.title}</h3>
+                                <p>${project.category}</p>
+                            </div>
+                            <div class="project-list-actions">
+                                <button class="btn btn-edit" data-id="${key}">Edit</button>
+                                <button class="btn btn-danger" data-id="${key}">Delete</button>
+                            </div>
+                        `;
+                        projectList.appendChild(card);
                     });
                 }
             });
@@ -152,69 +278,76 @@
 
         projectForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (uploadedImageUrls.length === 0 && !projectIdField.value) {
+            const imageUrls = Array.from(imagePreviewGrid.querySelectorAll('.preview-item')).map(item => item.dataset.url);
+            
+            if (imageUrls.length === 0) {
                 alert("Please upload at least one image.");
                 return;
             }
-            const project = {
+            
+            const projectData = {
                 title: projectForm['project-title'].value,
                 category: projectForm['project-category'].value,
                 description: projectForm['project-description'].value,
-                imageUrls: uploadedImageUrls,
+                imageUrls: imageUrls
             };
+
             const projectId = projectIdField.value;
-            if (projectId) {
-                projectsRef.child(projectId).child('imageUrls').get().then(snapshot => {
-                    const existingUrls = snapshot.val() || [];
-                    project.imageUrls = [...existingUrls, ...uploadedImageUrls];
-                    projectsRef.child(projectId).update(project).then(resetForm);
+            const dbOperation = projectId ? projectsRef.child(projectId).update(projectData) : projectsRef.push(projectData);
+            
+            dbOperation.then(resetForm).catch(err => console.error("Database Error:", err));
+        });
+
+        projectList.addEventListener('click', e => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            const projectId = button.dataset.id;
+
+            if (button.classList.contains('delete-btn')) {
+                if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                    projectsRef.child(projectId).remove();
+                }
+            } else if (button.classList.contains('btn-edit')) {
+                projectsRef.child(projectId).once('value', snapshot => {
+                    const project = snapshot.val();
+                    enterEditMode(projectId, project);
                 });
-            } else {
-                projectsRef.push(project).then(resetForm);
             }
         });
 
-        const resetForm = () => {
+        // --- Form State Management ---
+        const enterEditMode = (id, project) => {
+            resetForm(false); // Reset without setting isEditMode to false
+            isEditMode = true;
+            projectIdField.value = id;
+            projectForm['project-title'].value = project.title || '';
+            projectForm['project-category'].value = project.category || '';
+            projectForm['project-description'].value = project.description || '';
+            if (project.imageUrls) {
+                project.imageUrls.forEach(url => createImagePreview(url, false));
+            }
+            formTitle.textContent = 'Edit Project';
+            formModeIndicator.textContent = 'Currently Editing';
+            submitBtn.textContent = 'Save Changes';
+            cancelBtn.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        const resetForm = (resetMode = true) => {
             projectForm.reset();
-            imagePreviewList.innerHTML = '';
-            uploadedImageUrls = [];
+            imagePreviewGrid.innerHTML = '';
             projectIdField.value = '';
+            if (resetMode) isEditMode = false;
             formTitle.textContent = 'Add New Project';
             submitBtn.textContent = 'Add Project';
             cancelBtn.classList.add('hidden');
+            formModeIndicator.textContent = '';
         };
 
-        projectList.addEventListener('click', e => {
-            const projectId = e.target.dataset.id;
-            if (e.target.classList.contains('delete-btn')) {
-                if (confirm('Are you sure? This does not delete the stored images.')) {
-                    projectsRef.child(projectId).remove();
-                }
-            } else if (e.target.classList.contains('edit-btn')) {
-                projectsRef.child(projectId).once('value', snapshot => {
-                    resetForm();
-                    const project = snapshot.val();
-                    projectForm['project-title'].value = project.title || '';
-                    projectForm['project-category'].value = project.category || '';
-                    projectForm['project-description'].value = project.description || '';
-                    if (project.imageUrls) {
-                        project.imageUrls.forEach(url => {
-                            const li = document.createElement('li');
-                            li.innerHTML = `<span>✔️ ${url.substring(0, 40)}... (existing)</span>`;
-                            imagePreviewList.appendChild(li);
-                        });
-                    }
-                    projectIdField.value = projectId;
-                    formTitle.textContent = 'Edit Project (Add New Images)';
-                    submitBtn.textContent = 'Save Changes';
-                    cancelBtn.classList.remove('hidden');
-                    window.scrollTo(0, 0);
-                });
-            }
-        });
+        cancelBtn.addEventListener('click', () => resetForm());
 
-        cancelBtn.addEventListener('click', resetForm);
-        fetchProjects(); // Initial call to load projects
+        // Initial Load
+        fetchProjects();
     </script>
 </body>
 </html>
