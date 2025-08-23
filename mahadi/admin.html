@@ -4,170 +4,182 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Mahammud Hasan Mahadi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js" defer></script>
     <style>
         :root {
-            --admin-bg: #F4F7FC; --admin-text: #1a1a1a; --admin-subtle-text: #6c757d;
-            --admin-accent: #3D52F3; --admin-accent-dark: #2335D8; --admin-border: #dee2e6;
-            --admin-white: #ffffff; --admin-danger: #e74c3c; --admin-danger-dark: #c0392b;
-            --admin-success: #22c55e;
+            --bg-main: #F7F8FA;
+            --bg-panel: #FFFFFF;
+            --text-primary: #2D3748;
+            --text-secondary: #718096;
+            --accent-primary: #3D52F3;
+            --accent-primary-hover: #2335D8;
+            --border-color: #E2E8F0;
+            --danger-color: #E53E3E;
+            --danger-hover: #C53030;
+            --success-color: #38A169;
         }
         *, *:before, *:after { box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--admin-bg); color: var(--admin-text); margin: 0; padding: 2rem; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 16px;
+        }
         .hidden { display: none !important; }
 
-        /* --- NEW: Main Layout --- */
-        .admin-container {
+        .admin-header {
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .admin-header .logo { font-size: 1.5rem; font-weight: 800; }
+        .admin-header .title { font-size: 1.2rem; margin-left: 1rem; color: var(--text-secondary); }
+
+        .admin-wrapper {
             display: grid;
-            grid-template-columns: 1fr 1.5fr; /* Two columns */
+            grid-template-columns: minmax(400px, 1.2fr) 2fr;
             gap: 2rem;
-            max-width: 1400px;
-            margin: auto;
-        }
-
-        .project-management-column, .content-editor-column {
-            background-color: var(--admin-white);
-            border-radius: 12px;
             padding: 2rem;
-            box-shadow: 0 4px 25px rgba(0,0,0,0.05);
+            max-width: 1600px;
+            margin: 0 auto;
         }
 
-        .column-header {
+        .panel {
+            background-color: var(--bg-panel);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+        }
+
+        .panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--admin-border);
-            padding-bottom: 1rem;
             margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
         }
-        .column-header h2 { margin: 0; font-size: 1.5rem; }
-        #form-mode-indicator { font-size: 0.9rem; color: var(--admin-accent); font-weight: 700; }
-        .warning-text { color: var(--admin-danger); font-weight: 700; font-size: 1rem; text-align: center; padding-bottom: 2rem; }
+        .panel-header h2 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .btn-primary { background-color: var(--accent-primary); color: white; }
+        .btn-primary:hover { background-color: var(--accent-primary-hover); }
+        .btn-secondary { background-color: #F7F8FA; color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #EDF2F7; }
+        .btn-icon { background: transparent; padding: 0.5rem; }
+        .btn-icon svg { width: 20px; height: 20px; }
 
-        /* --- NEW: Project List Cards --- */
-        #project-list { max-height: 80vh; overflow-y: auto; }
-        .project-list-card {
+        /* Project List */
+        .project-card {
             display: flex;
             align-items: center;
             padding: 1rem;
             border-radius: 8px;
-            transition: background-color 0.2s ease;
+            border: 1px solid transparent;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
         }
-        .project-list-card:not(:last-child) { border-bottom: 1px solid #f0f0f0; }
-        .project-list-card:hover { background-color: #f8f9fa; }
-        .project-list-card img {
-            width: 80px; height: 60px; object-fit: cover;
-            border-radius: 6px; margin-right: 1rem; border: 1px solid var(--admin-border);
-        }
-        .project-list-info { flex-grow: 1; }
-        .project-list-info h3 { margin: 0; font-size: 1.1rem; }
-        .project-list-info p { margin: 0; color: var(--admin-subtle-text); font-size: 0.9rem; }
-        .project-list-actions button { margin-left: 0.5rem; }
+        .project-card:not(:last-child) { border-bottom: 1px solid var(--border-color); }
+        .project-card:hover { background-color: #F7F8FA; border-color: var(--border-color); }
+        .project-card__thumbnail { width: 100px; height: 75px; object-fit: cover; border-radius: 6px; margin-right: 1.5rem; border: 1px solid var(--border-color); }
+        .project-card__info { flex-grow: 1; }
+        .project-card__info h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+        .project-card__info p { margin: 0.25rem 0 0; color: var(--text-secondary); }
+        .project-card__actions { display: flex; gap: 0.5rem; }
+        .empty-state, .loader { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
 
-        /* --- NEW: Content Editor & Form --- */
+        /* Content Editor Form */
+        #form-title-text { font-weight: 600; color: var(--text-secondary); }
         .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .form-group input, .form-group textarea { width: 100%; padding: 0.8rem; font-size: 1rem; border-radius: 6px; border: 1px solid var(--admin-border); background: #fdfdfd; }
-        .form-group textarea { min-height: 120px; resize: vertical; }
-        .form-buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-group input, .form-group textarea { width: 100%; padding: 0.8rem 1rem; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: #FDFDFE; }
+        .form-group textarea { min-height: 150px; resize: vertical; }
+        .form-buttons { display: flex; gap: 1rem; margin-top: 2rem; }
+        #image-drop-zone { border: 2px dashed var(--border-color); padding: 2rem; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        #image-drop-zone:hover { border-color: var(--accent-primary); background-color: #F7F8FA; }
+        #image-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+        .preview-item { position: relative; }
+        .preview-item img { width: 100%; height: 90px; object-fit: cover; display: block; border-radius: 6px; }
+        .preview-item .remove-btn { position: absolute; top: -5px; right: -5px; background-color: var(--danger-color); color: white; border: 2px solid var(--bg-panel); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* --- NEW: Image Uploader --- */
-        .image-upload-area h3 { font-size: 1.2rem; margin-top: 0; margin-bottom: 1rem; }
-        #image-drop-zone { border: 2px dashed var(--admin-border); padding: 1.5rem; border-radius: 8px; text-align: center; cursor: pointer; transition: border-color 0.3s, background-color 0.3s; }
-        #image-drop-zone:hover { border-color: var(--admin-accent); background-color: #f8f9fa; }
-        #image-drop-zone p { margin: 0; color: var(--admin-subtle-text); }
-        #file-upload { display: none; }
-        #upload-progress { width: 100%; margin-top: 1rem; }
-
-        /* --- NEW: Image Preview Grid --- */
-        #image-preview-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 1rem;
-            margin-top: 1.5rem;
+        @media (max-width: 1200px) {
+            .admin-wrapper { grid-template-columns: 1fr; }
         }
-        .preview-item {
-            position: relative;
-            border: 1px solid var(--admin-border);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .preview-item img {
-            width: 100%; height: 80px; object-fit: cover; display: block;
-        }
-        .preview-item .remove-btn {
-            position: absolute; top: 4px; right: 4px; background-color: rgba(231, 76, 60, 0.8);
-            color: white; border: none; border-radius: 50%; width: 20px; height: 20px;
-            cursor: pointer; font-size: 12px; line-height: 20px; text-align: center;
-        }
-
-        /* General Button Styles */
-        .btn { padding: 0.9rem; font-size: 1rem; font-weight: 500; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease; width: 100%; }
-        .btn-primary { background-color: var(--admin-accent); color: var(--admin-white); }
-        .btn-primary:hover { background-color: var(--admin-accent-dark); }
-        .btn-danger { background-color: var(--admin-danger); color: var(--admin-white); font-size: 0.8rem; padding: 0.4rem 0.8rem; width: auto; }
-        .btn-danger:hover { background-color: var(--admin-danger-dark); }
-        .btn-secondary { background-color: #6c757d; color: var(--admin-white); }
-        .btn-edit { background-color: #f0f0f0; color: var(--admin-text); font-size: 0.8rem; padding: 0.4rem 0.8rem; width: auto; }
-
-        @media (max-width: 1024px) {
-            body { padding: 1rem; }
-            .admin-container { grid-template-columns: 1fr; }
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            .admin-wrapper, .admin-header, .panel { padding: 1rem; }
         }
     </style>
 </head>
 <body>
-    <p class="warning-text">⚠️ PUBLIC ACCESS MODE - Handle with care.</p>
-    <div class="admin-container">
+
+    <header class="admin-header">
+        <span class="logo">MHM.</span>
+        <span class="title">Portfolio Content Manager</span>
+    </header>
+
+    <div class="admin-wrapper">
         <!-- Left Column: Project Management -->
-        <section class="project-management-column">
-            <div class="column-header">
-                <h2>Project Management</h2>
+        <section class="panel">
+            <div class="panel-header">
+                <h2>All Projects</h2>
+                <button class="btn btn-primary" id="new-project-btn">New Project</button>
             </div>
-            <div id="project-list">
-                <!-- Project cards will be dynamically loaded here -->
+            <div class="loader">Loading projects...</div>
+            <div id="project-list"></div>
+            <div class="empty-state hidden">
+                <h3>No Projects Yet</h3>
+                <p>Add your first project to get started.</p>
             </div>
         </section>
 
         <!-- Right Column: Content Editor -->
-        <section class="content-editor-column">
-            <div class="column-header">
-                <h2 id="form-title">Add New Project</h2>
-                <span id="form-mode-indicator"></span>
+        <section class="panel">
+            <div class="panel-header">
+                <h2 id="form-title">Content Editor</h2>
             </div>
             <form id="project-form">
                 <input type="hidden" id="project-id">
-
-                <div class="image-upload-area">
-                    <h3>Project Images</h3>
+                <div class="form-group">
+                    <label>Project Images</label>
                     <div id="image-drop-zone">
-                        <input type="file" id="file-upload" multiple accept="image/*">
+                        <input type="file" id="file-upload" multiple accept="image/*" class="hidden">
                         <p>Drag & drop files here, or click to select.</p>
                     </div>
-                    <progress id="upload-progress" value="0" max="100" class="hidden"></progress>
+                    <progress id="upload-progress" value="0" max="100" class="hidden" style="width:100%; margin-top:1rem;"></progress>
                     <div id="image-preview-grid"></div>
                 </div>
-
-                <div class="form-group">
-                    <label for="project-title">Title</label>
-                    <input type="text" id="project-title" required>
-                </div>
-                <div class="form-group">
-                    <label for="project-category">Category</label>
-                    <input type="text" id="project-category" placeholder="e.g., Branding, UI/UX Design" required>
-                </div>
-                <div class="form-group">
-                    <label for="project-description">Description</label>
-                    <textarea id="project-description" placeholder="Tell the story behind this project..." required></textarea>
-                </div>
-
+                <div class="form-group"><label for="project-title">Title</label><input type="text" id="project-title" required></div>
+                <div class="form-group"><label for="project-category">Category</label><input type="text" id="project-category" placeholder="e.g., Branding, UI/UX Design" required></div>
+                <div class="form-group"><label for="project-description">Description</label><textarea id="project-description" placeholder="Tell the story behind this project..." required></textarea></div>
                 <div class="form-buttons">
                     <button type="submit" class="btn btn-primary" id="submit-btn">Add Project</button>
-                    <button type="button" class="btn btn-secondary hidden" id="cancel-btn">Cancel Edit</button>
+                    <button type="button" class="btn btn-secondary hidden" id="cancel-btn">Cancel</button>
                 </div>
             </form>
         </section>
@@ -182,169 +194,123 @@
         const projectsRef = database.ref('projects');
 
         // DOM Elements
-        const projectForm = document.getElementById('project-form');
-        const projectList = document.getElementById('project-list');
-        const fileUpload = document.getElementById('file-upload');
-        const dropZone = document.getElementById('image-drop-zone');
-        const progressEl = document.getElementById('upload-progress');
-        const imagePreviewGrid = document.getElementById('image-preview-grid');
-        const formTitle = document.getElementById('form-title');
-        const submitBtn = document.getElementById('submit-btn');
-        const cancelBtn = document.getElementById('cancel-btn');
-        const projectIdField = document.getElementById('project-id');
-        const formModeIndicator = document.getElementById('form-mode-indicator');
+        const form = document.getElementById('project-form'),
+              projectList = document.getElementById('project-list'),
+              fileUpload = document.getElementById('file-upload'),
+              dropZone = document.getElementById('image-drop-zone'),
+              progressEl = document.getElementById('upload-progress'),
+              imagePreviewGrid = document.getElementById('image-preview-grid'),
+              formTitle = document.getElementById('form-title'),
+              submitBtn = document.getElementById('submit-btn'),
+              cancelBtn = document.getElementById('cancel-btn'),
+              projectIdField = document.getElementById('project-id'),
+              newProjectBtn = document.getElementById('new-project-btn'),
+              loader = document.querySelector('.loader'),
+              emptyState = document.querySelector('.empty-state');
 
-        // State
-        let isEditMode = false;
+        // SVG Icons
+        const editIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>`;
+        const deleteIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`;
 
-        // --- Image Uploading & Preview ---
+        // --- Image Uploading ---
         const handleFiles = (files) => {
-            if (files.length === 0) return;
+            if (!files.length) return;
             progressEl.classList.remove('hidden');
             progressEl.value = 0;
-            
             Array.from(files).forEach(file => {
-                const fileName = `${Date.now()}-${file.name}`;
-                const uploadTask = storage.ref(`projects/${fileName}`).put(file);
-
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        progressEl.value = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    },
-                    (error) => console.error("Upload Error:", error),
-                    () => {
-                        uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
-                            createImagePreview(downloadURL, true); // `true` for newly uploaded
-                            if (Array.from(files).indexOf(file) === files.length - 1) {
-                                setTimeout(() => progressEl.classList.add('hidden'), 500);
-                            }
-                        });
-                    }
+                const uploadTask = storage.ref(`projects/${Date.now()}-${file.name}`).put(file);
+                uploadTask.on('state_changed', s => progressEl.value = (s.bytesTransferred / s.totalBytes) * 100,
+                    err => console.error(err),
+                    () => uploadTask.snapshot.ref.getDownloadURL().then(url => {
+                        createImagePreview(url);
+                        if (Array.from(files).indexOf(file) === files.length - 1) setTimeout(() => progressEl.classList.add('hidden'), 500);
+                    })
                 );
             });
         };
-
-        const createImagePreview = (url, isNew) => {
-            const previewItem = document.createElement('div');
-            previewItem.className = 'preview-item';
-            previewItem.dataset.url = url;
-            previewItem.innerHTML = `
-                <img src="${url}" alt="Project preview">
-                <button type="button" class="remove-btn" title="Remove image">×</button>
-            `;
-            imagePreviewGrid.appendChild(previewItem);
+        const createImagePreview = (url) => {
+            const item = document.createElement('div');
+            item.className = 'preview-item';
+            item.dataset.url = url;
+            item.innerHTML = `<img src="${url}" alt="Preview"><button type="button" class="remove-btn">×</button>`;
+            imagePreviewGrid.appendChild(item);
         };
-
         dropZone.addEventListener('click', () => fileUpload.click());
         fileUpload.addEventListener('change', (e) => handleFiles(e.target.files));
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--admin-accent)'; });
-        dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--admin-border)'; });
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--admin-border)'; handleFiles(e.dataTransfer.files); });
-
-        imagePreviewGrid.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-btn')) {
-                e.target.parentElement.remove();
-            }
-        });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--accent-primary)'; });
+        dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = 'var(--border-color)');
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--border-color)'; handleFiles(e.dataTransfer.files); });
+        imagePreviewGrid.addEventListener('click', (e) => e.target.classList.contains('remove-btn') && e.target.parentElement.remove());
 
         // --- CRUD Operations ---
         const fetchProjects = () => {
+            loader.classList.remove('hidden');
             projectsRef.orderByKey().on('value', snapshot => {
                 projectList.innerHTML = '';
+                loader.classList.add('hidden');
                 const projects = snapshot.val();
                 if (projects) {
-                    const sortedKeys = Object.keys(projects).reverse();
-                    sortedKeys.forEach(key => {
+                    emptyState.classList.add('hidden');
+                    Object.keys(projects).reverse().forEach(key => {
                         const project = projects[key];
                         const card = document.createElement('div');
-                        card.className = 'project-list-card';
-                        const thumbnailUrl = (project.imageUrls && project.imageUrls.length > 0) ? project.imageUrls[0] : 'https://via.placeholder.com/80x60?text=N/A';
+                        card.className = 'project-card';
                         card.innerHTML = `
-                            <img src="${thumbnailUrl}" alt="Thumbnail">
-                            <div class="project-list-info">
-                                <h3>${project.title}</h3>
-                                <p>${project.category}</p>
-                            </div>
-                            <div class="project-list-actions">
-                                <button class="btn btn-edit" data-id="${key}">Edit</button>
-                                <button class="btn btn-danger" data-id="${key}">Delete</button>
-                            </div>
-                        `;
+                            <img src="${project.imageUrls?.[0] || 'https://via.placeholder.com/100x75?text=N/A'}" class="project-card__thumbnail" alt="Thumbnail">
+                            <div class="project-card__info"><h3>${project.title}</h3><p>${project.category}</p></div>
+                            <div class="project-card__actions">
+                                <button class="btn btn-icon edit-btn" data-id="${key}" title="Edit">${editIcon}</button>
+                                <button class="btn btn-icon delete-btn" data-id="${key}" title="Delete">${deleteIcon}</button>
+                            </div>`;
                         projectList.appendChild(card);
                     });
+                } else {
+                    emptyState.classList.remove('hidden');
                 }
             });
         };
-
-        projectForm.addEventListener('submit', (e) => {
+        form.addEventListener('submit', (e) => {
             e.preventDefault();
             const imageUrls = Array.from(imagePreviewGrid.querySelectorAll('.preview-item')).map(item => item.dataset.url);
-            
-            if (imageUrls.length === 0) {
-                alert("Please upload at least one image.");
-                return;
-            }
-            
-            const projectData = {
-                title: projectForm['project-title'].value,
-                category: projectForm['project-category'].value,
-                description: projectForm['project-description'].value,
-                imageUrls: imageUrls
-            };
-
-            const projectId = projectIdField.value;
-            const dbOperation = projectId ? projectsRef.child(projectId).update(projectData) : projectsRef.push(projectData);
-            
-            dbOperation.then(resetForm).catch(err => console.error("Database Error:", err));
+            if (!imageUrls.length) return alert("Please upload at least one image.");
+            const projectData = { title: form['project-title'].value, category: form['project-category'].value, description: form['project-description'].value, imageUrls };
+            const op = projectIdField.value ? projectsRef.child(projectIdField.value).update(projectData) : projectsRef.push(projectData);
+            op.then(resetForm).catch(err => console.error(err));
         });
-
-        projectList.addEventListener('click', e => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            const projectId = button.dataset.id;
-
-            if (button.classList.contains('delete-btn')) {
-                if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-                    projectsRef.child(projectId).remove();
-                }
-            } else if (button.classList.contains('btn-edit')) {
-                projectsRef.child(projectId).once('value', snapshot => {
-                    const project = snapshot.val();
-                    enterEditMode(projectId, project);
-                });
+        projectList.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            if (btn.classList.contains('delete-btn')) {
+                if (confirm('Delete this project? This cannot be undone.')) projectsRef.child(id).remove();
+            } else if (btn.classList.contains('edit-btn')) {
+                projectsRef.child(id).once('value', snapshot => enterEditMode(id, snapshot.val()));
             }
         });
 
-        // --- Form State Management ---
+        // --- Form State ---
         const enterEditMode = (id, project) => {
-            resetForm(false); // Reset without setting isEditMode to false
-            isEditMode = true;
+            resetForm();
             projectIdField.value = id;
-            projectForm['project-title'].value = project.title || '';
-            projectForm['project-category'].value = project.category || '';
-            projectForm['project-description'].value = project.description || '';
-            if (project.imageUrls) {
-                project.imageUrls.forEach(url => createImagePreview(url, false));
-            }
-            formTitle.textContent = 'Edit Project';
-            formModeIndicator.textContent = 'Currently Editing';
+            form['project-title'].value = project.title;
+            form['project-category'].value = project.category;
+            form['project-description'].value = project.description;
+            project.imageUrls?.forEach(createImagePreview);
+            formTitle.innerHTML = `Editing: <span id="form-title-text">${project.title}</span>`;
             submitBtn.textContent = 'Save Changes';
             cancelBtn.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            form.scrollIntoView({ behavior: 'smooth' });
         };
-
-        const resetForm = (resetMode = true) => {
-            projectForm.reset();
-            imagePreviewGrid.innerHTML = '';
+        const resetForm = () => {
+            form.reset();
             projectIdField.value = '';
-            if (resetMode) isEditMode = false;
-            formTitle.textContent = 'Add New Project';
+            imagePreviewGrid.innerHTML = '';
+            formTitle.innerHTML = 'Content Editor';
             submitBtn.textContent = 'Add Project';
             cancelBtn.classList.add('hidden');
-            formModeIndicator.textContent = '';
         };
-
-        cancelBtn.addEventListener('click', () => resetForm());
+        cancelBtn.addEventListener('click', resetForm);
+        newProjectBtn.addEventListener('click', resetForm);
 
         // Initial Load
         fetchProjects();
