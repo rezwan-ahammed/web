@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - SecureExam+</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* This CSS is a direct implementation of your provided design sense, adapted for an authentication form. */
+        :root {
+            --bg-color: #F8F9FA;
+            --primary-text-color: #121212;
+            --secondary-text-color: #595959;
+            --accent-color: #3D52F3;
+            --accent-color-dark: #2335D8;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --danger-color: #dc3545;
+        }
+
+        *, *:before, *:after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--primary-text-color);
+            line-height: 1.7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 100%);
+            animation: gradient-animation 20s ease-in-out infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .auth-container {
+            background: #fff;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .auth-container h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-container p {
+            text-align: center;
+            color: var(--secondary-text-color);
+            margin-bottom: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            box-sizing: border-box;
+            transition: border-color .3s, box-shadow .3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(61, 82, 243, 0.1);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            background-color: var(--accent-color);
+            color: #FFF;
+            padding: 0.9rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(61, 82, 243, 0.2);
+            transition: all .3s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-color-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(61, 82, 243, 0.3);
+        }
+
+        .toggle-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .toggle-link a {
+            color: var(--accent-color);
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        #error-message {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 1rem;
+            font-weight: 500;
+            min-height: 1.2em; /* Prevents layout shift */
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Login Form -->
+        <div id="login-view">
+            <h1>Admin Login</h1>
+            <p>Welcome back! Please sign in.</p>
+            <form id="login-form">
+                <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
+                <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <p class="toggle-link">New Institution? <a id="show-register">Register here</a></p>
+        </div>
+
+        <!-- Register Form -->
+        <div id="register-view" style="display: none;">
+            <h1>Register Institution</h1>
+            <p>Create a new administrator account.</p>
+            <form id="register-form">
+                <div class="form-group"><label for="register-institution">Institution Name</label><input type="text" id="register-institution" required></div>
+                <div class="form-group"><label for="register-email">Admin Email</label><input type="email" id="register-email" required></div>
+                <div class="form-group"><label for="register-password">Password (min. 6 characters)</label><input type="password" id="register-password" minlength="6" required></div>
+                <button type="submit" class="btn">Register</button>
+            </form>
+            <p class="toggle-link">Already registered? <a id="show-login">Login here</a></p>
+        </div>
+        <p id="error-message"></p>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script>
+        // --- YOUR FIREBASE CONFIGURATION ---
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // --- DOM Element References ---
+        const loginView = document.getElementById('login-view');
+        const registerView = document.getElementById('register-view');
+        const errorMessage = document.getElementById('error-message');
+
+        // --- Auth Guard: Redirect if already logged in ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in, redirect to the dashboard.
+                window.location.href = 'admin_dashboard.html';
+            }
+        });
+
+        // --- View Toggling Logic ---
+        document.getElementById('show-register').addEventListener('click', () => {
+            loginView.style.display = 'none';
+            registerView.style.display = 'block';
+            errorMessage.textContent = '';
+        });
+        document.getElementById('show-login').addEventListener('click', () => {
+            registerView.style.display = 'none';
+            loginView.style.display = 'block';
+            errorMessage.textContent = '';
+        });
+
+        // --- Registration Logic ---
+        document.getElementById('register-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const institutionName = document.getElementById('register-institution').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            errorMessage.textContent = '';
+
+            // Step 1: Create the user in Firebase Auth
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    const user = userCredential.user;
+                    
+                    // Step 2: Create the institution record in the Realtime Database
+                    const institutionRef = database.ref('institutions').push({
+                        name: institutionName,
+                        adminUid: user.uid
+                    });
+
+                    // Step 3: Link the admin's UID to their new institution's ID
+                    return database.ref(`admins/${user.uid}`).set({
+                        institutionId: institutionRef.key
+                    });
+                })
+                .then(() => {
+                    // The onAuthStateChanged listener will handle the redirect.
+                    // This block is intentionally empty.
+                })
+                .catch(error => {
+                    // Provide user-friendly error messages
+                    switch (error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage.textContent = 'This email address is already registered.';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage.textContent = 'Password should be at least 6 characters.';
+                            break;
+                        default:
+                            errorMessage.textContent = error.message;
+                    }
+                });
+        });
+
+        // --- Login Logic ---
+        document.getElementById('login-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            errorMessage.textContent = '';
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // The onAuthStateChanged listener will handle the redirect.
+                })
+                .catch(error => {
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                        case 'auth/wrong-password':
+                            errorMessage.textContent = 'Invalid email or password.';
+                            break;
+                        default:
+                            errorMessage.textContent = error.message;
+                    }
+                });
+        });
+    </script>
+</body>
+</html>
