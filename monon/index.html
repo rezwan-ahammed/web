@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Admin Portal - SecureExam+</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
@@ -18,89 +18,196 @@
         .btn:disabled { background-color: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
         .btn:hover:not(:disabled) { background-color: var(--accent-color-dark); transform: translateY(-3px); }
         .toggle-link { text-align: center; margin-top: 1.5rem; }
-        .toggle-link a { color: var(--accent-color); font-weight: 700; cursor: pointer; }
+        .toggle-link a { color: var(--accent-color); font-weight: 700; cursor: pointer; text-decoration: none; }
         #error-message { color: var(--danger-color); text-align: center; margin-top: 1rem; font-weight: 500; min-height: 1.2em; }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div id="login-view">
-            <h1>Admin Login</h1><p>Welcome back! Please sign in.</p>
-            <form id="login-form">
-                <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
-                <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
-                <button type="submit" class="btn">Login</button>
+            <h1>Admin Login</h1>
+            <p>Welcome back! Please sign in.</p>
+            <form id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="btn" id="login-btn">Login</button>
             </form>
-            <p class="toggle-link">New Institution? <a id="show-register">Register here</a></p>
+            <p class="toggle-link">New Institution? <a id="show-register" href="#">Register here</a></p>
         </div>
+
         <div id="register-view" style="display: none;">
-            <h1>Register Institution</h1><p>Create a new administrator account.</p>
-            <form id="register-form">
-                <div class="form-group"><label for="register-institution">Institution Name</label><input type="text" id="register-institution" required></div>
-                <div class="form-group"><label for="register-email">Admin Email</label><input type="email" id="register-email" required></div>
-                <div class="form-group"><label for="register-password">Password (min. 6 characters)</label><input type="password" id="register-password" minlength="6" required></div>
+            <h1>Register Institution</h1>
+            <p>Create a new administrator account.</p>
+            <form id="register-form" novalidate>
+                <div class="form-group">
+                    <label for="register-institution">Institution Name</label>
+                    <input type="text" id="register-institution" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Admin Email</label>
+                    <input type="email" id="register-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password (min. 6 characters)</label>
+                    <input type="password" id="register-password" minlength="6" required>
+                </div>
                 <button type="submit" class="btn" id="register-btn">Register</button>
             </form>
-            <p class="toggle-link">Already registered? <a id="show-login">Login here</a></p>
+            <p class="toggle-link">Already registered? <a id="show-login" href="#">Login here</a></p>
         </div>
-        <p id="error-message"></p>
+
+        <p id="error-message" aria-live="polite"></p>
     </div>
 
+    <!-- Firebase compat libraries (you can update versions as needed) -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
+        // ---- Replace appId with your real web app id from Firebase console ----
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ",
+            authDomain: "mathemate-software.firebaseapp.com",
+            databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mathemate-software",
+            storageBucket: "mathemate-software.appspot.com",
+            messagingSenderId: "780184955321",
+            appId: "YOUR_WEB_APP_ID" // <<-- replace with real appId
+        };
+
+        if (firebaseConfig.appId === "YOUR_WEB_APP_ID") {
+            console.warn("Firebase appId is a placeholder. Replace firebaseConfig.appId with your project's real web app id.");
+        }
+
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
 
+        // DOM references
         const loginView = document.getElementById('login-view');
         const registerView = document.getElementById('register-view');
         const errorMessage = document.getElementById('error-message');
         const registerBtn = document.getElementById('register-btn');
+        const loginBtn = document.getElementById('login-btn');
 
+        // Redirect when an authenticated user has an admin record
         auth.onAuthStateChanged(user => {
             if (user) {
-                database.ref(`admins/${user.uid}`).once('value').then(snapshot => {
-                    if (snapshot.exists()) { window.location.href = 'admin_dashboard.html'; }
-                });
+                database.ref(`admins/${user.uid}`).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            // user is an admin -> go to dashboard
+                            window.location.href = 'admin_dashboard.html';
+                        }
+                        // if not an admin, we leave them on page (could show message)
+                    })
+                    .catch(err => {
+                        console.error('Error checking admin record:', err);
+                    });
             }
         });
 
-        document.getElementById('show-register').addEventListener('click', () => { loginView.style.display = 'none'; registerView.style.display = 'block'; errorMessage.textContent = ''; });
-        document.getElementById('show-login').addEventListener('click', () => { registerView.style.display = 'none'; loginView.style.display = 'block'; errorMessage.textContent = ''; });
+        // Toggle views (prevent default for anchors)
+        document.getElementById('show-register').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginView.style.display = 'none';
+            registerView.style.display = 'block';
+            errorMessage.textContent = '';
+        });
+        document.getElementById('show-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            registerView.style.display = 'none';
+            loginView.style.display = 'block';
+            errorMessage.textContent = '';
+        });
 
+        // REGISTER
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const institutionName = document.getElementById('register-institution').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
             errorMessage.textContent = '';
-            registerBtn.disabled = true;
-            registerBtn.textContent = 'Registering...';
-            let createdUser = null;
 
+            // trim inputs
+            const institutionName = document.getElementById('register-institution').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+
+            if (!institutionName || !email || password.length < 6) {
+                errorMessage.textContent = 'Please fill all fields and ensure password has at least 6 characters.';
+                return;
+            }
+
+            registerBtn.disabled = true;
+            const originalBtnText = registerBtn.textContent;
+            registerBtn.textContent = 'Registering...';
+
+            let createdUser = null;
             try {
+                // create user
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 createdUser = userCredential.user;
-                const newInstitutionRef = await database.ref('institutions').push({ name: institutionName, adminUid: createdUser.uid });
-                if (!newInstitutionRef.key) { throw new Error("Failed to get new institution ID."); }
+
+                // Use push() to generate a key then set() to ensure key exists
+                const newInstitutionRef = database.ref('institutions').push();
+                await newInstitutionRef.set({ name: institutionName, adminUid: createdUser.uid });
+
+                // set admin mapping
                 await database.ref(`admins/${createdUser.uid}`).set({ institutionId: newInstitutionRef.key });
+
+                // success: onAuthStateChanged will redirect once admin entry exists
+                // but we still provide friendly feedback if redirect is slow:
+                registerBtn.textContent = 'Registered ✓';
             } catch (error) {
-                errorMessage.textContent = error.message;
-                if (createdUser) { await createdUser.delete(); }
+                console.error('Registration error:', error);
+                // If the user was created but something failed, delete the user to avoid orphaned accounts
+                try {
+                    if (createdUser && createdUser.delete) {
+                        await createdUser.delete();
+                    }
+                } catch (delErr) {
+                    console.warn('Failed to delete partially created user:', delErr);
+                }
+
+                // show user-friendly message but include underlying firebase message if helpful
+                errorMessage.textContent = error && error.message ? error.message : 'Registration failed. Please try again.';
                 registerBtn.disabled = false;
-                registerBtn.textContent = 'Register';
+                registerBtn.textContent = originalBtnText;
             }
         });
 
-        document.getElementById('login-form').addEventListener('submit', e => {
+        // LOGIN
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
             errorMessage.textContent = '';
-            auth.signInWithEmailAndPassword(email, password).catch(error => { errorMessage.textContent = "Invalid email or password."; });
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                errorMessage.textContent = 'Please enter both email and password.';
+                return;
+            }
+
+            loginBtn.disabled = true;
+            const originalLoginText = loginBtn.textContent;
+            loginBtn.textContent = 'Signing in...';
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // onAuthStateChanged will handle redirection if admin record exists
+            } catch (error) {
+                console.error('Login error:', error);
+                // show helpful message — avoid leaking too much but provide actionable message
+                errorMessage.textContent = (error && error.code === 'auth/wrong-password') ? 'Invalid email or password.' : (error && error.message) ? error.message : 'Login failed.';
+                loginBtn.disabled = false;
+                loginBtn.textContent = originalLoginText;
+            }
         });
     </script>
 </body>
