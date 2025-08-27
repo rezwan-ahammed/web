@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Result - SecureExam+</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent-color: #3D52F3; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); --success-color: #28a745; --danger-color: #dc3545; --warning-color: #ffc107; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; margin: 0; color: #121212; }
+        .header { background: #fff; padding: 0 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; height: 70px; }
+        .header h1 { font-size: 1.5rem; }
+        .header a { text-decoration: none; color: var(--accent-color); font-weight: 700; }
+        .container { max-width: 900px; margin: auto; padding: 2rem; }
+        .card { background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 5px 25px var(--shadow-color); margin-bottom: 1.5rem; }
+        .result-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; text-align: center; margin-bottom: 2rem; }
+        .summary-box { background: #f8f9fa; padding: 1.5rem; border-radius: 12px; }
+        .summary-box h3 { margin: 0 0 0.5rem; color: #595959; font-size: 1rem; }
+        .summary-box .score { font-size: 2.5rem; font-weight: 800; }
+        .final-score { color: var(--accent-color); }
+        .question-block { margin-bottom: 2rem; }
+        .question-block h4 { margin-bottom: 1rem; }
+        .mcq-option { list-style: none; padding: 0.75rem 1.25rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid var(--border-color); }
+        .mcq-option.correct { background-color: #eaf7ec; border-color: var(--success-color); }
+        .mcq-option.incorrect { background-color: #fdeaea; border-color: var(--danger-color); }
+        .mcq-option.selected::before { content: 'Your Answer: '; font-weight: bold; }
+        .mcq-option.correct.selected::before { content: 'Correct Answer: '; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Exam Result</h1>
+        <a id="back-to-dashboard" href="student_dashboard.html">&larr; Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <div id="loading-view">
+            <p>Loading your result...</p>
+        </div>
+
+        <div id="result-view" style="display: none;">
+            <div class="card">
+                <h2 id="exam-title" style="text-align: center;"></h2>
+                <div class="result-summary">
+                    <div class="summary-box">
+                        <h3>Teacher's Marks</h3>
+                        <p class="score" id="teacher-marks"></p>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Integrity Score</h3>
+                        <p class="score" id="integrity-score"></p>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Final Calculated Score</h3>
+                        <p class="score final-score" id="final-score"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Answer Breakdown</h2>
+                <div id="answer-breakdown-container"></div>
+            </div>
+        </div>
+
+        <div id="error-view" style="display: none; text-align: center; color: var(--danger-color);">
+            <h2>Error</h2>
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM Elements
+        const loadingView = document.getElementById('loading-view');
+        const resultView = document.getElementById('result-view');
+        const errorView = document.getElementById('error-view');
+        const errorMessage = document.getElementById('error-message');
+
+        // --- AUTH GUARD & DATA FETCHING ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const instId = urlParams.get('instId');
+                const examId = urlParams.get('examId');
+                const studentId = urlParams.get('studentId');
+
+                // Security check: Make sure the logged-in user is the one whose result is being requested.
+                if (user.uid !== studentId) {
+                    return showError("You are not authorized to view this result.");
+                }
+
+                if (!instId || !examId || !studentId) {
+                    return showError("Invalid result link. Information is missing.");
+                }
+                
+                loadResultData(instId, examId, studentId);
+            } else {
+                // Redirect to login if not authenticated
+                window.location.href = 'student_portal.html';
+            }
+        });
+
+        async function loadResultData(instId, examId, studentId) {
+            try {
+                // Fetch all necessary data in parallel for speed
+                const [examSnapshot, sessionSnapshot, resultSnapshot] = await Promise.all([
+                    database.ref(`institutions/${instId}/exams/${examId}`).once('value'),
+                    database.ref(`institutions/${instId}/sessions/${examId}/${studentId}`).once('value'),
+                    database.ref(`institutions/${instId}/results/${examId}/${studentId}`).once('value')
+                ]);
+
+                if (!examSnapshot.exists() || !resultSnapshot.exists()) {
+                    return showError("This result could not be found or has not been published yet.");
+                }
+
+                const exam = examSnapshot.val();
+                const session = sessionSnapshot.val() || { answers: {} }; // Handle case where session might be missing
+                const result = resultSnapshot.val();
+
+                renderResult(exam, session, result);
+
+            } catch (error) {
+                console.error("Error loading result data:", error);
+                showError("Could not load result data. Please try again later.");
+            }
+        }
+
+        function renderResult(exam, session, result) {
+            // --- Render Summary ---
+            document.getElementById('exam-title').textContent = exam.title;
+            document.getElementById('teacher-marks').textContent = result.teacherMarks;
+            document.getElementById('integrity-score').textContent = result.integrityScore;
+            document.getElementById('final-score').textContent = result.finalScore;
+
+            // --- Render Answer Breakdown ---
+            const container = document.getElementById('answer-breakdown-container');
+            container.innerHTML = '';
+            exam.questions.forEach((q, index) => {
+                const qBlock = document.createElement('div');
+                qBlock.className = 'question-block';
+                let content = `<h4>Question ${index + 1}: ${q.text}</h4>`;
+                
+                if (q.type === 'MCQ') {
+                    const studentAnswerIndex = session.answers ? session.answers[index] : -1;
+                    const correctAnswerIndex = q.correct;
+                    content += `<ul style="padding: 0;">`;
+                    q.options.forEach((option, i) => {
+                        let classes = 'mcq-option';
+                        // Style based on correctness and student's selection
+                        if (i == correctAnswerIndex) classes += ' correct';
+                        if (i == studentAnswerIndex && studentAnswerIndex != correctAnswerIndex) classes += ' incorrect';
+                        if (i == studentAnswerIndex) classes += ' selected';
+                        content += `<li class="${classes}">${option}</li>`;
+                    });
+                    content += `</ul>`;
+                } else { // CQ (Written Question)
+                    content += `<p><i>Your written answer for this question was graded by your teacher. Refer to their feedback for details.</i></p>`;
+                }
+                qBlock.innerHTML = content;
+                container.appendChild(qBlock);
+            });
+            
+            // Show the result view
+            loadingView.style.display = 'none';
+            resultView.style.display = 'block';
+        }
+
+        function showError(message) {
+            loadingView.style.display = 'none';
+            resultView.style.display = 'none';
+            errorView.style.display = 'block';
+            errorMessage.textContent = message;
+        }
+    </script>
+</body>
+</html>
