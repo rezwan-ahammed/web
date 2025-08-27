@@ -1,119 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - SecureExam+</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); --danger-color: #dc3545; --success-color: #28a745; --warning-color: #ffc107; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; margin: 0; color: #121212; }
-        .header { background: #fff; padding: 0 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; height: 70px; }
-        .header h1 { font-size: 1.5rem; }
-        .header button { text-decoration: none; color: #595959; font-weight: 700; cursor: pointer; background: none; border: none; font-size: 1rem; padding: 0.5rem 1rem; border-radius: 8px; transition: background-color .2s; }
-        .header button:hover { background-color: #f1f1f1; }
-        .container { max-width: 1200px; margin: auto; padding: 2rem; }
-        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; }
-        .tab-link { padding: 1rem 1.5rem; cursor: pointer; font-weight: 700; color: #595959; border-bottom: 3px solid transparent; }
-        .tab-link.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
-        .tab-content { display: none; } .tab-content.active { display: block; }
-        .card { background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 5px 25px var(--shadow-color); margin-bottom: 1.5rem; }
-        h2, h3 { border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        .btn { display: inline-block; background-color: var(--accent-color); color: #FFF; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; border: none; cursor: pointer; transition: all .3s ease; }
-        .btn:hover { background-color: var(--accent-color-dark); }
-        .btn-danger { background-color: var(--danger-color); }
-        .btn-secondary { background-color: #6c757d; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
-        .list-item-clickable { cursor: pointer; transition: transform .2s, box-shadow .2s; }
-        .list-item-clickable:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--shadow-color); }
-        #exam-link-container { background: #eef1ff; padding: 1rem; border-radius: 8px; display: flex; align-items: center; gap: 1rem; }
-        .review-layout { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
-        .mcq-option { list-style: none; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid var(--border-color); }
-        .mcq-option.correct { background-color: #eaf7ec; } .mcq-option.incorrect { background-color: #fdeaea; }
-        .mcq-option.selected::before { content: '▶ '; font-weight: bold; }
-        .score { font-weight: 700; font-size: 1.2em; padding: 0.5rem 1rem; border-radius: 8px; color: #fff; }
-        .score.high { background-color: var(--success-color); } .score.medium { background-color: var(--warning-color); } .score.low { background-color: var(--danger-color); }
-        .back-btn { display: inline-block; margin-bottom: 1rem; color: var(--accent-color); font-weight: 700; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - SecureExam+</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0,0,0,0.1); --shadow-color: rgba(0,0,0,0.04); --danger-color:#dc3545; --success-color:#28a745; --warning-color:#ffc107; }
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:#F8F9FA; margin:0; }
+    .header { background:#fff; padding:0 2rem; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; height:70px; }
+    .container { max-width:1200px; margin:auto; padding:2rem; }
+    .tabs { display:flex; border-bottom:2px solid var(--border-color); margin-bottom:2rem; }
+    .tab-link { padding:1rem 1.5rem; cursor:pointer; font-weight:700; color:#595959; border-bottom:3px solid transparent; }
+    .tab-link.active { color:var(--accent-color); border-bottom-color:var(--accent-color); }
+    .tab-content { display:none; } .tab-content.active { display:block; }
+    .card { background:#fff; border-radius:12px; padding:2rem; box-shadow:0 5px 25px var(--shadow-color); margin-bottom:1.5rem; }
+    .form-group { margin-bottom:1.5rem; }
+    label { font-weight:700; margin-bottom:0.5rem; display:block; }
+    input, textarea { width:100%; padding:0.75rem; border:1px solid var(--border-color); border-radius:8px; }
+    .btn { background:var(--accent-color); color:#fff; padding:0.6rem 1.2rem; border:none; border-radius:8px; cursor:pointer; }
+    .btn:hover { background:var(--accent-color-dark); }
+    .btn-danger { background:var(--danger-color); }
+    .list-item { display:flex; justify-content:space-between; align-items:center; padding:1rem; border:1px solid var(--border-color); border-radius:8px; margin-bottom:1rem; }
+    .mcq-option { border:1px solid var(--border-color); padding:0.5rem; margin-bottom:0.5rem; border-radius:8px; }
+  </style>
 </head>
 <body>
-    <div class="header"><h1>Dashboard: <span id="institution-name">Loading...</span></h1><button id="logout-btn">Logout</button></div>
-    <div class="container">
-        <div class="tabs">
-            <div class="tab-link active" data-tab="manage">Manage Exams</div>
-            <div class="tab-link" data-tab="examine">Examine Submissions</div>
-        </div>
-        <div id="manage" class="tab-content active"></div>
-        <div id="examine" class="tab-content"></div>
+  <div class="header">
+    <h1>Dashboard: <span id="institution-name">Loading...</span></h1>
+    <button id="logout-btn">Logout</button>
+  </div>
+  <div class="container">
+    <div class="tabs">
+      <div class="tab-link active" data-tab="manage">Manage Exams</div>
+      <div class="tab-link" data-tab="examine">Examine Submissions</div>
     </div>
+    <div id="manage" class="tab-content active"></div>
+    <div id="examine" class="tab-content"></div>
+  </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey:"AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ",
+      authDomain:"mathemate-software.firebaseapp.com",
+      databaseURL:"https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:"mathemate-software",
+      storageBucket:"mathemate-software.appspot.com",
+      messagingSenderId:"780184955321",
+      appId:"YOUR_WEB_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-        let institutionId = null;
-        let appState = { exams: {}, sessions: {}, results: {} };
-        let questionCounter = 0;
+    let institutionId = null;
+    let appState = { exams:{}, results:{} };
 
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                try {
-                    const adminProfile = await database.ref(`admins/${user.uid}`).once('value');
-                    institutionId = adminProfile.val().institutionId;
-                    const instProfile = await database.ref(`institutions/${institutionId}`).once('value');
-                    document.getElementById('institution-name').textContent = instProfile.val().name;
-                    listenForDataChanges();
-                } catch (error) {
-                    alert("Could not load your institution's data.");
-                    auth.signOut();
-                }
-            } else { window.location.href = 'index.html'; }
+    auth.onAuthStateChanged(async user=>{
+      if(!user){ window.location.href="index.html"; return; }
+      const adminSnap = await db.ref(`admins/${user.uid}`).once('value');
+      if(!adminSnap.exists()) { alert("Unauthorized"); auth.signOut(); return; }
+      institutionId = adminSnap.val().institutionId;
+      const instSnap = await db.ref(`institutions/${institutionId}`).once('value');
+      document.getElementById("institution-name").textContent = instSnap.val().name;
+      listenForChanges();
+    });
+
+    function listenForChanges(){
+      db.ref(`institutions/${institutionId}`).on("value",snap=>{
+        const data = snap.val()||{};
+        appState.exams = data.exams||{};
+        appState.results = data.results||{};
+        const active = document.querySelector(".tab-link.active").dataset.tab;
+        if(active==="manage") renderManageExamsView();
+        if(active==="examine") renderExamineExamsView();
+      });
+    }
+
+    document.querySelectorAll(".tab-link").forEach(tab=>{
+      tab.addEventListener("click",()=>{
+        document.querySelectorAll(".tab-link,.tab-content").forEach(el=>el.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.tab).classList.add("active");
+        if(tab.dataset.tab==="manage") renderManageExamsView();
+        if(tab.dataset.tab==="examine") renderExamineExamsView();
+      });
+    });
+
+    // ---------- Manage Exams ----------
+    function renderManageExamsView(){
+      const container=document.getElementById("manage");
+      container.innerHTML="";
+      const btn=document.createElement("button");
+      btn.className="btn"; btn.textContent="Create New Exam";
+      btn.onclick=()=>renderExamForm();
+      container.appendChild(btn);
+
+      const list=document.createElement("div");
+      Object.entries(appState.exams).forEach(([id,exam])=>{
+        const item=document.createElement("div");
+        item.className="list-item";
+        item.innerHTML=`<div><b>${exam.title}</b> (${exam.questions?Object.keys(exam.questions).length:0} questions)</div>`;
+        const actions=document.createElement("div");
+        const edit=document.createElement("button"); edit.className="btn"; edit.textContent="Edit";
+        edit.onclick=()=>renderExamForm(id,exam);
+        const del=document.createElement("button"); del.className="btn btn-danger"; del.textContent="Delete";
+        del.onclick=()=>deleteExam(id);
+        actions.append(edit,del);
+        item.appendChild(actions);
+        list.appendChild(item);
+      });
+      container.appendChild(list);
+    }
+
+    function renderExamForm(examId=null,examData={}){
+      const container=document.getElementById("manage");
+      container.innerHTML="";
+      const form=document.createElement("form");
+      form.className="card";
+      form.innerHTML=`
+        <div class="form-group"><label>Exam Title</label><input type="text" id="exam-title" value="${examData.title||""}" required></div>
+        <div id="questions-container"></div>
+        <button type="button" class="btn" id="add-mcq">Add MCQ</button>
+        <button type="button" class="btn" id="add-short">Add Short Answer</button>
+        <br><br>
+        <button type="submit" class="btn">${examId?"Update":"Create"} Exam</button>
+        <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+      `;
+      container.appendChild(form);
+
+      const qContainer=form.querySelector("#questions-container");
+      const questions=examData.questions||{};
+      Object.entries(questions).forEach(([qid,q])=>addQuestionUI(qContainer,q));
+
+      form.querySelector("#add-mcq").onclick=()=>addQuestionUI(qContainer,{type:"mcq",question:"",options:[""],answer:""});
+      form.querySelector("#add-short").onclick=()=>addQuestionUI(qContainer,{type:"short",question:"",answer:""});
+
+      form.onsubmit=async e=>{
+        e.preventDefault();
+        const title=document.getElementById("exam-title").value.trim();
+        const qNodes=qContainer.querySelectorAll(".q-block");
+        const questions={};
+        qNodes.forEach((block,i)=>{
+          const type=block.dataset.type;
+          const qText=block.querySelector(".q-text").value;
+          if(type==="mcq"){
+            const opts=[...block.querySelectorAll(".opt")].map(o=>o.value);
+            const ans=block.querySelector(".ans").value;
+            questions[`q${i}`]={type,question:qText,options:opts,answer:ans};
+          }else{
+            const ans=block.querySelector(".ans").value;
+            questions[`q${i}`]={type,question:qText,answer:ans};
+          }
         });
-
-        function listenForDataChanges() {
-            database.ref(`institutions/${institutionId}`).on('value', snapshot => {
-                const data = snapshot.val() || {};
-                appState = { exams: data.exams || {}, sessions: data.sessions || {}, results: data.results || {} };
-                const activeTab = document.querySelector('.tab-link.active').dataset.tab;
-                if (activeTab === 'manage') renderManageExamsView();
-                else if (activeTab === 'examine') renderExamineExamsView();
-            });
+        if(examId){
+          await db.ref(`institutions/${institutionId}/exams/${examId}`).set({title,questions});
+        }else{
+          await db.ref(`institutions/${institutionId}/exams`).push({title,questions});
         }
+        renderManageExamsView();
+      };
+      form.querySelector("#cancel-btn").onclick=()=>renderManageExamsView();
+    }
 
-        document.querySelectorAll('.tab-link').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab-link, .tab-content').forEach(el => el.classList.remove('active'));
-                tab.classList.add('active');
-                const tabContent = document.getElementById(tab.dataset.tab);
-                tabContent.classList.add('active');
-                if (tab.dataset.tab === 'manage') renderManageExamsView();
-                if (tab.dataset.tab === 'examine') renderExamineExamsView();
-            });
+    function addQuestionUI(container,q){
+      const block=document.createElement("div");
+      block.className="card q-block"; block.dataset.type=q.type;
+      block.innerHTML=`<div class="form-group"><label>Question</label><input type="text" class="q-text" value="${q.question||""}"></div>`;
+      if(q.type==="mcq"){
+        const opts=document.createElement("div"); opts.className="form-group";
+        opts.innerHTML="<label>Options</label>";
+        (q.options||[""]).forEach(opt=>{
+          const inp=document.createElement("input"); inp.type="text"; inp.className="opt"; inp.value=opt;
+          opts.appendChild(inp);
         });
+        const addOpt=document.createElement("button"); addOpt.type="button"; addOpt.textContent="Add Option"; addOpt.className="btn";
+        addOpt.onclick=()=>{const i=document.createElement("input");i.type="text";i.className="opt";opts.insertBefore(i,addOpt)};
+        opts.appendChild(addOpt);
+        block.appendChild(opts);
+      }
+      const ans=document.createElement("div"); ans.className="form-group";
+      ans.innerHTML=`<label>Answer</label><input type="text" class="ans" value="${q.answer||""}">`;
+      block.appendChild(ans);
+      container.appendChild(block);
+    }
 
-        function renderManageExamsView() { /* Renders the main view for the "Manage Exams" tab */ }
-        function renderExamForm(examId = null) { /* Renders the create/edit form */ }
-        function addQuestion(type, qData = null) { /* Adds a question to the form */ }
-        async function handleExamFormSubmit(e) { /* Handles creating/updating an exam */ }
-        function renderExistingExamsList() { /* Renders the list of exams with Edit/Delete buttons */ }
-        function deleteExam(examId) { /* Deletes an exam and its related data */ }
-        
-        function renderExamineExamsView() { /* Renders the list of exams to grade */ }
-        function renderStudentListView(examId) { /* Renders the list of students for a selected exam */ }
-        function renderDetailedReviewView(examId, userId) { /* Renders the full grading interface */ }
-        async function saveGrade(examId, userId, teacherMarks) { /* Saves the grade to Firebase */ }
-        
-        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
-        // All function bodies are detailed in the previous response and remain the same logically,
-        // but are now structured to render views dynamically from the `appState` object.
-    </script>
+    async function deleteExam(id){
+      if(confirm("Delete this exam?")){
+        await db.ref(`institutions/${institutionId}/exams/${id}`).remove();
+      }
+    }
+
+    // ---------- Examine Submissions ----------
+    function renderExamineExamsView(){
+      const container=document.getElementById("examine");
+      container.innerHTML="";
+      Object.entries(appState.results).forEach(([examId,examResults])=>{
+        const exam=appState.exams[examId];
+        if(!exam) return;
+        const card=document.createElement("div"); card.className="card";
+        card.innerHTML=`<h3>${exam.title}</h3>`;
+        Object.entries(examResults).forEach(([userId,res])=>{
+          const item=document.createElement("div"); item.className="list-item";
+          item.textContent=`${res.studentName||userId} — Score: ${res.score||"N/A"}`;
+          card.appendChild(item);
+        });
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById("logout-btn").onclick=()=>auth.signOut();
+  </script>
 </body>
 </html>
