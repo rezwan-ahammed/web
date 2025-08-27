@@ -63,11 +63,20 @@
 
         auth.onAuthStateChanged(user => {
             if (user) {
+                // This listener's only job now is to check for an existing valid session.
+                // The registration form will handle its own redirect.
                 database.ref(`admins/${user.uid}`).once('value').then(snapshot => {
                     if (snapshot.exists()) { window.location.href = 'admin_dashboard.html'; }
                 });
             }
         });
+        
+        // Check for redirect errors from dashboard
+        const redirectError = sessionStorage.getItem('authError');
+        if(redirectError) {
+            errorMessage.textContent = redirectError;
+            sessionStorage.removeItem('authError');
+        }
 
         document.getElementById('show-register').addEventListener('click', () => { loginView.style.display = 'none'; registerView.style.display = 'block'; errorMessage.textContent = ''; });
         document.getElementById('show-login').addEventListener('click', () => { registerView.style.display = 'none'; loginView.style.display = 'block'; errorMessage.textContent = ''; });
@@ -89,9 +98,13 @@
                 const newInstitutionRef = await database.ref('institutions').push({ name: institutionName, adminUid: createdUser.uid });
                 if (!newInstitutionRef.key) { throw new Error("Database Error: Could not create institution."); }
                 await database.ref(`admins/${createdUser.uid}`).set({ institutionId: newInstitutionRef.key });
-                // If successful, the onAuthStateChanged listener will automatically redirect to the dashboard.
+                
+                // **** CRITICAL FIX: EXPLICIT REDIRECT ****
+                // The user is fully created and data is saved, now we can safely redirect.
+                window.location.href = 'admin_dashboard.html';
+
             } catch (error) {
-                if (createdUser) { await createdUser.delete(); } // Clean up failed registration
+                if (createdUser) { await createdUser.delete(); } 
                 errorMessage.textContent = error.message;
                 registerBtn.disabled = false;
                 registerBtn.textContent = 'Register';
@@ -103,13 +116,12 @@
             errorMessage.textContent = '';
             loginBtn.disabled = true;
             loginBtn.textContent = 'Logging in...';
-
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                // onAuthStateChanged will handle the redirect.
+                // onAuthStateChanged will handle the redirect for a successful login.
             } catch (error) {
                 errorMessage.textContent = "Invalid email or password.";
                 loginBtn.disabled = false;
