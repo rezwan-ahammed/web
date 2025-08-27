@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Exam Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <!-- All styles from the previous version are included here -->
     <style>
         :root { --bg-color: #F8F9FA; --primary-text-color: #121212; --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); --success-color: #28a745; --danger-color: #dc3545; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: var(--primary-text-color); margin: 0; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 50%, #DDEEFF 100%); animation: gradient-animation 20s ease-in-out infinite; background-size: 200% 200%; }
+        @keyframes gradient-animation { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .container { max-width: 1200px; margin: auto; padding: 0 1.5rem; }
         .main-header { position: sticky; top: 0; z-index: 1000; background-color: rgba(248, 249, 250, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); }
         .main-header .container { display: flex; justify-content: space-between; align-items: center; height: 70px; }
@@ -18,17 +19,18 @@
         .content-card { background: #fff; border-radius: 12px; padding: clamp(1.5rem, 5vw, 3rem); box-shadow: 0 10px 40px var(--shadow-color); }
         h2 { font-size: clamp(2rem, 5vw, 2.8rem); text-align: center; margin-bottom: 1rem; }
         .content-card > p { max-width: 600px; margin: 0 auto 3rem; text-align: center; color: #595959; }
-        .view { display: none; }
-        .view.active { display: block; }
+        .view { display: none; } .view.active { display: block; }
         .exam-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem; }
         .proctoring-sidebar { background: linear-gradient(180deg, #F8F9FA, #FFFFFF); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
         #video { width: 100%; border-radius: 8px; transform: scaleX(-1); }
+        .monitoring-status { list-style: none; padding: 0; }
         .monitoring-status li { display: flex; align-items: center; margin-bottom: 1rem; font-weight: 500; }
         .status-indicator { width: 12px; height: 12px; border-radius: 50%; background-color: var(--success-color); margin-right: 1rem; flex-shrink: 0; }
         .status-indicator.flagged { background-color: var(--danger-color); }
         #integrity-score { font-size: 2.5em; font-weight: 800; color: var(--accent-color); }
         .exam-paper { border: 1px solid var(--border-color); padding: 2rem; border-radius: 12px; height: 500px; overflow-y: auto; }
         .question-block { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
+        .mcq-option { margin-bottom: 0.5rem; }
         .cta-button { display: inline-block; background-color: var(--accent-color); color: #FFF; padding: 1rem 2.5rem; border-radius: 8px; font-weight: 500; border: none; cursor: pointer; transition: all .3s ease; }
         .cta-button:disabled { background-color: #ccc; cursor: not-allowed; }
         .cta-button:hover:not(:disabled) { background-color: var(--accent-color-dark); transform: translateY(-2px); }
@@ -39,25 +41,63 @@
     </style>
 </head>
 <body>
-    <!-- Header remains the same, timer will be populated by JS -->
     <header class="main-header"><div class="container"><a href="#" class="logo">SecureExam+</a><div id="header-info" class="header-info" style="display: none;"><h3 id="exam-title-header"></h3><p id="exam-timer">Time Left: --:--</p></div></div></header>
     
     <main class="page-wrapper"><div class="container"><div class="content-card">
         <div id="initial-loader" class="view active" style="text-align: center;"><h2>Loading Exam...</h2><p>Please wait while we initialize your secure session.</p></div>
-        <div id="error-view" class="view" style="text-align: center; color: var(--danger-color);"><h2>Error</h2><p id="error-message"></p></div>
-        <!-- Other views (verification, exam, upload, submission) are unchanged structurally -->
-        <div id="exam-view" class="view">...</div>
-        <div id="upload-view" class="view">...</div>
-        <div id="submission-view" class="view">...</div>
+        <div id="error-view" class="view" style="text-align: center; color: var(--danger-color);"><h2>An Error Occurred</h2><p id="error-message"></p></div>
+        
+        <div id="exam-view" class="view">
+            <div class="exam-layout">
+                <div class="exam-content">
+                    <div class="exam-paper" id="exam-paper-content"></div>
+                    <div class="button-group" style="text-align: center; margin-top: 2rem;">
+                        <button id="finish-writing-btn" class="cta-button">Finish Writing & Proceed to Upload</button>
+                    </div>
+                </div>
+                <div class="proctoring-sidebar">
+                    <h3>Live Monitoring</h3>
+                    <div id="video-container"><video id="video" autoplay muted playsinline></video></div>
+                    <ul class="monitoring-status">
+                        <li><span id="status-face" class="status-indicator"></span>Face Presence</li>
+                        <li><span id="status-objects" class="status-indicator"></span>Prohibited Objects</li>
+                        <li><span id="status-audio" class="status-indicator"></span>Unusual Noise</li>
+                        <li><span id="status-browser" class="status-indicator"></span>Browser Focus</li>
+                    </ul>
+                    <div id="integrity-score-display" style="text-align: center; margin-top: 2rem;">
+                        <p>Integrity Score</p><span id="integrity-score">100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="upload-view" class="view">
+            <h2>Answer Sheet Submission</h2>
+            <p>Time is up. You now have a <strong id="upload-grace-period">5 minute</strong> grace period to capture and upload a clear picture of your answer sheet. Proctoring is paused.</p>
+            <div id="upload-area">
+                <input type="file" id="answer-sheet-input" accept="image/*" style="display: none;">
+                <label for="answer-sheet-input" id="upload-label" class="cta-button">Click to Select Answer Sheet Image</label>
+                <img id="image-preview" src="" alt="Image Preview" style="display: none;">
+            </div>
+            <div class="button-group" style="text-align: center; margin-top: 2rem;">
+                <button id="submit-answersheet-btn" class="cta-button" disabled>Submit Final Answer Sheet</button>
+            </div>
+        </div>
+
+        <div id="submission-view" class="view" style="text-align: center;">
+            <h2>Exam Submitted Successfully</h2>
+            <p>Your responses and answer sheet have been recorded. You may now close this window.</p>
+            <p style="font-size: 4em; margin-top: 2rem;">✅</p>
+        </div>
     </div></div></main>
     
     <footer class="footer"><p>© 2025 SecureExam+. All Rights Reserved.</p></footer>
 
-    <!-- Firebase SDKs: App, Database, and now Storage -->
+    <!-- Firebase SDKs: App, Database, and Storage -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
-    <!-- AI Libraries are unchanged -->
+    <!-- AI Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -71,54 +111,54 @@
         
         // --- State, Timers, and Firebase Refs ---
         let examData, sessionState, examId, userId, sessionRef;
-        let mainTimerInterval, uploadTimerInterval;
+        let mainTimerInterval, uploadTimerInterval, stream;
+        let monitoringIntervals = [];
         const UPLOAD_GRACE_PERIOD = 300; // 5 minutes
 
-        // --- All DOM Elements are unchanged ---
+        // --- DOM Elements (condensed for brevity) ---
+        const views = { loader: document.getElementById('initial-loader'), error: document.getElementById('error-view'), exam: document.getElementById('exam-view'), upload: document.getElementById('upload-view'), submission: document.getElementById('submission-view') };
+        const video = document.getElementById('video');
 
-        window.onload = () => {
+        window.onload = async () => {
+            log('Page loaded. Initializing session.');
             const urlParams = new URLSearchParams(window.location.search);
             examId = urlParams.get('id');
 
             if (!examId) {
-                showError("No Exam ID provided in the URL. Please use the link from your administrator.");
-                return;
+                return showError("No Exam ID provided in URL. Please use the link from your administrator.");
             }
-
-            // Simulate a persistent user ID for the session. In a real app, this comes from Firebase Auth.
-            userId = sessionStorage.getItem('userId');
-            if (!userId) {
-                userId = 'user_' + Math.random().toString(36).substr(2, 9);
-                sessionStorage.setItem('userId', userId);
-            }
-
+            // Use a persistent user ID. In a real app, this would come from Firebase Auth.
+            userId = sessionStorage.getItem('userId') || 'user_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('userId', userId);
+            
             sessionRef = database.ref(`sessions/${examId}/${userId}`);
+            
+            try {
+                // Step 1: Fetch the main exam data. This is required for everyone.
+                const examSnapshot = await database.ref(`exams/${examId}`).once('value');
+                if (!examSnapshot.exists()) {
+                    return showError("The provided Exam ID is invalid. Please check the link.");
+                }
+                examData = examSnapshot.val();
 
-            sessionRef.once('value').then(snapshot => {
-                if (snapshot.exists()) {
+                // Step 2: Now check if a session for this user already exists.
+                const sessionSnapshot = await sessionRef.once('value');
+                if (sessionSnapshot.exists()) {
                     log('Found existing session. Resuming...');
-                    resumeSession(snapshot.val());
+                    await resumeSession(sessionSnapshot.val());
                 } else {
                     log('No existing session. Creating new one...');
-                    fetchExamAndInitialize();
+                    await initializeNewSession();
                 }
-            }).catch(err => showError("Could not connect to Firebase. Please check your connection and the Exam ID."));
+            } catch (err) {
+                console.error("Firebase Initialization Error:", err);
+                showError(`Could not connect to the database. [REASON: ${err.message}]. Please check your connection and security rules.`);
+            }
         };
 
-        function fetchExamAndInitialize() {
-            database.ref(`exams/${examId}`).once('value').then(snapshot => {
-                if (!snapshot.exists()) {
-                    showError("The provided Exam ID is invalid. Please check the link.");
-                    return;
-                }
-                examData = snapshot.val();
-                initializeNewSession();
-            });
-        }
-
-        function initializeNewSession() {
+        async function initializeNewSession() {
             sessionState = {
-                phase: 'IN_PROGRESS', // Assuming verification is passed
+                phase: 'IN_PROGRESS', // We'll skip verification for this example
                 integrityScore: 100,
                 timeLeft: examData.duration * 60,
                 uploadTimeLeft: UPLOAD_GRACE_PERIOD,
@@ -126,28 +166,41 @@
                 flags: [],
                 startTime: firebase.database.ServerValue.TIMESTAMP
             };
-            sessionRef.set(sessionState).then(() => {
+            // This is a critical step. If it fails, we must show an error.
+            try {
+                await sessionRef.set(sessionState);
                 log('New session created in Firebase.');
-                startExam();
-            });
+                await startExam();
+            } catch (err) {
+                console.error("Failed to create session:", err);
+                showError(`Could not create your session in the database. [REASON: ${err.message}]. This is often due to Firebase security rules not allowing writes.`);
+            }
         }
         
-        function resumeSession(state) {
+        async function resumeSession(state) {
             sessionState = state;
-            database.ref(`exams/${examId}`).once('value').then(snapshot => {
-                examData = snapshot.val();
-                log(`Resuming at phase: ${sessionState.phase}`);
-                if (sessionState.phase === 'IN_PROGRESS') startExam();
-                else if (sessionState.phase === 'UPLOADING') initiateUploadPhase(true); // true = isResume
-                else if (sessionState.phase === 'SUBMITTED') switchView('submission');
-            });
+            log(`Resuming at phase: ${sessionState.phase}`);
+            if (sessionState.phase === 'IN_PROGRESS') await startExam();
+            else if (sessionState.phase === 'UPLOADING') initiateUploadPhase(true); // true = isResume
+            else if (sessionState.phase === 'SUBMITTED') switchView('submission');
         }
 
-        function startExam() {
+        async function startExam() {
             switchView('exam');
             renderExam();
             startMainTimer();
-            // Start proctoring logic would go here
+            try {
+                // Initialize camera and start monitoring
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                video.srcObject = stream;
+                // AI Model loading should be here in a real app
+                startVisualMonitoring();
+                startAudioMonitoring();
+                startBrowserMonitoring();
+            } catch(err) {
+                alert("Could not access camera/microphone. Proctoring will be disabled.");
+                log("Camera/Mic Error: " + err.message);
+            }
         }
         
         function updateStateInFirebase(updates) {
@@ -156,14 +209,61 @@
             }
         }
         
-        function renderExam() { /* Unchanged from previous version */ }
-        function startMainTimer() { /* Unchanged, but calls updateStateInFirebase instead of saveState */ }
+        function renderExam() {
+            document.getElementById('exam-title-header').textContent = examData.title;
+            const container = document.getElementById('exam-paper-content');
+            container.innerHTML = '';
+            examData.questions.forEach((q, index) => {
+                const qBlock = document.createElement('div');
+                qBlock.className = 'question-block';
+                let content = `<h4>Question ${index + 1}: ${q.text}</h4>`;
+                if (q.type === 'MCQ') {
+                    content += `<div class="mcq-options">${q.options.map((opt, i) => `<div class="mcq-option"><input type="radio" name="q${index}" id="q${index}o${i}" value="${i}" ${sessionState.answers[index] == i ? 'checked' : ''}><label for="q${index}o${i}">${opt}</label></div>`).join('')}</div>`;
+                } else {
+                    content += `<p><i>(Write your answer on your notebook)</i></p>`;
+                }
+                qBlock.innerHTML = content;
+                container.appendChild(qBlock);
+            });
+            // Attach event listeners for saving answers
+            container.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const qIndex = e.target.name.replace('q','');
+                    const updates = {};
+                    updates[`answers/${qIndex}`] = e.target.value;
+                    updateStateInFirebase(updates);
+                    log(`Answer for Q${qIndex} saved to Firebase.`);
+                });
+            });
+        }
+        
+        function startMainTimer() { /* The timer logic is identical to previous version, but calls updateStateInFirebase */ 
+            document.getElementById('header-info').style.display = 'flex';
+            mainTimerInterval = setInterval(() => {
+                sessionState.timeLeft--;
+                const minutes = Math.floor(sessionState.timeLeft / 60);
+                const seconds = sessionState.timeLeft % 60;
+                document.getElementById('exam-timer').textContent = `Time Left: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                if (sessionState.timeLeft % 10 === 0) { // Update Firebase every 10 seconds to reduce writes
+                    updateStateInFirebase({ timeLeft: sessionState.timeLeft });
+                }
+                if (sessionState.timeLeft <= 0) {
+                    clearInterval(mainTimerInterval);
+                    initiateUploadPhase();
+                }
+            }, 1000);
+        }
+
+        document.getElementById('finish-writing-btn').addEventListener('click', () => {
+            if (confirm("Are you sure you want to finish writing? You cannot return to the questions.")) {
+                clearInterval(mainTimerInterval);
+                initiateUploadPhase();
+            }
+        });
 
         function initiateUploadPhase(isResume = false) {
             log('Initiating upload phase.');
-            // Stop monitoring, update phase in Firebase
             if (!isResume) {
-                clearInterval(mainTimerInterval);
                 stopMonitoring();
                 sessionState.phase = 'UPLOADING';
                 updateStateInFirebase({ phase: 'UPLOADING', timeLeft: 0 });
@@ -172,49 +272,79 @@
             startUploadTimer();
         }
         
-        function startUploadTimer() { /* Unchanged, but calls updateStateInFirebase */ }
+        function startUploadTimer() { /* Timer logic is identical, but calls updateStateInFirebase */
+            const timerEl = document.getElementById('upload-grace-period');
+            uploadTimerInterval = setInterval(() => {
+                sessionState.uploadTimeLeft--;
+                const minutes = Math.floor(sessionState.uploadTimeLeft / 60);
+                const seconds = sessionState.uploadTimeLeft % 60;
+                timerEl.textContent = `${minutes} minute(s) and ${seconds} second(s)`;
+                if (sessionState.uploadTimeLeft % 10 === 0) {
+                    updateStateInFirebase({ uploadTimeLeft: sessionState.uploadTimeLeft });
+                }
+                if (sessionState.uploadTimeLeft <= 0) {
+                    clearInterval(uploadTimerInterval);
+                    submitFinalExam();
+                }
+            }, 1000);
+        }
 
-        // --- Firebase Storage Image Upload ---
-        const answerSheetInput = document.getElementById('answer-sheet-input');
-        answerSheetInput.addEventListener('change', (e) => {
+        // --- Image Upload Handling with Firebase Storage ---
+        document.getElementById('answer-sheet-input').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
+            const uploadLabel = document.getElementById('upload-label');
+            uploadLabel.textContent = 'Uploading...';
+            document.getElementById('submit-answersheet-btn').disabled = true;
+
             const uploadTask = storage.ref(`answer_sheets/${examId}/${userId}.jpg`).put(file);
-            
             uploadTask.on('state_changed', 
-                (snapshot) => { /* Can show progress here */ }, 
-                (error) => { console.error(error); alert("Upload failed!"); },
-                () => { // On Complete
+                (snapshot) => { let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; uploadLabel.textContent = `Uploading... ${Math.round(progress)}%`; }, 
+                (error) => { console.error(error); alert("Upload failed!"); uploadLabel.textContent = 'Upload Failed. Try Again.'; },
+                () => {
                     uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                         log('File uploaded successfully. URL: ' + downloadURL);
                         updateStateInFirebase({ answerSheetUrl: downloadURL });
                         document.getElementById('submit-answersheet-btn').disabled = false;
                         document.getElementById('image-preview').src = downloadURL;
                         document.getElementById('image-preview').style.display = 'block';
+                        uploadLabel.style.display = 'none'; // Hide the upload button after success
                     });
                 }
             );
         });
 
+        document.getElementById('submit-answersheet-btn').addEventListener('click', submitFinalExam);
+
         function submitFinalExam() {
             clearInterval(uploadTimerInterval);
-            updateStateInFirebase({ phase: 'SUBMITTED', uploadTimeLeft: 0 });
+            updateStateInFirebase({ phase: 'SUBMITTED', uploadTimeLeft: 0, submissionTime: firebase.database.ServerValue.TIMESTAMP });
             log('Final submission complete.');
             switchView('submission');
         }
 
         // --- UI and Logging ---
         function showError(message) {
-            document.getElementById('initial-loader').classList.remove('active');
-            const errorView = document.getElementById('error-view');
+            switchView('error');
             document.getElementById('error-message').textContent = message;
-            errorView.classList.add('active');
         }
         function log(message) { console.log(`[${new Date().toLocaleTimeString()}] ${message}`); }
-        function switchView(viewName) { /* Unchanged */ }
-        // All other helper and proctoring functions (logFlag, stopMonitoring, etc.) would be adapted
-        // to call `updateStateInFirebase` instead of modifying a local-only state.
+        function switchView(viewName) { 
+            Object.values(views).forEach(v => v.classList.remove('active'));
+            views[viewName].classList.add('active');
+        }
+        
+        function stopMonitoring() {
+            monitoringIntervals.forEach(clearInterval);
+            if(stream) { stream.getTracks().forEach(track => track.stop()); }
+            log('All monitoring processes terminated.');
+        }
+
+        // --- Proctoring Stubs (logic would be added here) ---
+        function startVisualMonitoring() { log("Visual monitoring started."); }
+        function startAudioMonitoring() { log("Audio monitoring started."); }
+        function startBrowserMonitoring() { log("Browser monitoring started."); }
     </script>
 </body>
 </html>
