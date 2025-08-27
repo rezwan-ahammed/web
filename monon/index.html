@@ -114,8 +114,14 @@
             box-shadow: 0 4px 15px rgba(61, 82, 243, 0.2);
             transition: all .3s ease;
         }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
-        .btn:hover {
+        .btn:hover:not(:disabled) {
             background-color: var(--accent-color-dark);
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(61, 82, 243, 0.3);
@@ -164,7 +170,7 @@
                 <div class="form-group"><label for="register-institution">Institution Name</label><input type="text" id="register-institution" required></div>
                 <div class="form-group"><label for="register-email">Admin Email</label><input type="email" id="register-email" required></div>
                 <div class="form-group"><label for="register-password">Password (min. 6 characters)</label><input type="password" id="register-password" minlength="6" required></div>
-                <button type="submit" class="btn">Register</button>
+                <button type="submit" class="btn" id="register-btn">Register</button>
             </form>
             <p class="toggle-link">Already registered? <a id="show-login">Login here</a></p>
         </div>
@@ -186,12 +192,21 @@
         const loginView = document.getElementById('login-view');
         const registerView = document.getElementById('register-view');
         const errorMessage = document.getElementById('error-message');
+        const registerBtn = document.getElementById('register-btn');
 
         // --- Auth Guard: Redirect if already logged in ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                // User is signed in, redirect to the dashboard.
-                window.location.href = 'admin_dashboard.html';
+                // User is signed in, check if their admin profile exists before redirecting
+                database.ref(`admins/${user.uid}`).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        window.location.href = 'admin_dashboard.html';
+                    }
+                    // If profile doesn't exist, they might be in the middle of a failed registration.
+                    // Staying on this page is the correct behavior.
+                }).catch(err => {
+                    errorMessage.textContent = "Could not verify admin profile. Please try again.";
+                });
             }
         });
 
@@ -207,47 +222,55 @@
             errorMessage.textContent = '';
         });
 
-        // --- Registration Logic ---
-        document.getElementById('register-form').addEventListener('submit', e => {
+        // --- FIXED Registration Logic ---
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const institutionName = document.getElementById('register-institution').value;
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
             errorMessage.textContent = '';
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Registering...';
 
-            // Step 1: Create the user in Firebase Auth
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    const user = userCredential.user;
-                    
-                    // Step 2: Create the institution record in the Realtime Database
-                    const institutionRef = database.ref('institutions').push({
-                        name: institutionName,
-                        adminUid: user.uid
-                    });
+            let createdUser = null;
 
-                    // Step 3: Link the admin's UID to their new institution's ID
-                    return database.ref(`admins/${user.uid}`).set({
-                        institutionId: institutionRef.key
-                    });
-                })
-                .then(() => {
-                    // The onAuthStateChanged listener will handle the redirect.
-                    // This block is intentionally empty.
-                })
-                .catch(error => {
-                    // Provide user-friendly error messages
-                    switch (error.code) {
-                        case 'auth/email-already-in-use':
-                            errorMessage.textContent = 'This email address is already registered.';
-                            break;
-                        case 'auth/weak-password':
-                            errorMessage.textContent = 'Password should be at least 6 characters.';
-                            break;
-                        default:
-                            errorMessage.textContent = error.message;
-                    }
+            try {
+                // Step 1: Create the user in Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                createdUser = userCredential.user;
+
+                // Step 2: Create the institution record in the Realtime Database and get its key
+                const newInstitutionRef = await database.ref('institutions').push({
+                    name: institutionName,
+                    adminUid: createdUser.uid
                 });
+                const newInstitutionId = newInstitutionRef.key;
+
+                if (!newInstitutionId) {
+                    throw new Error("Failed to get new institution ID from Firebase.");
+                }
+
+                // Step 3: Link the admin's UID to their new institution's ID
+                await database.ref(`admins/${createdUser.uid}`).set({
+                    institutionId: newInstitutionId
+                });
+                
+                // If all steps succeed, the onAuthStateChanged listener will handle the redirect.
+
+            } catch (error) {
+                // This block handles errors from any of the `await` steps.
+                errorMessage.textContent = error.message;
+
+                // Cleanup: If the Auth user was created but a database step failed, delete the user
+                // to allow them to try registering again with the same email.
+                if (createdUser) {
+                    await createdUser.delete();
+                    console.log("Partial registration cleaned up for user: " + email);
+                }
+
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Register';
+            }
         });
 
         // --- Login Logic ---
@@ -262,14 +285,7 @@
                     // The onAuthStateChanged listener will handle the redirect.
                 })
                 .catch(error => {
-                    switch (error.code) {
-                        case 'auth/user-not-found':
-                        case 'auth/wrong-password':
-                            errorMessage.textContent = 'Invalid email or password.';
-                            break;
-                        default:
-                            errorMessage.textContent = error.message;
-                    }
+                    errorMessage.textContent = "Invalid email or password.";
                 });
         });
     </script>
