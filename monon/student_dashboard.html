@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - SecureExam+</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent-color: #3D52F3; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; margin: 0; color: #121212; }
+        .header { background: #fff; padding: 0 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; height: 70px; }
+        .header h1 { font-size: 1.5rem; }
+        .header .user-info { text-align: right; }
+        .header .user-info p { margin: 0; font-size: 0.9em; color: #595959; }
+        .header button { text-decoration: none; color: #595959; font-weight: 700; cursor: pointer; background: none; border: none; font-size: 1rem; padding: 0.5rem 1rem; border-radius: 8px; transition: background-color .2s; }
+        .header button:hover { background-color: #f1f1f1; }
+        .container { max-width: 900px; margin: auto; padding: 2rem; }
+        .page-title { text-align: center; margin-bottom: 2.5rem; }
+        .result-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 1.5rem 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .result-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px var(--shadow-color);
+        }
+        .result-card h3 { margin: 0; font-size: 1.4rem; }
+        .result-card p { margin: 5px 0 0; color: #595959; }
+        .final-score {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            text-align: right;
+        }
+        .final-score span {
+            font-size: 0.5em;
+            font-weight: 500;
+            color: #595959;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Student Dashboard</h1>
+        <div class="header-controls">
+            <div id="user-info" class="user-info" style="display: inline-block; vertical-align: middle; margin-right: 1rem;">
+                <h3 id="student-name">Loading...</h3>
+                <p id="student-email"></p>
+            </div>
+            <button id="logout-btn">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-title">
+            <h2>My Graded Exams</h2>
+            <p>Click on an exam to view your detailed results.</p>
+        </div>
+        <div id="results-container">
+            <p>Loading your results...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const resultsContainer = document.getElementById('results-container');
+        let currentUser = null;
+
+        // --- AUTH GUARD ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                loadDashboard();
+            } else {
+                // No user is signed in. Redirect to the student portal.
+                window.location.href = 'student_portal.html';
+            }
+        });
+
+        async function loadDashboard() {
+            try {
+                // 1. Fetch student's profile info to display in header
+                const studentProfileSnapshot = await database.ref(`students/${currentUser.uid}`).once('value');
+                if (studentProfileSnapshot.exists()) {
+                    const studentProfile = studentProfileSnapshot.val();
+                    document.getElementById('student-name').textContent = studentProfile.fullName;
+                    document.getElementById('student-email').textContent = studentProfile.email;
+                }
+
+                // 2. Fetch all results data across all institutions
+                const resultsRef = database.ref('institutions');
+                const institutionsSnapshot = await resultsRef.once('value');
+                
+                if (!institutionsSnapshot.exists()) {
+                    resultsContainer.innerHTML = '<p>No results have been published yet.</p>';
+                    return;
+                }
+                
+                const allResults = [];
+                const institutions = institutionsSnapshot.val();
+
+                // This nested loop structure is necessary to find the student's results
+                // across all institutions and all exams.
+                for (const instId in institutions) {
+                    if (institutions[instId].results) {
+                        for (const examId in institutions[instId].results) {
+                            if (institutions[instId].results[examId][currentUser.uid]) {
+                                // This student has a result for this exam!
+                                const result = institutions[instId].results[examId][currentUser.uid];
+                                const examInfo = institutions[instId].exams[examId];
+                                allResults.push({
+                                    instId,
+                                    examId,
+                                    examTitle: examInfo.title,
+                                    finalScore: result.finalScore
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                renderResults(allResults);
+
+            } catch (error) {
+                console.error("Error loading dashboard:", error);
+                resultsContainer.innerHTML = `<p style="color:red;">Could not load your results. Please try again later.</p>`;
+            }
+        }
+
+        function renderResults(results) {
+            resultsContainer.innerHTML = '';
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<p>No results have been published yet. Check back later!</p>';
+                return;
+            }
+
+            results.forEach(result => {
+                const card = document.createElement('a');
+                card.className = 'result-card';
+                // Pass all necessary info in the URL to the result page
+                card.href = `result.html?instId=${result.instId}&examId=${result.examId}&studentId=${currentUser.uid}`;
+                
+                card.innerHTML = `
+                    <div class="result-info">
+                        <h3>${result.examTitle}</h3>
+                        <p>Click to view details</p>
+                    </div>
+                    <div class="final-score">
+                        ${result.finalScore}<span>/100</span>
+                    </div>
+                `;
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        // --- Logout ---
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            auth.signOut();
+        });
+    </script>
+</body>
+</html>
