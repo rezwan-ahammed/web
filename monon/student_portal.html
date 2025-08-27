@@ -1,98 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal - SecureExam+</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.05); --danger-color: #dc3545; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 100%); margin: 0; }
-        .portal-container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 40px var(--shadow-color); width: 100%; max-width: 500px; }
-        h1 { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 0.5rem; }
-        p { text-align: center; color: #595959; margin-bottom: 2rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
-        input { width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        .btn { display: block; width: 100%; background-color: var(--accent-color); color: #FFF; padding: 0.9rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 1.1rem; transition: all .3s ease; }
-        .btn:hover:not(:disabled) { background-color: var(--accent-color-dark); transform: translateY(-3px); }
-        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
-        .toggle-link { text-align: center; margin-top: 1.5rem; }
-        .toggle-link a { color: var(--accent-color); font-weight: 700; cursor: pointer; }
-        #error-message { color: var(--danger-color); text-align: center; margin-top: 1rem; font-weight: 500; min-height: 1.2em; }
-        .view { display: none; } .view.active { display: block; }
-        #camera-feed, #photo-preview { width: 100%; max-width: 300px; margin: 1rem auto; display: block; border-radius: 8px; border: 1px solid var(--border-color); transform: scaleX(-1); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal - SecureExam+</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent-color: #3D52F3;
+      --accent-color-dark: #2335D8;
+      --border-color: rgba(0, 0, 0, 0.1);
+      --shadow-color: rgba(0, 0, 0, 0.05);
+      --danger-color: #dc3545;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 100%);
+      margin: 0;
+    }
+    .portal-container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px var(--shadow-color);
+      width: 100%;
+      max-width: 500px;
+    }
+    h1 { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 0.5rem; }
+    p { text-align: center; color: #595959; margin-bottom: 2rem; }
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
+    input {
+      width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--border-color);
+      border-radius: 8px; font-size: 1rem; box-sizing: border-box;
+    }
+    .btn {
+      display: block; width: 100%; background-color: var(--accent-color);
+      color: #FFF; padding: 0.9rem; border-radius: 8px; font-weight: 700;
+      border: none; cursor: pointer; font-size: 1.1rem; transition: all .3s ease;
+    }
+    .btn:hover:not(:disabled) { background-color: var(--accent-color-dark); transform: translateY(-3px); }
+    .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    .toggle-link { text-align: center; margin-top: 1.5rem; }
+    .toggle-link a { color: var(--accent-color); font-weight: 700; cursor: pointer; }
+    #error-message { color: var(--danger-color); text-align: center; margin-top: 1rem; font-weight: 500; min-height: 1.2em; }
+    .view { display: none; }
+    .view.active { display: block; }
+    #camera-feed, #photo-preview {
+      width: 100%; max-width: 300px; margin: 1rem auto; display: block;
+      border-radius: 8px; border: 1px solid var(--border-color); transform: scaleX(-1);
+    }
+  </style>
 </head>
 <body>
-    <div class="portal-container">
-        <div id="login-view" class="view active">
-            <h1>Student Login</h1><p>Welcome back! Please sign in.</p>
-            <form id="login-form">
-                <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
-                <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
-                <button type="submit" class="btn">Login</button>
-            </form>
-            <p class="toggle-link">New Student? <a id="show-register">Create an account</a></p>
+  <div class="portal-container">
+    <!-- LOGIN VIEW -->
+    <div id="login-view" class="view active">
+      <h1>Student Login</h1>
+      <p>Welcome back! Please sign in.</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" required>
         </div>
-        <div id="register-view" class="view">
-            <h1>Student Registration</h1><p>Step 1 of 3: Create your account.</p>
-            <form id="register-form">
-                <div class="form-group"><label for="register-email">Email</label><input type="email" id="register-email" required></div>
-                <div class="form-group"><label for="register-password">Password (min. 6 characters)</label><input type="password" id="register-password" minlength="6" required></div>
-                <button type="submit" class="btn">Next: Profile Information</button>
-            </form>
-            <p class="toggle-link">Already have an account? <a id="show-login">Login here</a></p>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required>
         </div>
-        <div id="profile-setup-view" class="view">
-            <h1>Complete Your Profile</h1><p>Step 2 & 3: Information and Photo</p>
-            <form id="profile-form">
-                <div class="form-group"><label for="profile-name">Full Name</label><input type="text" id="profile-name" required></div>
-                <div class="form-group"><label for="profile-studentid">Student ID Number</label><input type="text" id="profile-studentid" required></div>
-                <p style="font-weight:700; margin-bottom: 1rem;">Profile Photo</p>
-                <video id="camera-feed" autoplay playsinline></video>
-                <img id="photo-preview" style="display:none;"><canvas id="photo-canvas" style="display:none;"></canvas>
-                <button type="button" class="btn" id="capture-photo-btn" style="background-color: #6c757d; margin-bottom: 1rem;">Capture Photo</button>
-                <button type="submit" class="btn" id="complete-profile-btn" disabled>Complete Registration</button>
-            </form>
-        </div>
-        <p id="error-message"></p>
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <p class="toggle-link">New Student? <a id="show-register">Create an account</a></p>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
-    <script>
-        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
-        const storage = firebase.storage();
-        
-        const views = { login: document.getElementById('login-view'), register: document.getElementById('register-view'), profile: document.getElementById('profile-setup-view') };
-        const errorMessage = document.getElementById('error-message');
-        let capturedPhotoBlob = null;
-        let currentUser = null;
+    <!-- REGISTER VIEW -->
+    <div id="register-view" class="view">
+      <h1>Student Registration</h1>
+      <p>Step 1 of 3: Create your account.</p>
+      <form id="register-form">
+        <div class="form-group">
+          <label for="register-email">Email</label>
+          <input type="email" id="register-email" required>
+        </div>
+        <div class="form-group">
+          <label for="register-password">Password (min. 6 characters)</label>
+          <input type="password" id="register-password" minlength="6" required>
+        </div>
+        <button type="submit" class="btn">Next: Profile Information</button>
+      </form>
+      <p class="toggle-link">Already have an account? <a id="show-login">Login here</a></p>
+    </div>
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                database.ref(`students/${user.uid}`).once('value').then(snapshot => {
-                    if (snapshot.exists() && snapshot.val().profilePhotoUrl) {
-                        window.location.href = 'student_dashboard.html';
-                    } else {
-                        switchView('profile');
-                        startCamera();
-                    }
-                });
-            }
+    <!-- PROFILE SETUP VIEW -->
+    <div id="profile-setup-view" class="view">
+      <h1>Complete Your Profile</h1>
+      <p>Step 2 & 3: Information and Photo</p>
+      <form id="profile-form">
+        <div class="form-group">
+          <label for="profile-name">Full Name</label>
+          <input type="text" id="profile-name" required>
+        </div>
+        <div class="form-group">
+          <label for="profile-studentid">Student ID Number</label>
+          <input type="text" id="profile-studentid" required>
+        </div>
+        <p style="font-weight:700; margin-bottom: 1rem;">Profile Photo</p>
+        <video id="camera-feed" autoplay playsinline></video>
+        <img id="photo-preview" style="display:none;">
+        <canvas id="photo-canvas" style="display:none;"></canvas>
+        <button type="button" class="btn" id="capture-photo-btn" style="background-color: #6c757d; margin-bottom: 1rem;">Capture Photo</button>
+        <button type="submit" class="btn" id="complete-profile-btn" disabled>Complete Registration</button>
+      </form>
+    </div>
+
+    <p id="error-message"></p>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
+
+  <script>
+    // ✅ Replace YOUR_WEB_APP_ID with your actual Firebase App ID
+    const firebaseConfig = {
+      apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ",
+      authDomain: "mathemate-software.firebaseapp.com",
+      databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "mathemate-software",
+      storageBucket: "mathemate-software.appspot.com",
+      messagingSenderId: "780184955321",
+      appId: "1:780184955321:web:xxxxxxxxxxxxxxxx" // <-- put your real appId here
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+    const storage = firebase.storage();
+
+    const views = {
+      login: document.getElementById('login-view'),
+      register: document.getElementById('register-view'),
+      profile: document.getElementById('profile-setup-view')
+    };
+    const errorMessage = document.getElementById('error-message');
+    let capturedPhotoBlob = null;
+    let currentUser = null;
+    let cameraStream = null;
+
+    // Auth state
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        database.ref(`students/${user.uid}`).once('value').then(snapshot => {
+          if (snapshot.exists() && snapshot.val().profilePhotoUrl) {
+            window.location.href = 'student_dashboard.html';
+          } else {
+            switchView('profile');
+            startCamera();
+          }
         });
+      }
+    });
 
-        function switchView(viewName) { Object.values(views).forEach(v => v.classList.remove('active')); views[viewName].classList.add('active'); errorMessage.textContent = ''; }
-        document.getElementById('show-register').addEventListener('click', () => switchView('register'));
-        document.getElementById('show-login').addEventListener('click', () => switchView('login'));
-        
-        document.getElementById('register-form').addEventListener('submit', e => {
-            e.preventDefault();
-    
+    function switchView(viewName) {
+      Object.values(views).forEach(v => v.classList.remove('active'));
+      views[viewName].classList.add('active');
+      errorMessage.textContent = '';
+    }
+
+    document.getElementById('show-register').addEventListener('click', () => switchView('register'));
+    document.getElementById('show-login').addEventListener('click', () => switchView('login'));
+
+    // Register
+    document.getElementById('register-form').addEventListener('submit', e => {
+      e.preventDefault();
+      errorMessage.textContent = '';
+      auth.createUserWithEmailAndPassword(
+        e.target['register-email'].value,
+        e.target['register-password'].value
+      ).catch(error => { errorMessage.textContent = error.message; });
+    });
+
+    // Camera start
+    async function startCamera() {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById('camera-feed').srcObject = cameraStream;
+      } catch (err) {
+        errorMessage.textContent = "Camera access denied. Please allow camera.";
+      }
+    }
+
+    // Capture photo
+    document.getElementById('capture-photo-btn').addEventListener('click', () => {
+      const video = document.getElementById('camera-feed');
+      const canvas = document.getElementById('photo-canvas');
+      const preview = document.getElementById('photo-preview');
+      const completeBtn = document.getElementById('complete-profile-btn');
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(blob => {
+        capturedPhotoBlob = blob;
+        preview.src = URL.createObjectURL(blob);
+        preview.style.display = 'block';
+        video.style.display = 'none';
+        completeBtn.disabled = false;
+      }, 'image/jpeg');
+    });
+
+    // Save profile
+    document.getElementById('profile-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      errorMessage.textContent = '';
+      const completeBtn = document.getElementById('complete-profile-btn');
+
+      if (!currentUser || !capturedPhotoBlob) {
+        errorMessage.textContent = "Please capture a photo.";
+        return;
+      }
+
+      completeBtn.disabled = true;
+      completeBtn.textContent = 'Saving...';
+
+      try {
+        const photoRef = storage.ref(`student_photos/${currentUser.uid}.jpg`);
+        const uploadTask = await photoRef.put(capturedPhotoBlob);
+        const photoUrl = await uploadTask.ref.getDownloadURL();
+
+        const studentData = {
+          fullName: document.getElementById('profile-name').value,
+          studentId: document.getElementById('profile-studentid').value,
+          email: currentUser.email,
+          profilePhotoUrl: photoUrl
+        };
+
+        await database.ref(`students/${currentUser.uid}`).set(studentData);
+        window.location.href = 'student_dashboard.html';
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        completeBtn.disabled = false;
+        completeBtn.textContent = 'Complete Registration';
+      }
+    });
+
+    // Login
+    document.getElementById('login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      errorMessage.textContent = '';
+      auth.signInWithEmailAndPassword(
+        e.target['login-email'].value,
+        e.target['login-password'].value
+      ).catch(() => {
+        errorMessage.textContent = "Invalid email or password.";
+      });
+    });
+  </script>
+</body>
+</html>
