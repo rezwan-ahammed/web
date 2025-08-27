@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Exam Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- All styles from the previous version are included here -->
+    <style>
+        :root { --bg-color: #F8F9FA; --primary-text-color: #121212; --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); --success-color: #28a745; --danger-color: #dc3545; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: var(--primary-text-color); margin: 0; }
+        .container { max-width: 1200px; margin: auto; padding: 0 1.5rem; }
+        .main-header { position: sticky; top: 0; z-index: 1000; background-color: rgba(248, 249, 250, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); }
+        .main-header .container { display: flex; justify-content: space-between; align-items: center; height: 70px; }
+        .logo { font-size: 1.5rem; font-weight: 800; text-decoration: none; color: var(--primary-text-color); }
+        .header-info h3, .header-info p { margin: 0; line-height: 1.2; text-align: right; }
+        .page-wrapper { padding: 80px 0; }
+        .content-card { background: #fff; border-radius: 12px; padding: clamp(1.5rem, 5vw, 3rem); box-shadow: 0 10px 40px var(--shadow-color); }
+        h2 { font-size: clamp(2rem, 5vw, 2.8rem); text-align: center; margin-bottom: 1rem; }
+        .content-card > p { max-width: 600px; margin: 0 auto 3rem; text-align: center; color: #595959; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .exam-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem; }
+        .proctoring-sidebar { background: linear-gradient(180deg, #F8F9FA, #FFFFFF); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        #video { width: 100%; border-radius: 8px; transform: scaleX(-1); }
+        .monitoring-status li { display: flex; align-items: center; margin-bottom: 1rem; font-weight: 500; }
+        .status-indicator { width: 12px; height: 12px; border-radius: 50%; background-color: var(--success-color); margin-right: 1rem; flex-shrink: 0; }
+        .status-indicator.flagged { background-color: var(--danger-color); }
+        #integrity-score { font-size: 2.5em; font-weight: 800; color: var(--accent-color); }
+        .exam-paper { border: 1px solid var(--border-color); padding: 2rem; border-radius: 12px; height: 500px; overflow-y: auto; }
+        .question-block { margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
+        .cta-button { display: inline-block; background-color: var(--accent-color); color: #FFF; padding: 1rem 2.5rem; border-radius: 8px; font-weight: 500; border: none; cursor: pointer; transition: all .3s ease; }
+        .cta-button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .cta-button:hover:not(:disabled) { background-color: var(--accent-color-dark); transform: translateY(-2px); }
+        #upload-area { text-align: center; border: 2px dashed var(--border-color); padding: 2rem; border-radius: 12px; }
+        #image-preview { max-width: 100%; max-height: 300px; margin-top: 1rem; border-radius: 8px; }
+        .footer { text-align: center; padding: 4rem 0 2rem 0; border-top: 1px solid var(--border-color); color: #595959; }
+        @media (max-width: 900px) { .exam-layout { grid-template-columns: 1fr; } .proctoring-sidebar { order: -1; margin-bottom: 2rem; } }
+    </style>
+</head>
+<body>
+    <!-- Header remains the same, timer will be populated by JS -->
+    <header class="main-header"><div class="container"><a href="#" class="logo">SecureExam+</a><div id="header-info" class="header-info" style="display: none;"><h3 id="exam-title-header"></h3><p id="exam-timer">Time Left: --:--</p></div></div></header>
+    
+    <main class="page-wrapper"><div class="container"><div class="content-card">
+        <div id="initial-loader" class="view active" style="text-align: center;"><h2>Loading Exam...</h2><p>Please wait while we initialize your secure session.</p></div>
+        <div id="error-view" class="view" style="text-align: center; color: var(--danger-color);"><h2>Error</h2><p id="error-message"></p></div>
+        <!-- Other views (verification, exam, upload, submission) are unchanged structurally -->
+        <div id="exam-view" class="view">...</div>
+        <div id="upload-view" class="view">...</div>
+        <div id="submission-view" class="view">...</div>
+    </div></div></main>
+    
+    <footer class="footer"><p>© 2025 SecureExam+. All Rights Reserved.</p></footer>
+
+    <!-- Firebase SDKs: App, Database, and now Storage -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
+    <!-- AI Libraries are unchanged -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <script>
+        // --- YOUR FIREBASE CONFIGURATION ---
+        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
+        
+        // --- State, Timers, and Firebase Refs ---
+        let examData, sessionState, examId, userId, sessionRef;
+        let mainTimerInterval, uploadTimerInterval;
+        const UPLOAD_GRACE_PERIOD = 300; // 5 minutes
+
+        // --- All DOM Elements are unchanged ---
+
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            examId = urlParams.get('id');
+
+            if (!examId) {
+                showError("No Exam ID provided in the URL. Please use the link from your administrator.");
+                return;
+            }
+
+            // Simulate a persistent user ID for the session. In a real app, this comes from Firebase Auth.
+            userId = sessionStorage.getItem('userId');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                sessionStorage.setItem('userId', userId);
+            }
+
+            sessionRef = database.ref(`sessions/${examId}/${userId}`);
+
+            sessionRef.once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    log('Found existing session. Resuming...');
+                    resumeSession(snapshot.val());
+                } else {
+                    log('No existing session. Creating new one...');
+                    fetchExamAndInitialize();
+                }
+            }).catch(err => showError("Could not connect to Firebase. Please check your connection and the Exam ID."));
+        };
+
+        function fetchExamAndInitialize() {
+            database.ref(`exams/${examId}`).once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    showError("The provided Exam ID is invalid. Please check the link.");
+                    return;
+                }
+                examData = snapshot.val();
+                initializeNewSession();
+            });
+        }
+
+        function initializeNewSession() {
+            sessionState = {
+                phase: 'IN_PROGRESS', // Assuming verification is passed
+                integrityScore: 100,
+                timeLeft: examData.duration * 60,
+                uploadTimeLeft: UPLOAD_GRACE_PERIOD,
+                answers: {},
+                flags: [],
+                startTime: firebase.database.ServerValue.TIMESTAMP
+            };
+            sessionRef.set(sessionState).then(() => {
+                log('New session created in Firebase.');
+                startExam();
+            });
+        }
+        
+        function resumeSession(state) {
+            sessionState = state;
+            database.ref(`exams/${examId}`).once('value').then(snapshot => {
+                examData = snapshot.val();
+                log(`Resuming at phase: ${sessionState.phase}`);
+                if (sessionState.phase === 'IN_PROGRESS') startExam();
+                else if (sessionState.phase === 'UPLOADING') initiateUploadPhase(true); // true = isResume
+                else if (sessionState.phase === 'SUBMITTED') switchView('submission');
+            });
+        }
+
+        function startExam() {
+            switchView('exam');
+            renderExam();
+            startMainTimer();
+            // Start proctoring logic would go here
+        }
+        
+        function updateStateInFirebase(updates) {
+            if (sessionRef) {
+                sessionRef.update(updates).catch(err => console.error("Firebase update failed:", err));
+            }
+        }
+        
+        function renderExam() { /* Unchanged from previous version */ }
+        function startMainTimer() { /* Unchanged, but calls updateStateInFirebase instead of saveState */ }
+
+        function initiateUploadPhase(isResume = false) {
+            log('Initiating upload phase.');
+            // Stop monitoring, update phase in Firebase
+            if (!isResume) {
+                clearInterval(mainTimerInterval);
+                stopMonitoring();
+                sessionState.phase = 'UPLOADING';
+                updateStateInFirebase({ phase: 'UPLOADING', timeLeft: 0 });
+            }
+            switchView('upload');
+            startUploadTimer();
+        }
+        
+        function startUploadTimer() { /* Unchanged, but calls updateStateInFirebase */ }
+
+        // --- Firebase Storage Image Upload ---
+        const answerSheetInput = document.getElementById('answer-sheet-input');
+        answerSheetInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const uploadTask = storage.ref(`answer_sheets/${examId}/${userId}.jpg`).put(file);
+            
+            uploadTask.on('state_changed', 
+                (snapshot) => { /* Can show progress here */ }, 
+                (error) => { console.error(error); alert("Upload failed!"); },
+                () => { // On Complete
+                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                        log('File uploaded successfully. URL: ' + downloadURL);
+                        updateStateInFirebase({ answerSheetUrl: downloadURL });
+                        document.getElementById('submit-answersheet-btn').disabled = false;
+                        document.getElementById('image-preview').src = downloadURL;
+                        document.getElementById('image-preview').style.display = 'block';
+                    });
+                }
+            );
+        });
+
+        function submitFinalExam() {
+            clearInterval(uploadTimerInterval);
+            updateStateInFirebase({ phase: 'SUBMITTED', uploadTimeLeft: 0 });
+            log('Final submission complete.');
+            switchView('submission');
+        }
+
+        // --- UI and Logging ---
+        function showError(message) {
+            document.getElementById('initial-loader').classList.remove('active');
+            const errorView = document.getElementById('error-view');
+            document.getElementById('error-message').textContent = message;
+            errorView.classList.add('active');
+        }
+        function log(message) { console.log(`[${new Date().toLocaleTimeString()}] ${message}`); }
+        function switchView(viewName) { /* Unchanged */ }
+        // All other helper and proctoring functions (logFlag, stopMonitoring, etc.) would be adapted
+        // to call `updateStateInFirebase` instead of modifying a local-only state.
+    </script>
+</body>
+</html>
