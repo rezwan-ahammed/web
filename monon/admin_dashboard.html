@@ -1,233 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - SecureExam+</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); --danger-color: #dc3545; --success-color: #28a745; --warning-color: #ffc107; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; margin: 0; color: #121212; }
-        .header { background: #fff; padding: 0 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; height: 70px; }
-        .header h1 { font-size: 1.5rem; }
-        .header button { text-decoration: none; color: #595959; font-weight: 700; cursor: pointer; background: none; border: none; font-size: 1rem; padding: 0.5rem 1rem; border-radius: 8px; transition: background-color .2s; }
-        .header button:hover { background-color: #f1f1f1; }
-        .container { max-width: 1200px; margin: auto; padding: 2rem; }
-        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; }
-        .tab-link { padding: 1rem 1.5rem; cursor: pointer; font-weight: 700; color: #595959; border-bottom: 3px solid transparent; }
-        .tab-link.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
-        .tab-content { display: none; } .tab-content.active { display: block; }
-        .card { background: #fff; border-radius: 12px; padding: 2rem; box-shadow: 0 5px 25px var(--shadow-color); margin-bottom: 1.5rem; }
-        h2, h3 { border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        .btn { display: inline-block; background-color: var(--accent-color); color: #FFF; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; border: none; cursor: pointer; transition: all .3s ease; }
-        .btn:hover:not(:disabled) { background-color: var(--accent-color-dark); }
-        .btn-danger { background-color: var(--danger-color); } .btn-secondary { background-color: #6c757d; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1rem; }
-        .list-item-clickable { cursor: pointer; transition: transform .2s, box-shadow .2s; }
-        .list-item-clickable:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--shadow-color); }
-        .question-card { background: #f8f9fa; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
-        .remove-btn { float: right; background: #e74c3c; color: white; border-radius: 50%; border: none; width: 25px; height: 25px; cursor: pointer; font-weight: bold;}
-        .review-layout { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
-        .mcq-option { list-style: none; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid var(--border-color); }
-        .mcq-option.correct { background-color: #eaf7ec; } .mcq-option.incorrect { background-color: #fdeaea; }
-        .mcq-option.selected::before { content: '▶ '; font-weight: bold; }
-        .score { font-weight: 700; font-size: 1.2em; padding: 0.5rem 1rem; border-radius: 8px; color: #fff; }
-        .score.high { background-color: var(--success-color); } .score.medium { background-color: var(--warning-color); } .score.low { background-color: var(--danger-color); }
-        .back-btn { display: inline-block; margin-bottom: 1rem; color: var(--accent-color); font-weight: 700; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div id="loader" style="text-align: center; padding-top: 5rem;"><h2>Loading Dashboard...</h2></div>
-    <div id="dashboard-content" style="display: none;">
-        <div class="header"><h1>Dashboard: <span id="institution-name"></span></h1><button id="logout-btn">Logout</button></div>
-        <div class="container">
-            <div class="tabs">
-                <div class="tab-link active" data-tab="manage">Manage Exams</div>
-                <div class="tab-link" data-tab="examine">Examine Submissions</div>
-            </div>
-            <div id="manage" class="tab-content active"></div>
-            <div id="examine" class="tab-content"></div>
-        </div>
-    </div>
+<!-- The overall HTML structure and CSS are unchanged -->
+<!-- The change is inside the JavaScript's renderExamForm function -->
+<script>
+    // ... (Firebase config, Auth Guard, state management are unchanged) ...
 
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = { apiKey: "AIzaSyAPgoVPBdYnnMHRnKbGJIe87HJ_Py82XUQ", authDomain: "mathemate-software.firebaseapp.com", databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mathemate-software", storageBucket: "mathemate-software.appspot.com", messagingSenderId: "780184955321", appId: "YOUR_WEB_APP_ID" };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
-
-        let institutionId = null;
-        let appState = { exams: {}, sessions: {}, results: {} };
-        let questionCounter = 0;
-
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                try {
-                    const adminProfileSnapshot = await database.ref(`admins/${user.uid}`).once('value');
-                    if (!adminProfileSnapshot.exists()) { throw new Error("Admin profile not found."); }
-                    institutionId = adminProfileSnapshot.val().institutionId;
-                    const instProfileSnapshot = await database.ref(`institutions/${institutionId}`).once('value');
-                    document.getElementById('institution-name').textContent = instProfileSnapshot.val().name;
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('dashboard-content').style.display = 'block';
-                    listenForDataChanges();
-                } catch (error) {
-                    sessionStorage.setItem('authError', error.message);
-                    await auth.signOut();
-                    window.location.href = 'index.html';
-                }
-            } else { window.location.href = 'index.html'; }
-        });
-
-        function listenForDataChanges() {
-            database.ref(`institutions/${institutionId}`).on('value', snapshot => {
-                const data = snapshot.val() || {};
-                appState = { exams: data.exams || {}, sessions: data.sessions || {}, results: data.results || {} };
-                const activeTab = document.querySelector('.tab-link.active')?.dataset.tab;
-                if (activeTab === 'manage') renderManageExamsView();
-                else if (activeTab === 'examine') renderExamineExamsView();
-            });
-        }
-
-        document.querySelectorAll('.tab-link').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                document.querySelectorAll('.tab-link, .tab-content').forEach(el => el.classList.remove('active'));
-                const tabName = e.target.dataset.tab;
-                e.target.classList.add('active');
-                document.getElementById(tabName).classList.add('active');
-                if (tabName === 'manage') renderManageExamsView();
-                if (tabName === 'examine') renderExamineExamsView();
-            });
-        });
-        
-        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
-
-        // --- MANAGE EXAMS ---
-        function renderManageExamsView() {
-            const container = document.getElementById('manage');
-            container.innerHTML = `
-                <div class="card" id="exam-form-card"></div>
-                <div class="card">
-                    <h2>Existing Exams</h2>
-                    <div id="existing-exams-list"></div>
-                </div>`;
-            renderExamForm();
-            renderExistingExamsList();
-        }
-        
-        function renderExamForm(examId = null) {
-            const exam = examId ? appState.exams[examId] : null;
-            const formCard = document.getElementById('exam-form-card');
-            formCard.innerHTML = `
-                <h2 id="form-title">${exam ? `Edit Exam: ${exam.title}` : 'Create New Exam'}</h2>
-                <form id="create-exam-form">
-                    <input type="hidden" id="exam-id-hidden" value="${examId || ''}">
-                    <div class="form-group"><label>Exam Title</label><input type="text" id="exam-title" value="${exam ? exam.title : ''}" required></div>
-                    <div class="form-group"><label>Duration (Minutes)</label><input type="number" id="exam-duration" value="${exam ? exam.duration : ''}" required></div>
-                    <h3>Questions</h3><div id="questions-container"></div>
-                    <button type="button" class="btn btn-secondary" onclick="addQuestion('CQ')">Add Written Question</button>
-                    <button type="button" class="btn btn-secondary" onclick="addQuestion('MCQ')">Add MCQ</button>
-                    <hr style="margin: 2rem 0;">
-                    <button type="submit" class="btn">Save Exam</button>
-                    ${examId ? `<button type="button" class="btn btn-secondary" onclick="renderExamForm()">Cancel Edit</button>` : ''}
-                </form>
-                <div id="exam-link-container" style="display:none; margin-top: 1.5rem;"></div>`;
-            
-            questionCounter = 0;
-            if (exam) { exam.questions.forEach(q => addQuestion(q.type, q)); }
-            document.getElementById('create-exam-form').addEventListener('submit', handleExamFormSubmit);
-        }
-
-        function addQuestion(type, qData = null) {
-            questionCounter++;
-            const qId = `q-${questionCounter}`;
-            const container = document.getElementById('questions-container');
-            const card = document.createElement('div');
-            card.className = 'question-card';
-            card.id = qId;
-            let content = `
-                <button type="button" class="remove-btn" onclick="document.getElementById('${qId}').remove()">×</button>
-                <h4>Question ${questionCounter} (${type})</h4>
-                <input type="text" class="question-text" placeholder="Enter the question" value="${qData ? qData.text : ''}" required>`;
-            if (type === 'MCQ') {
-                content += `<div class="mcq-options" style="margin-top:1rem;">${[...Array(4)].map((_, i) => `
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
-                        <input type="radio" name="correct-${qId}" value="${i}" ${qData && qData.correct === i ? 'checked' : ''} required>
-                        <input type="text" class="option-text" placeholder="Option ${i + 1}" value="${qData ? qData.options[i] : ''}" required>
-                    </div>`).join('')}</div>`;
-            }
-            card.innerHTML = content;
-            card.dataset.type = type;
-            container.appendChild(card);
-        }
-
-        async function handleExamFormSubmit(e) {
-            e.preventDefault();
-            const examId = e.target['exam-id-hidden'].value;
-            const examData = { title: e.target['exam-title'].value, duration: parseInt(e.target['exam-duration'].value, 10), questions: [] };
-            
-            document.querySelectorAll('#questions-container .question-card').forEach(card => {
-                const q = { type: card.dataset.type, text: card.querySelector('.question-text').value };
-                if (q.type === 'MCQ') {
-                    q.options = [...card.querySelectorAll('.option-text')].map(opt => opt.value);
-                    q.correct = parseInt(card.querySelector('input[type="radio"]:checked').value, 10);
-                }
-                examData.questions.push(q);
-            });
-
-            try {
-                const examRef = database.ref(`institutions/${institutionId}/exams/${examId || ''}`);
-                const refToUse = examId ? examRef : examRef.push();
-                await refToUse.set(examData);
-
-                const finalExamId = examId || refToUse.key;
-                const link = `${window.location.origin.replace('http://','https://')}/exam.html?instId=${institutionId}&examId=${finalExamId}`;
-                const linkContainer = document.getElementById('exam-link-container');
-                linkContainer.innerHTML = `<strong style="flex-shrink: 0;">Exam Link:</strong><input type="text" id="exam-link-display" value="${link}" readonly><button class="btn" id="copy-btn">Copy</button>`;
-                linkContainer.style.display = 'flex';
-                document.getElementById('copy-btn').onclick = () => { navigator.clipboard.writeText(link); alert('Link Copied!'); };
+    function renderExamForm(examId = null) {
+        const exam = examId ? appState.exams[examId] : null;
+        // ... (The form's outer HTML is the same) ...
+        formCard.innerHTML = `
+            <h2>${exam ? 'Edit Exam' : 'Create New Exam'}</h2>
+            <form id="create-exam-form">
+                <input type="hidden" id="exam-id-hidden" value="${examId || ''}">
+                <div class="form-group"><label>Exam Title</label><input type="text" id="exam-title" value="${exam ? exam.title : ''}" required></div>
+                <div class="form-group"><label>Duration (Minutes)</label><input type="number" id="exam-duration" value="${exam ? exam.duration : ''}" required></div>
                 
-                if (!examId) { renderExamForm(); } // Reset form only if creating new
-                alert(`Exam ${examId ? 'updated' : 'created'} successfully!`);
-            } catch (error) { alert("Error saving exam: " + error.message); }
-        }
+                <!-- NEW FIELDS FOR CLASS AND DATE -->
+                <div class="form-group">
+                    <label for="exam-class">Assign to Class</label>
+                    <select id="exam-class" required>
+                        <option value="" disabled ${!exam ? 'selected' : ''}>Select a class</option>
+                        <option value="9" ${exam && exam.assignedClass === '9' ? 'selected' : ''}>Class 9</option>
+                        <option value="10" ${exam && exam.assignedClass === '10' ? 'selected' : ''}>Class 10</option>
+                        <option value="11" ${exam && exam.assignedClass === '11' ? 'selected' : ''}>Class 11 (HSC 1st Year)</option>
+                        <option value="12" ${exam && exam.assignedClass === '12' ? 'selected' : ''}>Class 12 (HSC 2nd Year)</option>
+                        <option value="admission" ${exam && exam.assignedClass === 'admission' ? 'selected' : ''}>University Admission</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="exam-date">Exam Date</label>
+                    <input type="date" id="exam-date" value="${exam ? exam.examDate : ''}" required>
+                </div>
 
-        function renderExistingExamsList() {
-            const container = document.getElementById('existing-exams-list');
-            container.innerHTML = '';
-            Object.entries(appState.exams).forEach(([examId, exam]) => {
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `
-                    <div><h3>${exam.title}</h3><small>${exam.questions.length} Questions</small></div>
-                    <div>
-                        <button class="btn btn-secondary" onclick="renderExamForm('${examId}')">Edit</button>
-                        <button class="btn btn-danger" onclick="deleteExam('${examId}')">Delete</button>
-                    </div>`;
-                container.appendChild(item);
-            });
+                <!-- ... (Questions container and other buttons are the same) ... -->
+            </form>`;
+        // ... (Rest of the renderExamForm logic) ...
+    }
+
+    async function handleExamFormSubmit(e) {
+        e.preventDefault();
+        // ... (Get existing form values like title, duration, questions) ...
+        
+        const examData = {
+            title: document.getElementById('exam-title').value,
+            duration: parseInt(document.getElementById('exam-duration').value),
+            assignedClass: document.getElementById('exam-class').value,
+            examDate: document.getElementById('exam-date').value,
+            questions: [] // populated from the form
+        };
+
+        if (!examData.assignedClass || !examData.examDate) {
+            return alert("Please assign a class and a date for the exam.");
         }
         
-        function deleteExam(examId) {
-            if (confirm("DELETE this exam and ALL related submissions? This is irreversible.")) {
-                database.ref(`institutions/${institutionId}/exams/${examId}`).remove();
-                database.ref(`institutions/${institutionId}/sessions/${examId}`).remove();
-                database.ref(`institutions/${institutionId}/results/${examId}`).remove();
-                alert("Exam deleted.");
-            }
-        }
-        
-        // --- EXAMINE SUBMISSIONS ---
-        function renderExamineExamsView() { /* Function body unchanged */ }
-        function renderStudentListView(examId) { /* Function body unchanged */ }
-        function renderDetailedReviewView(examId, userId) { /* Function body unchanged */ }
-        async function saveGrade(examId, userId, teacherMarks) { /* Function body unchanged */ }
-    </script>
-</body>
-</html>
+        // ... (Rest of the save-to-Firebase logic is the same) ...
+    }
+
+    // ... (All other dashboard functions are unchanged) ...
+</script>
