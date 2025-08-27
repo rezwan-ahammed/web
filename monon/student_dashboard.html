@@ -11,50 +11,26 @@
         .header { background: #fff; padding: 0 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; height: 70px; }
         .header h1 { font-size: 1.5rem; }
         .header .user-info { text-align: right; }
+        .header .user-info h3 { margin: 0; font-weight: 700; }
         .header .user-info p { margin: 0; font-size: 0.9em; color: #595959; }
         .header button { text-decoration: none; color: #595959; font-weight: 700; cursor: pointer; background: none; border: none; font-size: 1rem; padding: 0.5rem 1rem; border-radius: 8px; transition: background-color .2s; }
         .header button:hover { background-color: #f1f1f1; }
         .container { max-width: 900px; margin: auto; padding: 2rem; }
         .page-title { text-align: center; margin-bottom: 2.5rem; }
-        .result-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-            padding: 1.5rem 2rem;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            text-decoration: none;
-            color: inherit;
-            box-shadow: 0 5px 15px var(--shadow-color);
-            transition: transform .2s, box-shadow .2s;
-        }
-        .result-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px var(--shadow-color);
-        }
+        .result-card { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 1.5rem 2rem; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 1.5rem; text-decoration: none; color: inherit; box-shadow: 0 5px 15px var(--shadow-color); transition: transform .2s, box-shadow .2s; }
+        .result-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px var(--shadow-color); }
         .result-card h3 { margin: 0; font-size: 1.4rem; }
         .result-card p { margin: 5px 0 0; color: #595959; }
-        .final-score {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--accent-color);
-            text-align: right;
-        }
-        .final-score span {
-            font-size: 0.5em;
-            font-weight: 500;
-            color: #595959;
-        }
+        .final-score { font-size: 2rem; font-weight: 800; color: var(--accent-color); text-align: right; }
+        .final-score span { font-size: 0.5em; font-weight: 500; color: #595959; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>Student Dashboard</h1>
-        <div class="header-controls">
-            <div id="user-info" class="user-info" style="display: inline-block; vertical-align: middle; margin-right: 1rem;">
+        <div style="display: flex; align-items: center;">
+            <div id="user-info" class="user-info" style="margin-right: 1rem;">
                 <h3 id="student-name">Loading...</h3>
                 <p id="student-email"></p>
             </div>
@@ -84,20 +60,17 @@
         const resultsContainer = document.getElementById('results-container');
         let currentUser = null;
 
-        // --- AUTH GUARD ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
                 loadDashboard();
             } else {
-                // No user is signed in. Redirect to the student portal.
                 window.location.href = 'student_portal.html';
             }
         });
 
         async function loadDashboard() {
             try {
-                // 1. Fetch student's profile info to display in header
                 const studentProfileSnapshot = await database.ref(`students/${currentUser.uid}`).once('value');
                 if (studentProfileSnapshot.exists()) {
                     const studentProfile = studentProfileSnapshot.val();
@@ -105,39 +78,44 @@
                     document.getElementById('student-email').textContent = studentProfile.email;
                 }
 
-                // 2. Fetch all results data across all institutions
-                const resultsRef = database.ref('institutions');
-                const institutionsSnapshot = await resultsRef.once('value');
+                // EFFICIENTLY find all results for the current user.
+                const institutionsRef = database.ref('institutions');
+                const institutionsSnapshot = await institutionsRef.once('value');
                 
                 if (!institutionsSnapshot.exists()) {
-                    resultsContainer.innerHTML = '<p>No results have been published yet.</p>';
-                    return;
+                    return renderResults([]);
                 }
                 
-                const allResults = [];
-                const institutions = institutionsSnapshot.val();
-
-                // This nested loop structure is necessary to find the student's results
-                // across all institutions and all exams.
-                for (const instId in institutions) {
-                    if (institutions[instId].results) {
-                        for (const examId in institutions[instId].results) {
-                            if (institutions[instId].results[examId][currentUser.uid]) {
-                                // This student has a result for this exam!
-                                const result = institutions[instId].results[examId][currentUser.uid];
-                                const examInfo = institutions[instId].exams[examId];
-                                allResults.push({
+                const allResultsPromises = [];
+                institutionsSnapshot.forEach(instSnapshot => {
+                    const instId = instSnapshot.key;
+                    const resultsRef = database.ref(`institutions/${instId}/results`).orderByChild(currentUser.uid);
+                    
+                    // Create a promise to fetch results for the current student within this institution
+                    const resultPromise = database.ref(`institutions/${instId}/results`).once('value').then(examResultsSnapshot => {
+                        const exams = instSnapshot.val().exams || {};
+                        const foundResults = [];
+                        examResultsSnapshot.forEach(examResultSnapshot => {
+                            const examId = examResultSnapshot.key;
+                            if (examResultSnapshot.hasChild(currentUser.uid)) {
+                                const resultData = examResultSnapshot.child(currentUser.uid).val();
+                                foundResults.push({
                                     instId,
                                     examId,
-                                    examTitle: examInfo.title,
-                                    finalScore: result.finalScore
+                                    examTitle: exams[examId]?.title || 'Unknown Exam',
+                                    finalScore: resultData.finalScore
                                 });
                             }
-                        }
-                    }
-                }
+                        });
+                        return foundResults;
+                    });
+                    allResultsPromises.push(resultPromise);
+                });
                 
-                renderResults(allResults);
+                const resultsByInstitution = await Promise.all(allResultsPromises);
+                const finalResults = resultsByInstitution.flat(); // Flatten the array of arrays
+                
+                renderResults(finalResults);
 
             } catch (error) {
                 console.error("Error loading dashboard:", error);
@@ -155,26 +133,16 @@
             results.forEach(result => {
                 const card = document.createElement('a');
                 card.className = 'result-card';
-                // Pass all necessary info in the URL to the result page
                 card.href = `result.html?instId=${result.instId}&examId=${result.examId}&studentId=${currentUser.uid}`;
-                
                 card.innerHTML = `
-                    <div class="result-info">
-                        <h3>${result.examTitle}</h3>
-                        <p>Click to view details</p>
-                    </div>
-                    <div class="final-score">
-                        ${result.finalScore}<span>/100</span>
-                    </div>
+                    <div class="result-info"><h3>${result.examTitle}</h3><p>Click to view details</p></div>
+                    <div class="final-score">${result.finalScore}<span>/100</span></div>
                 `;
                 resultsContainer.appendChild(card);
             });
         }
 
-        // --- Logout ---
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            auth.signOut();
-        });
+        document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
     </script>
 </body>
 </html>
