@@ -6,7 +6,7 @@
     <title>Student Dashboard - SecureExam+</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --accent-color: #3D52F3; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); }
+        :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; margin: 0; color: #121212; }
         .header { background: #fff; padding: 0 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; height: 70px; }
         .header h1 { font-size: 1.5rem; }
@@ -17,34 +17,40 @@
         .header button:hover { background-color: #f1f1f1; }
         .container { max-width: 900px; margin: auto; padding: 2rem; }
         .page-title { text-align: center; margin-bottom: 2.5rem; }
-        .result-card { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 1.5rem 2rem; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 1.5rem; text-decoration: none; color: inherit; box-shadow: 0 5px 15px var(--shadow-color); transition: transform .2s, box-shadow .2s; }
-        .result-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px var(--shadow-color); }
-        .result-card h3 { margin: 0; font-size: 1.4rem; }
-        .result-card p { margin: 5px 0 0; color: #595959; }
+        .page-title h2 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .card { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 1.5rem 2rem; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 1.5rem; text-decoration: none; color: inherit; box-shadow: 0 5px 15px var(--shadow-color); transition: transform .2s, box-shadow .2s; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px var(--shadow-color); }
+        .card h3 { margin: 0; font-size: 1.4rem; }
+        .card p { margin: 5px 0 0; color: #595959; text-align: left; }
+        .card .btn { background-color: var(--accent-color); color: #fff; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; }
+        .card .btn:hover { background-color: var(--accent-color-dark); }
         .final-score { font-size: 2rem; font-weight: 800; color: var(--accent-color); text-align: right; }
         .final-score span { font-size: 0.5em; font-weight: 500; color: #595959; }
+        hr.section-divider { margin: 3.5rem 0; border: none; border-top: 1px solid #e0e0e0; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>Student Dashboard</h1>
-        <div style="display: flex; align-items: center;">
-            <div id="user-info" class="user-info" style="margin-right: 1rem;">
-                <h3 id="student-name">Loading...</h3>
-                <p id="student-email"></p>
+    <div id="loader" style="text-align: center; padding-top: 5rem;"><h2>Loading Dashboard...</h2></div>
+    <div id="dashboard-content" style="display: none;">
+        <div class="header">
+            <h1>Student Dashboard</h1>
+            <div style="display: flex; align-items: center;">
+                <div id="user-info" class="user-info" style="margin-right: 1rem;">
+                    <h3 id="student-name"></h3><p id="student-email"></p>
+                </div>
+                <button id="logout-btn">Logout</button>
             </div>
-            <button id="logout-btn">Logout</button>
         </div>
-    </div>
-
-    <div class="container">
-        <div class="page-title">
-            <h2>My Graded Exams</h2>
-            <p>Click on an exam to view your detailed results.</p>
-        </div>
-        <div id="results-container">
-            <p>Loading your results...</p>
+        <div class="container">
+            <div id="todays-exams-section">
+                <div class="page-title"><h2>Today's Active Exams</h2><p>These are the exams available for you to take today.</p></div>
+                <div id="todays-exams-container"></div>
+            </div>
+            <hr class="section-divider">
+            <div id="graded-results-section">
+                <div class="page-title"><h2>Past Graded Results</h2><p>Click on an exam to view your detailed results.</p></div>
+                <div id="results-container"></div>
+            </div>
         </div>
     </div>
 
@@ -57,88 +63,128 @@
         const auth = firebase.auth();
         const database = firebase.database();
 
-        const resultsContainer = document.getElementById('results-container');
         let currentUser = null;
 
+        // --- ROLE-BASED AUTH GUARD ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
-                loadDashboard();
+                database.ref(`students/${user.uid}`).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        loadDashboard(snapshot.val()); // Pass profile to loader
+                    } else {
+                        // This user is not a student, redirect them.
+                        window.location.href = 'index.html'; // Redirect to admin portal as a fallback
+                    }
+                });
             } else {
                 window.location.href = 'student_portal.html';
             }
         });
 
-        async function loadDashboard() {
+        async function loadDashboard(studentProfile) {
+            document.getElementById('student-name').textContent = studentProfile.fullName;
+            document.getElementById('student-email').textContent = studentProfile.email;
+            
             try {
-                const studentProfileSnapshot = await database.ref(`students/${currentUser.uid}`).once('value');
-                if (studentProfileSnapshot.exists()) {
-                    const studentProfile = studentProfileSnapshot.val();
-                    document.getElementById('student-name').textContent = studentProfile.fullName;
-                    document.getElementById('student-email').textContent = studentProfile.email;
+                // Fetch all data for the student's institution
+                const instId = studentProfile.institutionId;
+                const institutionRef = database.ref(`institutions/${instId}`);
+                const institutionSnapshot = await institutionRef.once('value');
+                
+                if (!institutionSnapshot.exists()) {
+                    throw new Error("Could not find your institution's data.");
                 }
+                
+                const institutionData = institutionSnapshot.val();
+                const allExams = institutionData.exams || {};
+                const allResults = institutionData.results || {};
+                const allSessions = institutionData.sessions || {};
+                
+                renderTodaysExams(allExams, allSessions, studentProfile, instId);
+                renderGradedResults(allResults, allExams, instId);
 
-                // EFFICIENTLY find all results for the current user.
-                const institutionsRef = database.ref('institutions');
-                const institutionsSnapshot = await institutionsRef.once('value');
-                
-                if (!institutionsSnapshot.exists()) {
-                    return renderResults([]);
-                }
-                
-                const allResultsPromises = [];
-                institutionsSnapshot.forEach(instSnapshot => {
-                    const instId = instSnapshot.key;
-                    const resultsRef = database.ref(`institutions/${instId}/results`).orderByChild(currentUser.uid);
-                    
-                    // Create a promise to fetch results for the current student within this institution
-                    const resultPromise = database.ref(`institutions/${instId}/results`).once('value').then(examResultsSnapshot => {
-                        const exams = instSnapshot.val().exams || {};
-                        const foundResults = [];
-                        examResultsSnapshot.forEach(examResultSnapshot => {
-                            const examId = examResultSnapshot.key;
-                            if (examResultSnapshot.hasChild(currentUser.uid)) {
-                                const resultData = examResultSnapshot.child(currentUser.uid).val();
-                                foundResults.push({
-                                    instId,
-                                    examId,
-                                    examTitle: exams[examId]?.title || 'Unknown Exam',
-                                    finalScore: resultData.finalScore
-                                });
-                            }
-                        });
-                        return foundResults;
-                    });
-                    allResultsPromises.push(resultPromise);
-                });
-                
-                const resultsByInstitution = await Promise.all(allResultsPromises);
-                const finalResults = resultsByInstitution.flat(); // Flatten the array of arrays
-                
-                renderResults(finalResults);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
 
             } catch (error) {
                 console.error("Error loading dashboard:", error);
-                resultsContainer.innerHTML = `<p style="color:red;">Could not load your results. Please try again later.</p>`;
+                document.getElementById('todays-exams-container').innerHTML = `<p style="color:red;">Could not load dashboard. ${error.message}</p>`;
+                document.getElementById('results-container').innerHTML = '';
             }
         }
 
-        function renderResults(results) {
-            resultsContainer.innerHTML = '';
-            if (results.length === 0) {
-                resultsContainer.innerHTML = '<p>No results have been published yet. Check back later!</p>';
+        function renderTodaysExams(exams, sessions, studentProfile, instId) {
+            const container = document.getElementById('todays-exams-container');
+            container.innerHTML = '';
+            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+            const todaysExams = Object.entries(exams).filter(([examId, exam]) => {
+                return exam.assignedClass === studentProfile.class && exam.examDate === today;
+            });
+
+            if (todaysExams.length === 0) {
+                container.innerHTML = '<p>You have no active exams scheduled for today.</p>';
                 return;
             }
 
-            results.forEach(result => {
-                const card = document.createElement('a');
-                card.className = 'result-card';
-                card.href = `result.html?instId=${result.instId}&examId=${result.examId}&studentId=${currentUser.uid}`;
+            todaysExams.forEach(([examId, exam]) => {
+                const examLink = `exam.html?instId=${instId}&examId=${examId}`;
+                const hasSubmitted = sessions[examId] && sessions[examId][currentUser.uid];
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                let actionButton = `<a href="${examLink}" class="btn">Start Exam</a>`;
+                if (hasSubmitted) {
+                    actionButton = `<button class="btn" disabled>Submitted</button>`;
+                }
+
                 card.innerHTML = `
-                    <div class="result-info"><h3>${result.examTitle}</h3><p>Click to view details</p></div>
-                    <div class="final-score">${result.finalScore}<span>/100</span></div>
+                    <div>
+                        <h3>${exam.title}</h3>
+                        <p>Duration: ${exam.duration} minutes</p>
+                    </div>
+                    ${actionButton}
                 `;
-                resultsContainer.appendChild(card);
+                container.appendChild(card);
+            });
+        }
+        
+        function renderGradedResults(results, exams, instId) {
+            const container = document.getElementById('results-container');
+            container.innerHTML = '';
+            
+            const myResults = [];
+            Object.entries(results).forEach(([examId, examResults]) => {
+                if (examResults[currentUser.uid]) {
+                    myResults.push({
+                        examId,
+                        examTitle: exams[examId]?.title || 'Unknown Exam',
+                        finalScore: examResults[currentUser.uid].finalScore
+                    });
+                }
+            });
+
+            if (myResults.length === 0) {
+                container.innerHTML = '<p>No results have been published yet. Check back later!</p>';
+                return;
+            }
+
+            myResults.forEach(result => {
+                const card = document.createElement('a');
+                card.className = 'card';
+                card.href = `result.html?instId=${instId}&examId=${result.examId}&studentId=${currentUser.uid}`;
+                card.innerHTML = `
+                    <div>
+                        <h3>${result.examTitle}</h3>
+                        <p>Click to view details</p>
+                    </div>
+                    <div class="final-score">
+                        ${result.finalScore}<span>/100</span>
+                    </div>
+                `;
+                container.appendChild(card);
             });
         }
 
