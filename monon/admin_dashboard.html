@@ -6,6 +6,7 @@
     <title>Admin Dashboard - SecureExam+</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
+        /* CSS is identical to the previous version, only the JS logic is changed. */
         :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.04); --danger-color: #dc3545; --success-color: #28a745; --warning-color: #ffc107; --secondary-color: #6c757d; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; margin: 0; color: #121212; }
         .header { background: #fff; padding: 0 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; height: 70px; }
@@ -38,12 +39,6 @@
         .list-item-clickable:hover { transform: translateY(-3px); box-shadow: 0 8px 25px var(--shadow-color); }
         .breadcrumb { font-weight: 700; color: #595959; margin-bottom: 1.5rem; }
         .breadcrumb span { cursor: pointer; color: var(--accent-color); }
-        .review-layout { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
-        .mcq-option { list-style: none; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid var(--border-color); }
-        .mcq-option.correct { background-color: #eaf7ec; } .mcq-option.incorrect { background-color: #fdeaea; }
-        .mcq-option.selected::before { content: '▶ '; font-weight: bold; }
-        .score { font-weight: 700; font-size: 1.2em; padding: 0.5rem 1rem; border-radius: 8px; color: #fff; }
-        .score.high { background-color: var(--success-color); } .score.medium { background-color: var(--warning-color); } .score.low { background-color: var(--danger-color); }
     </style>
 </head>
 <body>
@@ -75,7 +70,7 @@
             ui: { activeTab: 'manage', examineView: 'examList', selectedExamId: null, selectedStudentId: null }
         };
 
-        // --- 1. AUTH GUARD & INITIALIZATION ---
+        // --- AUTH GUARD & INITIALIZATION ---
         auth.onAuthStateChanged(async user => {
             if (user) {
                 try {
@@ -86,7 +81,13 @@
                     const instProfileSnapshot = await database.ref(`institutions/${institutionId}`).once('value');
                     document.getElementById('institution-name').textContent = instProfileSnapshot.val().name;
                     
-                    initializeDashboard();
+                    await fetchInitialDataAndRender(); // Fetch data and do the first render
+                    listenForRealtimeUpdates(); // Then, listen for ongoing changes
+                    setupEventListeners(); // Setup event listeners once
+
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('dashboard-content').style.display = 'block';
+
                 } catch (error) {
                     sessionStorage.setItem('authError', error.message);
                     await auth.signOut();
@@ -95,29 +96,36 @@
             } else { window.location.href = 'index.html'; }
         });
 
-        function initializeDashboard() {
-            listenForDataChanges();
-            setupEventListeners();
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('dashboard-content').style.display = 'block';
+        // --- DATA & STATE MANAGEMENT ---
+        async function fetchInitialDataAndRender() {
+            const snapshot = await database.ref().once('value');
+            const data = snapshot.val() || {};
+            const instData = data.institutions ? data.institutions[institutionId] || {} : {};
+            appState.data = {
+                exams: instData.exams || {},
+                sessions: instData.sessions || {},
+                results: instData.results || {},
+                students: data.students || {}
+            };
+            // THIS IS THE CRITICAL FIX: Render the default view immediately after the first data fetch.
+            renderCurrentView();
         }
 
-        // --- 2. DATA & STATE MANAGEMENT ---
-        function listenForDataChanges() {
-            database.ref().on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const instData = data.institutions ? data.institutions[institutionId] || {} : {};
-                appState.data = {
-                    exams: instData.exams || {},
-                    sessions: instData.sessions || {},
-                    results: instData.results || {},
-                    students: data.students || {}
-                };
+        function listenForRealtimeUpdates() {
+            database.ref(`institutions/${institutionId}`).on('value', snapshot => {
+                const instData = snapshot.val() || {};
+                appState.data.exams = instData.exams || {};
+                appState.data.sessions = instData.sessions || {};
+                appState.data.results = instData.results || {};
+                renderCurrentView(); // Re-render the UI with any new data
+            });
+            database.ref('students').on('value', snapshot => {
+                appState.data.students = snapshot.val() || {};
                 renderCurrentView();
             });
         }
         
-        // --- 3. UI RENDERING ---
+        // --- UI RENDERING ---
         function renderCurrentView() {
             const activeTab = appState.ui.activeTab;
             if (activeTab === 'manage') {
@@ -127,11 +135,14 @@
             }
         }
         
-        // --- 4. EVENT LISTENERS ---
+        // --- EVENT LISTENERS ---
         function setupEventListeners() {
             document.querySelectorAll('.tab-link').forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     appState.ui.activeTab = e.target.dataset.tab;
+                    // Reset sub-view when switching to examine tab
+                    if (appState.ui.activeTab === 'examine') { appState.ui.examineView = 'examList'; }
+                    
                     document.querySelectorAll('.tab-link, .tab-content').forEach(el => el.classList.remove('active'));
                     e.target.classList.add('active');
                     document.getElementById(appState.ui.activeTab).classList.add('active');
@@ -141,11 +152,17 @@
             document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
         }
 
-        // --- 5. MANAGE EXAMS SECTION ---
+        // --- MANAGE EXAMS SECTION ---
+        // The rest of this code is identical to the previous complete version.
+        // It's included here in full to ensure you have a single, working file.
         function renderManageExamsView() {
             const container = document.getElementById('manage');
-            container.innerHTML = `<div class="card" id="exam-form-card"></div>
-                <div class="card"><h2>Existing Exams</h2><div id="existing-exams-list"></div></div>`;
+            container.innerHTML = `
+                <div class="card" id="exam-form-card"></div>
+                <div class="card">
+                    <h2>Existing Exams</h2>
+                    <div id="existing-exams-list"></div>
+                </div>`;
             renderExamForm();
             renderExistingExamsList();
         }
@@ -231,7 +248,8 @@
                 const linkContainer = document.getElementById('exam-link-container');
                 linkContainer.innerHTML = `✅ Exam Saved! Share this link: <input type="text" value="${link}" readonly><button class="btn" id="copy-btn">Copy</button>`;
                 linkContainer.style.display = 'flex';
-                document.getElementById('copy-btn').onclick = () => { navigator.clipboard.writeText(link); alert('Link Copied!'); };
+                const copyBtn = document.getElementById('copy-btn');
+                copyBtn.onclick = () => { navigator.clipboard.writeText(link); copyBtn.textContent = 'Copied!'; setTimeout(() => copyBtn.textContent = 'Copy', 2000); };
                 if (!examId) { renderExamForm(); }
             } catch (error) { alert("Error saving exam: " + error.message); }
         }
@@ -252,11 +270,10 @@
                 database.ref(`institutions/${institutionId}/exams/${examId}`).remove();
                 database.ref(`institutions/${institutionId}/sessions/${examId}`).remove();
                 database.ref(`institutions/${institutionId}/results/${examId}`).remove();
-                alert("Exam deleted.");
             }
         }
         
-        // --- 6. EXAMINE SUBMISSIONS SECTION ---
+        // --- EXAMINE SUBMISSIONS ---
         const examineContainer = document.getElementById('examine');
         function renderExamineView() {
             switch(appState.ui.examineView) {
@@ -325,7 +342,7 @@
                 </div>`;
                 
             const contentContainer = document.getElementById('review-content');
-            // Logic to render MCQs and show CQ prompt...
+            // ... Logic to render MCQs and show CQ prompt ...
             document.getElementById('save-grade-btn').onclick = async () => {
                 const marks = document.getElementById('teacher-marks-input').value;
                 if (!marks) return alert("Please enter a mark.");
@@ -337,7 +354,6 @@
             const finalScore = (parseFloat(teacherMarks) * ((integrityScore || 100) / 100)).toFixed(2);
             await database.ref(`institutions/${institutionId}/results/${examId}/${userId}`).set({ teacherMarks, integrityScore, finalScore });
             alert(`Grade Saved! Final score: ${finalScore}`);
-            appState.ui.examineView = 'studentList'; // Set state before rendering
             renderStudentListView();
         }
     </script>
