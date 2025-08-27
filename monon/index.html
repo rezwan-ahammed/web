@@ -6,26 +6,107 @@
     <title>Admin Portal - SecureExam+</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.05); --danger-color: #dc3545; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 100%); margin: 0; }
-        .auth-container { background: #fff; padding: 3rem; border-radius: 12px; box-shadow: 0 10px 40px var(--shadow-color); width: 100%; max-width: 450px; }
-        h1 { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 0.5rem; }
-        .auth-container p { text-align: center; color: #595959; margin-bottom: 2.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 700; margin-bottom: 0.5rem; }
-        input { width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        .btn { display: block; width: 100%; background-color: var(--accent-color); color: #FFF; padding: 0.9rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 1.1rem; transition: all .3s ease; }
-        .btn:disabled { background-color: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn:hover:not(:disabled) { background-color: var(--accent-color-dark); transform: translateY(-3px); }
-        .toggle-link { text-align: center; margin-top: 1.5rem; }
-        .toggle-link a { color: var(--accent-color); font-weight: 700; cursor: pointer; }
-        #error-message { color: var(--danger-color); text-align: center; margin-top: 1rem; font-weight: 500; min-height: 1.2em; }
+        :root {
+            --accent-color: #3D52F3;
+            --accent-color-dark: #2335D8;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --danger-color: #dc3545;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 100%);
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .auth-container {
+            background: #fff;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            width: 100%;
+            max-width: 450px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #121212;
+        }
+        .auth-container p {
+            text-align: center;
+            color: #595959;
+            margin-bottom: 2.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #121212;
+        }
+        input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            background-color: var(--accent-color);
+            color: #FFF;
+            padding: 0.9rem;
+            border-radius: 8px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all .3s ease;
+        }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn:hover:not(:disabled) {
+            background-color: var(--accent-color-dark);
+            transform: translateY(-3px);
+        }
+        .toggle-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .toggle-link a {
+            color: var(--accent-color);
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #error-message {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 1rem;
+            font-weight: 500;
+            min-height: 1.2em;
+        }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div id="login-view">
-            <h1>Admin Login</h1><p>Welcome back! Please sign in.</p>
+            <h1>Admin Login</h1>
+            <p>Welcome back! Please sign in.</p>
             <form id="login-form">
                 <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
                 <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
@@ -34,7 +115,8 @@
             <p class="toggle-link">New Institution? <a id="show-register">Register here</a></p>
         </div>
         <div id="register-view" style="display: none;">
-            <h1>Register Institution</h1><p>Create a new administrator account.</p>
+            <h1>Register Institution</h1>
+            <p>Create a new administrator account.</p>
             <form id="register-form">
                 <div class="form-group"><label for="register-institution">Institution Name</label><input type="text" id="register-institution" required></div>
                 <div class="form-group"><label for="register-email">Admin Email</label><input type="email" id="register-email" required></div>
@@ -61,26 +143,46 @@
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
 
+        // --- ROLE-BASED AUTH GUARD ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                // This listener's only job now is to check for an existing valid session.
-                // The registration form will handle its own redirect.
+                // Check if this user is an admin.
                 database.ref(`admins/${user.uid}`).once('value').then(snapshot => {
-                    if (snapshot.exists()) { window.location.href = 'admin_dashboard.html'; }
+                    if (snapshot.exists()) {
+                        // This is a valid admin, send them to their dashboard.
+                        window.location.href = 'admin_dashboard.html';
+                    } else {
+                        // This is NOT an admin. They might be a student. Redirect them.
+                        database.ref(`students/${user.uid}`).once('value').then(studentSnapshot => {
+                            if (studentSnapshot.exists()) {
+                                window.location.href = 'student_dashboard.html';
+                            }
+                        });
+                    }
                 });
             }
         });
         
-        // Check for redirect errors from dashboard
+        // Check for redirect errors from other pages
         const redirectError = sessionStorage.getItem('authError');
         if(redirectError) {
             errorMessage.textContent = redirectError;
             sessionStorage.removeItem('authError');
         }
 
-        document.getElementById('show-register').addEventListener('click', () => { loginView.style.display = 'none'; registerView.style.display = 'block'; errorMessage.textContent = ''; });
-        document.getElementById('show-login').addEventListener('click', () => { registerView.style.display = 'none'; loginView.style.display = 'block'; errorMessage.textContent = ''; });
+        // --- VIEW TOGGLING ---
+        document.getElementById('show-register').addEventListener('click', () => {
+            loginView.style.display = 'none';
+            registerView.style.display = 'block';
+            errorMessage.textContent = '';
+        });
+        document.getElementById('show-login').addEventListener('click', () => {
+            registerView.style.display = 'none';
+            loginView.style.display = 'block';
+            errorMessage.textContent = '';
+        });
 
+        // --- ROBUST REGISTRATION LOGIC ---
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMessage.textContent = '';
@@ -93,35 +195,43 @@
             
             let createdUser = null;
             try {
+                // Step 1: Create Auth user
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 createdUser = userCredential.user;
+
+                // Step 2: Create Institution in Database
                 const newInstitutionRef = await database.ref('institutions').push({ name: institutionName, adminUid: createdUser.uid });
                 if (!newInstitutionRef.key) { throw new Error("Database Error: Could not create institution."); }
+                
+                // Step 3: Create Admin profile linking user to institution
                 await database.ref(`admins/${createdUser.uid}`).set({ institutionId: newInstitutionRef.key });
                 
-                // **** CRITICAL FIX: EXPLICIT REDIRECT ****
-                // The user is fully created and data is saved, now we can safely redirect.
-                window.location.href = 'admin_dashboard.html';
+                // If all steps succeed, the onAuthStateChanged listener will automatically redirect.
 
             } catch (error) {
-                if (createdUser) { await createdUser.delete(); } 
+                if (createdUser) {
+                    // Cleanup failed registration by deleting the Auth user
+                    await createdUser.delete();
+                }
                 errorMessage.textContent = error.message;
                 registerBtn.disabled = false;
                 registerBtn.textContent = 'Register';
             }
         });
 
+        // --- LOGIN LOGIC ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMessage.textContent = '';
             loginBtn.disabled = true;
             loginBtn.textContent = 'Logging in...';
+
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                // onAuthStateChanged will handle the redirect for a successful login.
+                // onAuthStateChanged will handle the redirect.
             } catch (error) {
                 errorMessage.textContent = "Invalid email or password.";
                 loginBtn.disabled = false;
