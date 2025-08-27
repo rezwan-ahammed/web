@@ -6,12 +6,7 @@
     <title>Student Portal - SecureExam+</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        /* This CSS uses the same design language as index.html for brand consistency */
-        :root {
-            --accent-color: #3D52F3; --accent-color-dark: #2335D8;
-            --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.05);
-            --danger-color: #dc3545;
-        }
+        :root { --accent-color: #3D52F3; --accent-color-dark: #2335D8; --border-color: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0, 0, 0, 0.05); --danger-color: #dc3545; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(320deg, #E4DFFF 0%, #F5FAFF 100%); margin: 0; }
         .portal-container { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 40px var(--shadow-color); width: 100%; max-width: 500px; }
         h1 { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 0.5rem; }
@@ -31,10 +26,8 @@
 </head>
 <body>
     <div class="portal-container">
-        <!-- View 1: Login Form -->
         <div id="login-view" class="view active">
-            <h1>Student Login</h1>
-            <p>Welcome back! Please sign in.</p>
+            <h1>Student Login</h1><p>Welcome back! Please sign in.</p>
             <form id="login-form">
                 <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required></div>
                 <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required></div>
@@ -42,10 +35,8 @@
             </form>
             <p class="toggle-link">New Student? <a id="show-register">Create an account</a></p>
         </div>
-        <!-- View 2: Register Form -->
         <div id="register-view" class="view">
-            <h1>Student Registration</h1>
-            <p>Step 1 of 3: Create your account.</p>
+            <h1>Student Registration</h1><p>Step 1 of 3: Create your account.</p>
             <form id="register-form">
                 <div class="form-group"><label for="register-email">Email</label><input type="email" id="register-email" required></div>
                 <div class="form-group"><label for="register-password">Password (min. 6 characters)</label><input type="password" id="register-password" minlength="6" required></div>
@@ -53,17 +44,14 @@
             </form>
             <p class="toggle-link">Already have an account? <a id="show-login">Login here</a></p>
         </div>
-        <!-- View 3: Profile & Photo Setup -->
         <div id="profile-setup-view" class="view">
-            <h1>Complete Your Profile</h1>
-            <p>Step 2 & 3: Information and Photo</p>
+            <h1>Complete Your Profile</h1><p>Step 2 & 3: Information and Photo</p>
             <form id="profile-form">
                 <div class="form-group"><label for="profile-name">Full Name</label><input type="text" id="profile-name" required></div>
                 <div class="form-group"><label for="profile-studentid">Student ID Number</label><input type="text" id="profile-studentid" required></div>
                 <p style="font-weight:700; margin-bottom: 1rem;">Profile Photo</p>
                 <video id="camera-feed" autoplay playsinline></video>
-                <img id="photo-preview" style="display:none;">
-                <canvas id="photo-canvas" style="display:none;"></canvas>
+                <img id="photo-preview" style="display:none;"><canvas id="photo-canvas" style="display:none;"></canvas>
                 <button type="button" class="btn" id="capture-photo-btn" style="background-color: #6c757d; margin-bottom: 1rem;">Capture Photo</button>
                 <button type="submit" class="btn" id="complete-profile-btn" disabled>Complete Registration</button>
             </form>
@@ -81,23 +69,19 @@
         const auth = firebase.auth();
         const database = firebase.database();
         const storage = firebase.storage();
-
-        // DOM Elements
+        
         const views = { login: document.getElementById('login-view'), register: document.getElementById('register-view'), profile: document.getElementById('profile-setup-view') };
         const errorMessage = document.getElementById('error-message');
         let capturedPhotoBlob = null;
         let currentUser = null;
 
-        // --- AUTH GUARD & PROFILE COMPLETION CHECK ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentUser = user; // Set current user globally
+                currentUser = user;
                 database.ref(`students/${user.uid}`).once('value').then(snapshot => {
                     if (snapshot.exists() && snapshot.val().profilePhotoUrl) {
-                        // Profile is complete, redirect to dashboard
                         window.location.href = 'student_dashboard.html';
                     } else {
-                        // User is authenticated but profile is incomplete. Force completion.
                         switchView('profile');
                         startCamera();
                     }
@@ -105,103 +89,10 @@
             }
         });
 
-        // View Toggling Logic
         function switchView(viewName) { Object.values(views).forEach(v => v.classList.remove('active')); views[viewName].classList.add('active'); errorMessage.textContent = ''; }
         document.getElementById('show-register').addEventListener('click', () => switchView('register'));
         document.getElementById('show-login').addEventListener('click', () => switchView('login'));
         
-        // --- STEP 1: REGISTRATION ---
         document.getElementById('register-form').addEventListener('submit', e => {
             e.preventDefault();
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            errorMessage.textContent = '';
-            
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    // onAuthStateChanged will handle the redirect to the profile setup view
-                })
-                .catch(error => { errorMessage.textContent = error.message; });
-        });
-
-        // --- STEP 2 & 3: PROFILE AND PHOTO ---
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('camera-feed').srcObject = stream;
-            } catch (err) {
-                errorMessage.textContent = "Camera access is required to create a profile.";
-            }
-        }
-
-        document.getElementById('capture-photo-btn').addEventListener('click', () => {
-            const video = document.getElementById('camera-feed');
-            const canvas = document.getElementById('photo-canvas');
-            const preview = document.getElementById('photo-preview');
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const context = canvas.getContext('2d');
-            context.scale(-1, 1);
-            context.drawImage(video, -canvas.width, 0);
-
-            preview.src = canvas.toDataURL('image/jpeg');
-            preview.style.display = 'block';
-            video.style.display = 'none';
-
-            canvas.toBlob(blob => { capturedPhotoBlob = blob; }, 'image/jpeg', 0.9);
-            document.getElementById('complete-profile-btn').disabled = false;
-        });
-
-        document.getElementById('profile-form').addEventListener('submit', async e => {
-            e.preventDefault();
-            errorMessage.textContent = '';
-            if (!currentUser || !capturedPhotoBlob) {
-                errorMessage.textContent = "Please capture a photo before completing your profile.";
-                return;
-            }
-
-            const completeBtn = document.getElementById('complete-profile-btn');
-            completeBtn.disabled = true;
-            completeBtn.textContent = 'Saving...';
-            
-            try {
-                // Upload photo to Storage
-                const photoRef = storage.ref(`student_photos/${currentUser.uid}.jpg`);
-                const uploadTask = await photoRef.put(capturedPhotoBlob);
-                const photoUrl = await uploadTask.ref.getDownloadURL();
-
-                // Save student info to Database
-                const studentData = {
-                    fullName: document.getElementById('profile-name').value,
-                    studentId: document.getElementById('profile-studentid').value,
-                    email: currentUser.email,
-                    profilePhotoUrl: photoUrl
-                };
-                await database.ref(`students/${currentUser.uid}`).set(studentData);
-
-                // onAuthStateChanged will handle the final redirect.
-                // We can also force it here in case the listener is slow.
-                window.location.href = 'student_dashboard.html';
-
-            } catch (error) {
-                errorMessage.textContent = error.message;
-                completeBtn.disabled = false;
-                completeBtn.textContent = 'Complete Registration';
-            }
-        });
-
-        // --- LOGIN LOGIC ---
-        document.getElementById('login-form').addEventListener('submit', e => {
-            e.preventDefault();
-            errorMessage.textContent = '';
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            auth.signInWithEmailAndPassword(email, password)
-                .catch(error => { 
-                    errorMessage.textContent = "Invalid email or password.";
-                });
-        });
-    </script>
-</body>
-</html>
+    
