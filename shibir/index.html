@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>তুমি কি শিবির?</title>
-    <!-- Google Fonts for Bengali and English text -->
     <link href="https://fonts.googleapis.com/css2?family=Mina:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Material Icons for UI elements -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- html2canvas for the share functionality -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -24,8 +21,6 @@
             --font-main: 'Hind Siliguri', sans-serif;
             --font-title: 'Mina', serif;
         }
-
-        /* --- Base & Body Styles --- */
         body {
             font-family: var(--font-main);
             margin: 0;
@@ -37,8 +32,6 @@
             align-items: center;
             justify-content: center;
         }
-
-        /* Animated Gradient Background */
         body::before {
             content: '';
             position: fixed;
@@ -48,14 +41,11 @@
             animation: gradientAnimation 15s ease infinite;
             z-index: -1;
         }
-
         @keyframes gradientAnimation {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-        /* --- Screen Management --- */
         .screen {
             position: absolute;
             top: 0; left: 0;
@@ -71,14 +61,11 @@
             opacity: 0;
             visibility: hidden;
         }
-
         .screen.active {
             opacity: 1;
             visibility: visible;
             z-index: 1;
         }
-
-        /* --- Card Styling --- */
         .card {
             background: var(--card-background);
             backdrop-filter: blur(12px);
@@ -92,13 +79,10 @@
             text-align: center;
             animation: pop-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-
         @keyframes pop-in {
             from { transform: translateY(20px) scale(0.95); opacity: 0; }
             to { transform: translateY(0) scale(1); opacity: 1; }
         }
-        
-        /* --- UI Components (Buttons, Inputs, etc.) --- */
         .btn {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -142,12 +126,10 @@
         }
         .answer-btn.correct { background-color: var(--correct-color); border-color: var(--correct-color); }
         .answer-btn.incorrect { background-color: var(--incorrect-color); border-color: var(--incorrect-color); }
-
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         .form-input {
             padding: 12px;
             border: 1px solid rgba(255,255,255,0.3);
@@ -159,8 +141,6 @@
             color: white;
         }
         .form-input::placeholder { color: var(--secondary-text-color); }
-
-        /* --- Typography --- */
         .app-title {
             font-family: var(--font-title);
             color: var(--text-color);
@@ -169,8 +149,6 @@
             text-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
         }
         p { color: var(--secondary-text-color); line-height: 1.6; }
-
-        /* --- Specific Elements --- */
         #fab {
             position: fixed;
             bottom: 30px;
@@ -191,7 +169,6 @@
         }
         #fab.visible { transform: scale(1); }
         #fab:hover { transform: scale(1.1) rotate(15deg); }
-
         #leaderboard-list {
             list-style: none;
             padding: 0;
@@ -209,8 +186,6 @@
             justify-content: space-between;
             align-items: center;
         }
-        
-        /* Loader Spinner */
         .loader {
             border: 8px solid rgba(255,255,255,0.2);
             border-top: 8px solid var(--accent-color);
@@ -220,33 +195,29 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Custom Toast Notification */
         #toast {
             position: fixed;
             bottom: -100px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: var(--correct-color);
+            background-color: var(--incorrect-color);
             color: white;
             padding: 16px;
             border-radius: 8px;
             z-index: 100;
             transition: bottom 0.5s ease-in-out;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
         }
+        #toast.success { background-color: var(--correct-color); }
         #toast.show { bottom: 30px; }
-
     </style>
 </head>
 <body>
-
-    <!-- ======== SCREENS ======== -->
     <div id="loader-screen" class="screen">
         <div class="loader"></div>
         <p style="margin-top:20px;">লোড হচ্ছে...</p>
     </div>
-
     <div id="home-screen" class="screen active">
         <div class="card">
             <h1 class="app-title">শিবির কুইজ</h1>
@@ -255,7 +226,6 @@
             <button id="logout-btn" class="btn" style="display: none;">লগআউট</button>
         </div>
     </div>
-
     <div id="quiz-screen" class="screen">
         <div class="card">
             <p id="progress-text">প্রশ্ন ১/১০</p>
@@ -263,7 +233,6 @@
             <div id="answer-buttons"></div>
         </div>
     </div>
-
     <div id="result-screen" class="screen">
         <div class="card" id="result-card-content">
             <h2 id="result-percentage">আপনি 0% শিবির</h2>
@@ -279,7 +248,6 @@
             <button id="restart-btn" class="btn"><i class="material-icons">refresh</i>আবার খেলুন</button>
         </div>
     </div>
-    
     <div id="leaderboard-screen" class="screen">
         <div class="card">
             <h2>লিডারবোর্ড</h2>
@@ -289,17 +257,12 @@
             <button id="back-home-btn" class="btn" style="margin-top: 20px;">হোমে ফিরে যান</button>
         </div>
     </div>
-
     <div id="fab">
         <i class="material-icons">leaderboard</i>
     </div>
-    
     <div id="toast"></div>
-
     <audio id="correct-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
     <audio id="incorrect-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-show-wrong-answer-buzz-950.mp3" preload="auto"></audio>
-
-    <!-- ======== JAVASCRIPT LOGIC ======== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -318,8 +281,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const database = getDatabase(app);
-
-        // --- Quiz Content ---
         const questions = [
             { question: "আপনার মতে একজন আদর্শ ছাত্রের প্রধান কাজ কী?", answers: [ { text: "নিয়মিত পড়াশোনা করা এবং জ্ঞান অর্জন করা।", points: 0 }, { text: "ক্যাম্পাসে সংগঠনের কাজকে সর্বোচ্চ গুরুত্ব দেওয়া।", points: 3, personality: "আপনি একজন নিবেদিতপ্রাণ কর্মী!" }, { text: "পড়াশোনার পাশাপাশি সামাজিক কাজে যুক্ত থাকা।", points: 1 }, { text: "ক্যারিয়ার গঠনের দিকে মনোযোগ দেওয়া।", points: 0 } ] },
             { question: "বিশ্ববিদ্যালয়ে নতুন ছাত্র এলে আপনার ভূমিকা কী হবে?", answers: [ { text: "তাদেরকে নিজের সংগঠনের আদর্শে অনুপ্রাণিত করা।", points: 3 }, { text: "বন্ধুত্ব স্থাপন এবং একাডেমিক বিষয়ে সাহায্য করা।", points: 0, personality: "আপনি একজন বন্ধুবৎসল মানুষ!" }, { text: "তাদের সাথে নিরাপদ দূরত্ব বজায় রাখা।", points: 1 }, { text: "তাদের মেধা অনুযায়ী গ্রুপ তৈরি করা।", points: 2 } ] },
@@ -332,98 +293,79 @@
             { question: "প্রতিবাদের ভাষা কেমন হওয়া উচিত বলে আপনি মনে করেন?", answers: [ { text: "সুসংগঠিত ও আদর্শিক পদ্ধতিতে।", points: 3 }, { text: "শান্তিপূর্ণ মিছিল ও মিটিং এর মাধ্যমে।", points: 1 }, { text: "প্রয়োজনে কঠোর এবং আক্রমণাত্মক।", points: 2 }, { text: "আমি প্রতিবাদ বা রাজনীতিতে জড়াতে চাই না।", points: 0 } ] },
             { question: "কোন কাজটি আপনাকে সবচেয়ে বেশি মানসিক শান্তি দেয়?", answers: [ { text: "কুরআন তেলাওয়াত বা নামাজ পড়া।", points: 3 }, { text: "পরিবারের সাথে সময় কাটানো।", points: 0 }, { text: "সফলভাবে কোনো কঠিন কাজ শেষ করা।", points: 1 }, { text: "ভ্রমণ করা বা নতুন কিছু আবিষ্কার করা।", points: 0, personality: "আপনি একজন ভ্রমণপিপাসু ও जिज्ञासु!" } ] }
         ];
-
         const resultTiers = [
             { minPercent: 0, tier: "সাধারণ ছাত্র", personality: "আপনি রাজনীতির বাইরে থেকে নিজের পড়াশোনা ও ক্যারিয়ার নিয়ে মনোযোগী। সাধারণ জীবনযাপনই আপনার পছন্দ।" },
             { minPercent: 25, tier: "সহানুভূতিশীল", personality: "আপনি সরাসরি জড়িত না থাকলেও তাদের কিছু আদর্শের প্রতি আপনার কিছুটা দুর্বলতা বা সহানুভূতি রয়েছে।" },
             { minPercent: 50, tier: "সম্ভাব্য কর্মী", personality: "আপনার কথাবার্তা ও চালচলনে আদর্শিক ছাপ স্পষ্ট। একটু চেষ্টা করলেই আপনি একজন ভালো কর্মী হতে পারবেন।" },
             { minPercent: 75, tier: "কট্টর শিবির", personality: "আপনি একজন খাঁটি শিবির। আপনার রক্তে মিশে আছে সংগঠনের আদর্শ। আপনি সংগঠনের জন্য নিবেদিতপ্রাণ।" }
         ];
-
         const screens = document.querySelectorAll('.screen');
         const fab = document.getElementById('fab');
         const correctSound = document.getElementById('correct-sound');
         const incorrectSound = document.getElementById('incorrect-sound');
-
         let isAudioUnlocked = false;
         let score = 0;
         let currentQuestionIndex = 0;
         let userPersonality = "";
         const maxScore = questions.length * 3;
-
-        // --- Helper Functions ---
         function switchScreen(screenId) {
             screens.forEach(s => s.classList.remove('active'));
             const activeScreen = document.getElementById(screenId);
             if (activeScreen) activeScreen.classList.add('active');
         }
-
-        function showToast(message) {
+        function showToast(message, isSuccess = false) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            toast.className = 'show';
+            if (isSuccess) {
+                toast.classList.add('success');
+            }
+            setTimeout(() => toast.classList.remove('show'), 4000);
         }
-
-        // --- Firebase Authentication (Handles UI changes on login/logout) ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userRef = ref(database, `users/${user.uid}`);
                 const snapshot = await get(userRef);
                 const userData = snapshot.val() || { highscore: 0 };
-                
                 document.getElementById('highscore-info').innerHTML = `আপনার সর্বোচ্চ স্কোর: <strong>${userData.highscore || 0}%</strong>`;
                 document.getElementById('logout-btn').style.display = 'inline-block';
                 fab.classList.add('visible');
             } else {
-                // User is signed out
                 document.getElementById('highscore-info').textContent = '';
                 document.getElementById('logout-btn').style.display = 'none';
                 fab.classList.remove('visible');
             }
         });
-
-        // This function ensures the user is logged in before proceeding.
         async function ensureAuthenticated() {
-            if (auth.currentUser) {
-                return auth.currentUser;
-            }
+            if (auth.currentUser) return auth.currentUser;
             try {
                 const userCredential = await signInAnonymously(auth);
                 return userCredential.user;
             } catch (error) {
-                console.error("Anonymous sign-in failed:", error);
-                showToast("Authentication failed. Please try again.");
+                console.error("Firebase Authentication Error:", error.code, error.message);
+                showToast(`ত্রুটি: ${error.code}. Firebase-এ অ্যানোনিমাস সাইন-ইন চালু আছে কি না দেখুন।`);
                 return null;
             }
         }
-        
-        // --- Quiz Logic ---
         function startQuiz() {
-            // Unlock audio on the first user interaction
             if (!isAudioUnlocked) {
                 [correctSound, incorrectSound].forEach(audio => {
-                    audio.play().catch(() => {});
-                    audio.pause();
-                    audio.currentTime = 0;
+                    audio.play().catch(() => {}); audio.pause(); audio.currentTime = 0;
                 });
                 isAudioUnlocked = true;
             }
-            
             score = 0;
             currentQuestionIndex = 0;
             userPersonality = "আপনি একজন ভারসাম্যপূর্ণ মানুষ!";
             switchScreen('quiz-screen');
             showQuestion();
         }
-
         function showQuestion() {
             const currentQ = questions[currentQuestionIndex];
             document.getElementById('progress-text').innerText = `প্রশ্ন ${currentQuestionIndex + 1}/${questions.length}`;
             document.getElementById('question-text').innerText = currentQ.question;
             const answerButtons = document.getElementById('answer-buttons');
             answerButtons.innerHTML = '';
-
             const shuffledAnswers = [...currentQ.answers].sort(() => Math.random() - 0.5);
             shuffledAnswers.forEach((answer, index) => {
                 const btn = document.createElement('button');
@@ -434,11 +376,9 @@
                 answerButtons.appendChild(btn);
             });
         }
-
         function selectAnswer(answer, btn) {
             document.querySelectorAll('#quiz-screen .answer-btn').forEach(b => b.disabled = true);
             score += answer.points;
-
             if (answer.points >= 2) {
                 btn.classList.add('correct');
                 if(isAudioUnlocked) correctSound.play().catch(e => {});
@@ -447,23 +387,15 @@
                 btn.classList.add('incorrect');
                 if(isAudioUnlocked) incorrectSound.play().catch(e => {});
             }
-
             setTimeout(() => {
                 currentQuestionIndex++;
-                if (currentQuestionIndex < questions.length) {
-                    showQuestion();
-                } else {
-                    showResult();
-                }
+                if (currentQuestionIndex < questions.length) showQuestion();
+                else showResult();
             }, 1200);
         }
-
-        // --- Result & Leaderboard ---
         async function showResult() {
             const percentage = Math.round((score / maxScore) * 100);
             const finalTier = resultTiers.slice().reverse().find(t => percentage >= t.minPercent);
-            
-            // If user is already logged in, update their high score
             if(auth.currentUser){
                 const userRef = ref(database, `users/${auth.currentUser.uid}`);
                 const snapshot = await get(userRef);
@@ -473,28 +405,23 @@
                      document.getElementById('highscore-info').innerHTML = `আপনার সর্বোচ্চ স্কোর: <strong>${percentage}%</strong>`;
                 }
             }
-
             const resultCard = document.getElementById('result-screen');
             resultCard.querySelector('#result-percentage').innerText = `আপনি ${percentage}% শিবির`;
             resultCard.querySelector('#result-tier').innerText = finalTier.tier;
             resultCard.querySelector('#result-personality').innerText = `"${finalTier.personality}"`;
             document.getElementById('save-score-btn').disabled = false;
             document.getElementById('save-score-btn').innerText = "লিডারবোর্ডে স্কোর পাঠান";
-            
             switchScreen('result-screen');
         }
-        
         async function fetchAndShowLeaderboard() {
             const user = await ensureAuthenticated();
-            if (!user) return; // Stop if authentication fails
-
+            if (!user) return;
             switchScreen('loader-screen');
             const leaderboardRef = ref(database, 'leaderboard');
             const snapshot = await get(leaderboardRef);
             const data = snapshot.val();
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
-
             if (data) {
                 Object.values(data).sort((a, b) => b.score - a.score)
                     .slice(0, 50) 
@@ -508,58 +435,46 @@
             }
             switchScreen('leaderboard-screen');
         }
-
         async function saveScoreToLeaderboard() {
             const saveBtn = document.getElementById('save-score-btn');
             saveBtn.disabled = true;
             saveBtn.innerText = "প্রসেসিং...";
-            
             const user = await ensureAuthenticated();
             if (!user) {
                 saveBtn.disabled = false;
                 saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
                 return;
             }
-            
             const nameInput = document.getElementById('username-input');
             const name = nameInput.value.trim();
-            if (!name) {
-                showToast("লিডারবোর্ডের জন্য অনুগ্রহ করে আপনার নাম দিন।");
-                saveBtn.disabled = false;
-                saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
+            if (!name || name.length > 20) {
+                showToast( !name ? "লিডারবোর্ডের জন্য অনুগ্রহ করে আপনার নাম দিন।" : "নাম ২০ অক্ষরের মধ্যে হতে হবে।");
+                saveBtn.disabled = false; saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
                 return;
             }
-            if (name.length > 20) {
-                 showToast("নাম ২০ অক্ষরের মধ্যে হতে হবে।");
-                 saveBtn.disabled = false;
-                 saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
-                 return;
-            }
-            
             saveBtn.innerText = "সংরক্ষণ করা হচ্ছে...";
             const percentage = Math.round((score / maxScore) * 100);
-
             try {
-                await set(ref(database, `leaderboard/${user.uid}`), { name, score: percentage, uid: user.uid });
-                 // Also update high score if this is a new record
+                const leaderboardRef = ref(database, `leaderboard/${user.uid}`);
                 const userRef = ref(database, `users/${user.uid}`);
+                await set(leaderboardRef, { name, score: percentage, uid: user.uid });
                 const snapshot = await get(userRef);
                 const userData = snapshot.val() || { highscore: 0 };
-                if (percentage > (userData.highscore || 0)) {
+                if (percentage > userData.highscore) {
                    await set(ref(database, `users/${user.uid}/highscore`), percentage);
                 }
-                showToast("আপনার স্কোর সফলভাবে লিডারবোর্ডে যুক্ত হয়েছে!");
+                showToast("আপনার স্কোর সফলভাবে লিডারবোর্ডে যুক্ত হয়েছে!", true);
                 await fetchAndShowLeaderboard();
             } catch (error) {
-                showToast("স্কোর সেইভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+                console.error("Firebase Database Error:", error.code, error.message);
+                showToast(`স্কোর সেইভ করা যায়নি: ${error.code}`);
                 saveBtn.disabled = false;
                 saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
             }
         }
-
         function shareResult() {
             const resultCard = document.getElementById('result-card-content');
-            showToast("শেয়ার করার জন্য ছবি তৈরি করা হচ্ছে...");
+            showToast("শেয়ার করার জন্য ছবি তৈরি করা হচ্ছে...", true);
             html2canvas(resultCard, { backgroundColor: null, scale: 2 }).then(canvas => {
                 canvas.toBlob(blob => {
                     const file = new File([blob], "result.png", { type: "image/png" });
@@ -576,20 +491,15 @@
                 });
             });
         }
-
         function fallbackDownload(canvas) {
             const link = document.createElement('a');
             link.download = 'shibir-quiz-result.png';
             link.href = canvas.toDataURL();
             link.click();
         }
-
-        // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Hide loader and show home screen on initial load
             document.getElementById('loader-screen').classList.remove('active');
             document.getElementById('home-screen').classList.add('active');
-
             document.getElementById('start-btn').onclick = startQuiz;
             document.getElementById('restart-btn').onclick = () => switchScreen('home-screen');
             document.getElementById('save-score-btn').onclick = saveScoreToLeaderboard;
