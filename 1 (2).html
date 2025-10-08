@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>তুমি কি শিবির?</title>
+    <!-- Google Fonts for Bengali and English text -->
+    <link href="https://fonts.googleapis.com/css2?family=Mina:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Material Icons for UI elements -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- html2canvas for the share functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-bg-start: #1e3c72;
+            --primary-bg-end: #2a5298;
+            --accent-color: #00e5ff;
+            --secondary-accent: #ff00ff;
+            --card-background: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --secondary-text-color: #bdc3c7;
+            --correct-color: #27ae60;
+            --incorrect-color: #c0392b;
+            --font-main: 'Hind Siliguri', sans-serif;
+            --font-title: 'Mina', serif;
+        }
+
+        /* --- Base & Body Styles --- */
+        body {
+            font-family: var(--font-main);
+            margin: 0;
+            background: linear-gradient(135deg, var(--primary-bg-start), var(--primary-bg-end));
+            color: var(--text-color);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animated Gradient Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, rgba(42, 82, 152, 0.5), rgba(30, 60, 114, 0.8), rgba(255, 0, 255, 0.3), rgba(0, 229, 255, 0.3));
+            background-size: 400% 400%;
+            animation: gradientAnimation 15s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Screen Management --- */
+        .screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.5s ease-out, visibility 0.5s;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .screen.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 1;
+        }
+
+        /* --- Card Styling --- */
+        .card {
+            background: var(--card-background);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            width: 100%;
+            max-width: 500px;
+            padding: 28px;
+            text-align: center;
+            animation: pop-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes pop-in {
+            from { transform: translateY(20px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        
+        /* --- UI Components (Buttons, Inputs, etc.) --- */
+        .btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn.primary {
+            background: linear-gradient(145deg, var(--secondary-accent), var(--accent-color));
+            border: none;
+        }
+        .btn:disabled {
+            background: rgba(189, 195, 199, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+        .answer-btn {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: left;
+            text-transform: none;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            margin-bottom: 10px;
+        }
+        .answer-btn.correct { background-color: var(--correct-color); border-color: var(--correct-color); }
+        .answer-btn.incorrect { background-color: var(--incorrect-color); border-color: var(--incorrect-color); }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-input {
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            font-size: 1rem;
+            width: calc(100% - 26px);
+            margin-bottom: 10px;
+            background: rgba(0,0,0,0.2);
+            color: white;
+        }
+        .form-input::placeholder { color: var(--secondary-text-color); }
+
+        /* --- Typography --- */
+        .app-title {
+            font-family: var(--font-title);
+            color: var(--text-color);
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+        }
+        p { color: var(--secondary-text-color); line-height: 1.6; }
+
+        /* --- Specific Elements --- */
+        #fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(45deg, var(--secondary-accent), var(--accent-color));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            z-index: 5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: scale(0);
+        }
+        #fab.visible { transform: scale(1); }
+        #fab:hover { transform: scale(1.1) rotate(15deg); }
+
+        #leaderboard-list {
+            list-style: none;
+            padding: 0;
+            width:100%;
+            max-height: 40vh;
+            overflow-y: auto;
+            text-align: left;
+        }
+        #leaderboard-list li {
+            background: rgba(0,0,0,0.2);
+            margin-bottom: 8px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Loader Spinner */
+        .loader {
+            border: 8px solid rgba(255,255,255,0.2);
+            border-top: 8px solid var(--accent-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--correct-color);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            z-index: 100;
+            transition: bottom 0.5s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #toast.show { bottom: 30px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- ======== SCREENS ======== -->
+    <div id="loader-screen" class="screen">
+        <div class="loader"></div>
+        <p style="margin-top:20px;">লোড হচ্ছে...</p>
+    </div>
+
+    <div id="home-screen" class="screen active">
+        <div class="card">
+            <h1 class="app-title">শিবির কুইজ</h1>
+            <p>কিছু প্রশ্নের উত্তর দিন এবং খুঁজে বের করুন আপনি কত শতাংশ শিবির। <span id="highscore-info"></span></p>
+            <button id="start-btn" class="btn primary">শুরু করুন</button>
+            <button id="logout-btn" class="btn" style="display: none;">লগআউট</button>
+        </div>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <div class="card">
+            <p id="progress-text">প্রশ্ন ১/১০</p>
+            <h2 id="question-text" style="min-height: 60px;">প্রশ্ন এখানে লোড হবে...</h2>
+            <div id="answer-buttons"></div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <div class="card" id="result-card-content">
+            <h2 id="result-percentage">আপনি 0% শিবির</h2>
+            <h3 id="result-tier">ফলাফল স্তর</h3>
+            <p id="result-personality">"ব্যক্তিত্বের ধরণ"</p>
+            <div id="optional-account-section" style="margin-top: 20px;">
+                <input type="text" id="username-input" class="form-input" placeholder="আপনার নাম লিখুন">
+                <button id="save-score-btn" class="btn primary">লিডারবোর্ডে স্কোর পাঠান</button>
+            </div>
+        </div>
+        <div style="margin-top:20px;">
+             <button id="share-btn" class="btn"><i class="material-icons">share</i>শেয়ার করুন</button>
+            <button id="restart-btn" class="btn"><i class="material-icons">refresh</i>আবার খেলুন</button>
+        </div>
+    </div>
+    
+    <div id="leaderboard-screen" class="screen">
+        <div class="card">
+            <h2>লিডারবোর্ড</h2>
+            <ul id="leaderboard-list">
+                <li>এখনো কোনো স্কোর নেই।</li>
+            </ul>
+            <button id="back-home-btn" class="btn" style="margin-top: 20px;">হোমে ফিরে যান</button>
+        </div>
+    </div>
+
+    <div id="fab">
+        <i class="material-icons">leaderboard</i>
+    </div>
+    
+    <div id="toast"></div>
+
+    <audio id="correct-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
+    <audio id="incorrect-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-show-wrong-answer-buzz-950.mp3" preload="auto"></audio>
+
+    <!-- ======== JAVASCRIPT LOGIC ======== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyBF7wyNG17yNOjNflL427G1T-PXcx2Zw_Y",
+            authDomain: "mathemate-software.firebaseapp.com",
+            databaseURL: "https://mathemate-software-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mathemate-software",
+            storageBucket: "mathemate-software.appspot.com",
+            messagingSenderId: "780184955321",
+            appId: "1:780184955321:web:0e1b0f8bff546603cfee68"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        // --- Quiz Content ---
+        const questions = [
+            { question: "আপনার মতে একজন আদর্শ ছাত্রের প্রধান কাজ কী?", answers: [ { text: "নিয়মিত পড়াশোনা করা এবং জ্ঞান অর্জন করা।", points: 0 }, { text: "ক্যাম্পাসে সংগঠনের কাজকে সর্বোচ্চ গুরুত্ব দেওয়া।", points: 3, personality: "আপনি একজন নিবেদিতপ্রাণ কর্মী!" }, { text: "পড়াশোনার পাশাপাশি সামাজিক কাজে যুক্ত থাকা।", points: 1 }, { text: "ক্যারিয়ার গঠনের দিকে মনোযোগ দেওয়া।", points: 0 } ] },
+            { question: "বিশ্ববিদ্যালয়ে নতুন ছাত্র এলে আপনার ভূমিকা কী হবে?", answers: [ { text: "তাদেরকে নিজের সংগঠনের আদর্শে অনুপ্রাণিত করা।", points: 3 }, { text: "বন্ধুত্ব স্থাপন এবং একাডেমিক বিষয়ে সাহায্য করা।", points: 0, personality: "আপনি একজন বন্ধুবৎসল মানুষ!" }, { text: "তাদের সাথে নিরাপদ দূরত্ব বজায় রাখা।", points: 1 }, { text: "তাদের মেধা অনুযায়ী গ্রুপ তৈরি করা।", points: 2 } ] },
+            { question: "আপনার মতে, দেশের প্রধান সমস্যা কোনটি?", answers: [ { text: "নৈতিক ও আদর্শিক অবক্ষয়।", points: 3 }, { text: "অর্থনৈতিক সংকট এবং দুর্নীতি।", points: 1, personality: "আপনি একজন বাস্তববাদী চিন্তাবিদ!" }, { text: "শিক্ষাব্যবস্থার দুর্বলতা।", points: 2 }, { text: "রাজনৈতিক অস্থিতিশীলতা।", points: 1 } ] },
+            { question: "আপনার অবসর সময়ের প্রিয় কাজ কোনটি?", answers: [ { text: "ইসলামিক সাহিত্য ও ইতিহাস পড়া।", points: 3 }, { text: "সিনেমা দেখা বা গান শোনা।", points: 0 }, { text: "খেলাধুলা করা বা বন্ধুদের সাথে আড্ডা দেওয়া।", points: 0 }, { text: "অনলাইনে স্কিল ডেভেলপমেন্ট কোর্স করা।", points: 1, personality: "আপনি একজন আত্ম-উন্নয়নে বিশ্বাসী!" } ] },
+            { question: "সহপাঠী কোনো সমস্যায় পড়লে আপনি কী করবেন?", answers: [ { text: "তাকে আদর্শিক পথে চলার পরামর্শ দেব।", points: 3 }, { text: "তার বাস্তব সমস্যা সমাধানে সরাসরি সাহায্য করব।", points: 1 }, { text: "তাকে এড়িয়ে চলব, নিজের ঝামেলা বাড়াব না।", points: 0 }, { text: "অন্য বন্ধুদের বিষয়টি জানিয়ে সাহায্যের আবেদন করব।", points: 2 } ] },
+            { question: "কোন ধরনের পোশাক আপনার বেশি পছন্দ?", answers: [ { text: "পাঞ্জাবি-পাজামা বা শালীন পোশাক।", points: 3, personality: "আপনি একজন ঐতিহ্যপ্রেমী!" }, { text: "টি-শার্ট, জিন্স বা আধুনিক পোশাক।", points: 0 }, { text: "ফরমাল শার্ট-প্যান্ট।", points: 1 }, { text: "পরিষ্কার-পরিচ্ছন্ন যেকোনো পোশাক।", points: 0 } ] },
+            { question: "সামাজিক যোগাযোগ মাধ্যমে আপনি কোন বিষয়ে বেশি সক্রিয়?", answers: [ { text: "ধর্মীয় ও আদর্শিক লেখা প্রচার করা।", points: 3 }, { text: "ব্যক্তিগত জীবন ও বন্ধুদের সাথে মুহূর্ত শেয়ার করা।", points: 0 }, { text: "ট্রল ও মজার কন্টেন্ট শেয়ার করা।", points: 0 }, { text: "গুরুত্বপূর্ণ সংবাদ ও শিক্ষামূলক বিষয় শেয়ার করা।", points: 1 } ] },
+            { question: "আপনার একজন প্রিয় নেতা বা ব্যক্তিত্ব কে?", answers: [ { text: "সাইয়েদ আবুল আ'লা মওদুদী।", points: 3 }, { text: "বঙ্গবন্ধু শেখ মুজিবুর রহমান।", points: 0 }, { text: "এপিজে আবদুল কালাম।", points: 1 }, { text: "আমার নির্দিষ্ট কোনো প্রিয় নেতা নেই।", points: 0, personality: "আপনি একজন মুক্তমনা মানুষ!" } ] },
+            { question: "প্রতিবাদের ভাষা কেমন হওয়া উচিত বলে আপনি মনে করেন?", answers: [ { text: "সুসংগঠিত ও আদর্শিক পদ্ধতিতে।", points: 3 }, { text: "শান্তিপূর্ণ মিছিল ও মিটিং এর মাধ্যমে।", points: 1 }, { text: "প্রয়োজনে কঠোর এবং আক্রমণাত্মক।", points: 2 }, { text: "আমি প্রতিবাদ বা রাজনীতিতে জড়াতে চাই না।", points: 0 } ] },
+            { question: "কোন কাজটি আপনাকে সবচেয়ে বেশি মানসিক শান্তি দেয়?", answers: [ { text: "কুরআন তেলাওয়াত বা নামাজ পড়া।", points: 3 }, { text: "পরিবারের সাথে সময় কাটানো।", points: 0 }, { text: "সফলভাবে কোনো কঠিন কাজ শেষ করা।", points: 1 }, { text: "ভ্রমণ করা বা নতুন কিছু আবিষ্কার করা।", points: 0, personality: "আপনি একজন ভ্রমণপিপাসু ও जिज्ञासु!" } ] }
+        ];
+
+        const resultTiers = [
+            { minPercent: 0, tier: "সাধারণ ছাত্র", personality: "আপনি রাজনীতির বাইরে থেকে নিজের পড়াশোনা ও ক্যারিয়ার নিয়ে মনোযোগী। সাধারণ জীবনযাপনই আপনার পছন্দ।" },
+            { minPercent: 25, tier: "সহানুভূতিশীল", personality: "আপনি সরাসরি জড়িত না থাকলেও তাদের কিছু আদর্শের প্রতি আপনার কিছুটা দুর্বলতা বা সহানুভূতি রয়েছে।" },
+            { minPercent: 50, tier: "সম্ভাব্য কর্মী", personality: "আপনার কথাবার্তা ও চালচলনে আদর্শিক ছাপ স্পষ্ট। একটু চেষ্টা করলেই আপনি একজন ভালো কর্মী হতে পারবেন।" },
+            { minPercent: 75, tier: "কট্টর শিবির", personality: "আপনি একজন খাঁটি শিবির। আপনার রক্তে মিশে আছে সংগঠনের আদর্শ। আপনি সংগঠনের জন্য নিবেদিতপ্রাণ।" }
+        ];
+
+        const screens = document.querySelectorAll('.screen');
+        const fab = document.getElementById('fab');
+        const correctSound = document.getElementById('correct-sound');
+        const incorrectSound = document.getElementById('incorrect-sound');
+
+        let isAudioUnlocked = false;
+        let score = 0;
+        let currentQuestionIndex = 0;
+        let userPersonality = "";
+        const maxScore = questions.length * 3;
+
+        // --- Helper Functions ---
+        function switchScreen(screenId) {
+            screens.forEach(s => s.classList.remove('active'));
+            const activeScreen = document.getElementById(screenId);
+            if (activeScreen) activeScreen.classList.add('active');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // --- Firebase Authentication (Handles UI changes on login/logout) ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userRef = ref(database, `users/${user.uid}`);
+                const snapshot = await get(userRef);
+                const userData = snapshot.val() || { highscore: 0 };
+                
+                document.getElementById('highscore-info').innerHTML = `আপনার সর্বোচ্চ স্কোর: <strong>${userData.highscore || 0}%</strong>`;
+                document.getElementById('logout-btn').style.display = 'inline-block';
+                fab.classList.add('visible');
+            } else {
+                // User is signed out
+                document.getElementById('highscore-info').textContent = '';
+                document.getElementById('logout-btn').style.display = 'none';
+                fab.classList.remove('visible');
+            }
+        });
+
+        // This function ensures the user is logged in before proceeding.
+        async function ensureAuthenticated() {
+            if (auth.currentUser) {
+                return auth.currentUser;
+            }
+            try {
+                const userCredential = await signInAnonymously(auth);
+                return userCredential.user;
+            } catch (error) {
+                console.error("Anonymous sign-in failed:", error);
+                showToast("Authentication failed. Please try again.");
+                return null;
+            }
+        }
+        
+        // --- Quiz Logic ---
+        function startQuiz() {
+            // Unlock audio on the first user interaction
+            if (!isAudioUnlocked) {
+                [correctSound, incorrectSound].forEach(audio => {
+                    audio.play().catch(() => {});
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+                isAudioUnlocked = true;
+            }
+            
+            score = 0;
+            currentQuestionIndex = 0;
+            userPersonality = "আপনি একজন ভারসাম্যপূর্ণ মানুষ!";
+            switchScreen('quiz-screen');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const currentQ = questions[currentQuestionIndex];
+            document.getElementById('progress-text').innerText = `প্রশ্ন ${currentQuestionIndex + 1}/${questions.length}`;
+            document.getElementById('question-text').innerText = currentQ.question;
+            const answerButtons = document.getElementById('answer-buttons');
+            answerButtons.innerHTML = '';
+
+            const shuffledAnswers = [...currentQ.answers].sort(() => Math.random() - 0.5);
+            shuffledAnswers.forEach((answer, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn answer-btn';
+                btn.innerText = answer.text;
+                btn.style.animationDelay = `${index * 100}ms`;
+                btn.onclick = () => selectAnswer(answer, btn);
+                answerButtons.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(answer, btn) {
+            document.querySelectorAll('#quiz-screen .answer-btn').forEach(b => b.disabled = true);
+            score += answer.points;
+
+            if (answer.points >= 2) {
+                btn.classList.add('correct');
+                if(isAudioUnlocked) correctSound.play().catch(e => {});
+                if (answer.personality) userPersonality = answer.personality;
+            } else {
+                btn.classList.add('incorrect');
+                if(isAudioUnlocked) incorrectSound.play().catch(e => {});
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    showQuestion();
+                } else {
+                    showResult();
+                }
+            }, 1200);
+        }
+
+        // --- Result & Leaderboard ---
+        async function showResult() {
+            const percentage = Math.round((score / maxScore) * 100);
+            const finalTier = resultTiers.slice().reverse().find(t => percentage >= t.minPercent);
+            
+            // If user is already logged in, update their high score
+            if(auth.currentUser){
+                const userRef = ref(database, `users/${auth.currentUser.uid}`);
+                const snapshot = await get(userRef);
+                const userData = snapshot.val() || { highscore: 0 };
+                 if (percentage > (userData.highscore || 0)) {
+                    await set(ref(database, `users/${auth.currentUser.uid}/highscore`), percentage);
+                     document.getElementById('highscore-info').innerHTML = `আপনার সর্বোচ্চ স্কোর: <strong>${percentage}%</strong>`;
+                }
+            }
+
+            const resultCard = document.getElementById('result-screen');
+            resultCard.querySelector('#result-percentage').innerText = `আপনি ${percentage}% শিবির`;
+            resultCard.querySelector('#result-tier').innerText = finalTier.tier;
+            resultCard.querySelector('#result-personality').innerText = `"${finalTier.personality}"`;
+            document.getElementById('save-score-btn').disabled = false;
+            document.getElementById('save-score-btn').innerText = "লিডারবোর্ডে স্কোর পাঠান";
+            
+            switchScreen('result-screen');
+        }
+        
+        async function fetchAndShowLeaderboard() {
+            const user = await ensureAuthenticated();
+            if (!user) return; // Stop if authentication fails
+
+            switchScreen('loader-screen');
+            const leaderboardRef = ref(database, 'leaderboard');
+            const snapshot = await get(leaderboardRef);
+            const data = snapshot.val();
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+
+            if (data) {
+                Object.values(data).sort((a, b) => b.score - a.score)
+                    .slice(0, 50) 
+                    .forEach(entry => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<span>${entry.name}</span><strong>${entry.score}%</strong>`;
+                        list.appendChild(li);
+                    });
+            } else {
+                list.innerHTML = '<li>এখনো কোনো স্কোর নেই।</li>';
+            }
+            switchScreen('leaderboard-screen');
+        }
+
+        async function saveScoreToLeaderboard() {
+            const saveBtn = document.getElementById('save-score-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerText = "প্রসেসিং...";
+            
+            const user = await ensureAuthenticated();
+            if (!user) {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
+                return;
+            }
+            
+            const nameInput = document.getElementById('username-input');
+            const name = nameInput.value.trim();
+            if (!name) {
+                showToast("লিডারবোর্ডের জন্য অনুগ্রহ করে আপনার নাম দিন।");
+                saveBtn.disabled = false;
+                saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
+                return;
+            }
+            if (name.length > 20) {
+                 showToast("নাম ২০ অক্ষরের মধ্যে হতে হবে।");
+                 saveBtn.disabled = false;
+                 saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
+                 return;
+            }
+            
+            saveBtn.innerText = "সংরক্ষণ করা হচ্ছে...";
+            const percentage = Math.round((score / maxScore) * 100);
+
+            try {
+                await set(ref(database, `leaderboard/${user.uid}`), { name, score: percentage, uid: user.uid });
+                 // Also update high score if this is a new record
+                const userRef = ref(database, `users/${user.uid}`);
+                const snapshot = await get(userRef);
+                const userData = snapshot.val() || { highscore: 0 };
+                if (percentage > (userData.highscore || 0)) {
+                   await set(ref(database, `users/${user.uid}/highscore`), percentage);
+                }
+                showToast("আপনার স্কোর সফলভাবে লিডারবোর্ডে যুক্ত হয়েছে!");
+                await fetchAndShowLeaderboard();
+            } catch (error) {
+                showToast("স্কোর সেইভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+                saveBtn.disabled = false;
+                saveBtn.innerText = "লিডারবোর্ডে স্কোর পাঠান";
+            }
+        }
+
+        function shareResult() {
+            const resultCard = document.getElementById('result-card-content');
+            showToast("শেয়ার করার জন্য ছবি তৈরি করা হচ্ছে...");
+            html2canvas(resultCard, { backgroundColor: null, scale: 2 }).then(canvas => {
+                canvas.toBlob(blob => {
+                    const file = new File([blob], "result.png", { type: "image/png" });
+                    const shareData = {
+                        files: [file],
+                        title: "আমার শিবির কুইজ রেজাল্ট!",
+                        text: `আমি এই কুইজে ${document.getElementById('result-percentage').innerText} স্কোর করেছি! আপনিও চেষ্টা করুন।`
+                    };
+                    if (navigator.canShare && navigator.canShare(shareData)) {
+                        navigator.share(shareData).catch(() => fallbackDownload(canvas));
+                    } else {
+                        fallbackDownload(canvas);
+                    }
+                });
+            });
+        }
+
+        function fallbackDownload(canvas) {
+            const link = document.createElement('a');
+            link.download = 'shibir-quiz-result.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide loader and show home screen on initial load
+            document.getElementById('loader-screen').classList.remove('active');
+            document.getElementById('home-screen').classList.add('active');
+
+            document.getElementById('start-btn').onclick = startQuiz;
+            document.getElementById('restart-btn').onclick = () => switchScreen('home-screen');
+            document.getElementById('save-score-btn').onclick = saveScoreToLeaderboard;
+            document.getElementById('logout-btn').onclick = () => {
+                if (confirm("আপনি কি নিশ্চিতভাবে লগআউট করতে চান?")) {
+                    auth.signOut();
+                }
+            };
+            document.getElementById('fab').onclick = fetchAndShowLeaderboard;
+            document.getElementById('back-home-btn').onclick = () => switchScreen('home-screen');
+            document.getElementById('share-btn').onclick = shareResult;
+        });
+    </script>
+</body>
+</html>
+
+
