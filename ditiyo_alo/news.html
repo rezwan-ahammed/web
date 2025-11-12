@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>দ্বিতীয় আলো - ব্যাডমিন্টন সংবাদ</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Noto Sans Bengali -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', sans-serif;
+            background-color: #ffffff;
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Custom text alignment for justified text with last line left */
+        .text-justify-custom {
+            text-align: justify;
+            text-justify: inter-word;
+        }
+    </style>
+</head>
+<body class="text-gray-900">
+
+    <!-- HEADER SECTION -->
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+        <!-- Top Bar: Logo, Search, Login -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <!-- Logo (Ditiyo Alo) -->
+            <div class="flex-shrink-0 cursor-pointer">
+                <h1 class="text-3xl font-bold tracking-tight flex items-center">
+                    <!-- Sun Icon mimic -->
+                    <span class="relative mr-1">
+                        <span class="text-red-600 text-2xl relative z-10">দ্বিতীয়</span>
+                        <div class="absolute -top-3 left-2 w-6 h-6 bg-red-500 rounded-full opacity-20 blur-sm"></div>
+                        <div class="absolute -top-2 left-3 w-4 h-4 bg-red-600 rounded-full z-0"></div>
+                    </span>
+                    <span>আলো</span>
+                </h1>
+            </div>
+
+            <!-- Right Icons -->
+            <div class="flex items-center space-x-5 text-gray-600">
+                <i class="fas fa-search text-xl cursor-pointer"></i>
+                <div class="flex items-center space-x-1 cursor-pointer border-l pl-4 border-gray-300">
+                    <i class="fas fa-user text-lg"></i>
+                    <span class="text-base font-medium hidden sm:inline">Login</span>
+                    <span class="text-base font-medium sm:hidden">Login</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Bar (Scrollable) -->
+        <div class="flex items-center border-b border-gray-200 bg-white">
+            <div class="flex-1 overflow-x-auto no-scrollbar py-3 px-4 whitespace-nowrap text-[17px] font-medium text-gray-800">
+                <a href="#" class="mr-6 hover:text-red-600">সর্বশেষ</a>
+                <a href="#" class="mr-6 hover:text-red-600">শিবগঞ্জ</a>
+                <a href="#" class="mr-6 text-red-600 font-bold">খেলাধুলা</a>
+                <a href="#" class="mr-6 hover:text-red-600">বিশ্ব</a>
+                <a href="#" class="mr-6 hover:text-red-600">বাণিজ্য</a>
+                <a href="#" class="mr-6 hover:text-red-600">মতামত</a>
+                <a href="#" class="mr-6 hover:text-red-600">ফিচার</a>
+            </div>
+            <div class="flex items-center pl-2 pr-4 bg-white shadow-[-10px_0_10px_rgba(255,255,255,0.9)] z-10">
+                <button class="flex items-center px-3 py-1 bg-red-50 text-gray-700 border border-red-100 rounded hover:bg-red-100 transition mr-3 text-sm">
+                    <i class="fas fa-globe mr-1"></i> Eng
+                </button>
+                <i class="fas fa-bars text-2xl text-gray-700 cursor-pointer"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-3xl mx-auto px-4 py-6 bg-white">
+        
+        <!-- Breadcrumb/Category -->
+        <div class="mb-3 flex items-center space-x-2 text-sm">
+            <a href="#" class="text-gray-500 hover:text-red-600">খেলাধুলা</a>
+            <span class="text-gray-400">></span>
+            <a href="#" class="text-blue-600 text-lg font-medium hover:underline decoration-2 underline-offset-4">ব্যাডমিন্টন</a>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="text-[26px] md:text-[32px] leading-[1.3] font-bold text-gray-900 mb-4">
+            লেজেন্ডারি প্লেয়ার রেজওয়ানকে ছাড়াই আয়োজিত হচ্ছে শিবগঞ্জ ব্যাডমিন্টন টুর্নামেন্ট, সব মহলে সমালোচনার ঝড়
+        </h1>
+
+        <!-- Author & Date -->
+        <div class="flex flex-col text-gray-600 text-sm mb-5 space-y-1">
+            <div class="flex items-center">
+                <span class="font-bold text-red-600 mr-1">নিজস্ব প্রতিবেদক,</span> দ্বিতীয় আলো
+            </div>
+            <div class="flex items-center space-x-2 text-xs md:text-sm">
+                <span>শিবগঞ্জ</span>
+                <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                <span>প্রকাশ: ১২ নভেম্বর ২০২৫, ১৮ : ০২</span>
+            </div>
+        </div>
+
+        <!-- Social Share & Tools Bar -->
+        <div class="flex items-center justify-between border-y border-gray-200 py-3 mb-6">
+            <div class="flex items-center space-x-3">
+                <!-- Facebook -->
+                <button class="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <!-- X (Twitter) -->
+                <button class="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center hover:opacity-90">
+                    <i class="fab fa-x-twitter"></i>
+                </button>
+                <!-- Share -->
+                <button class="w-9 h-9 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100">
+                    <i class="fas fa-share"></i>
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-3 text-gray-600">
+                <!-- Font Size Controls -->
+                <button onclick="changeFontSize(1)" class="w-9 h-9 rounded-full border border-blue-500 text-blue-600 flex items-center justify-center font-bold hover:bg-blue-50 text-sm" title="ফন্ট বড় করুন">
+                    অ+
+                </button>
+                <button onclick="changeFontSize(-1)" class="w-9 h-9 rounded-full border border-blue-500 text-blue-600 flex items-center justify-center font-bold hover:bg-blue-50 text-sm" title="ফন্ট ছোট করুন">
+                    অ-
+                </button>
+                <!-- Bookmark -->
+                <button class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
+                    <i class="far fa-bookmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Image -->
+        <figure class="mb-6 relative">
+            <div class="relative w-full aspect-[16/9] overflow-hidden bg-gray-200 rounded-sm">
+                <!-- Generic Badminton Image -->
+                <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=1000&auto=format&fit=crop" 
+                     alt="Badminton Racket Shuttlecock" 
+                     class="w-full h-full object-cover"
+                     onerror="this.src='https://placehold.co/800x450/e2e8f0/475569?text=ব্যাডমিন্টন+কোর্ট'"/>
+            </div>
+            <figcaption class="mt-2 text-[15px] text-gray-500 border-b border-gray-200 pb-3">
+                <span class="text-gray-800 font-medium">শিবগঞ্জ ব্যাডমিন্টন কোর্ট</span> | প্রতীকী ছবি
+            </figcaption>
+        </figure>
+
+        <!-- Article Body -->
+        <article id="article-content" class="text-[19px] leading-[1.8] text-gray-800 text-justify-custom font-normal space-y-6">
+            
+            <p>
+                আসন্ন শিবগঞ্জ ব্যাডমিন্টন টুর্নামেন্টকে ঘিরে ক্রীড়াঙ্গনে উত্তেজনার পারদ যখন তুঙ্গে, ঠিক তখনই এক বিতর্কিত সিদ্ধান্তে স্থানীয় ক্রীড়ামোদীদের মধ্যে তীব্র ক্ষোভ ও সমালোচনার জন্ম দিয়েছে আয়োজক কমিটি। শিবগঞ্জের ব্যাডমিন্টন অঙ্গনের জীবন্ত কিংবদন্তি, 'লেজেন্ডারি প্লেয়ার' খ্যাত রেজওয়ানকে বাদ দিয়েই এবারের টুর্নামেন্টের আয়োজন করা হচ্ছে। এই ঘটনায় এলাকাজুড়ে শুরু হয়েছে সমালোচনার ঝড়।
+            </p>
+
+            <p>
+                শিবগঞ্জের ব্যাডমিন্টন মানেই যার নাম সবার আগে আসে, তিনি রেজওয়ান। দীর্ঘ এক দশকেরও বেশি সময় ধরে তিনি স্থানীয় পর্যায়ে ব্যাডমিন্টনকে একাই শাসন করেছেন। একাধিকবার চ্যাম্পিয়নশিপ জিতে তিনি নিজেকে নিয়ে গেছেন অনন্য উচ্চতায়। শুধু খেলোয়াড় হিসেবেই নন, এলাকার তরুণ প্রজন্মকে ব্যাডমিন্টনে উৎসাহিত করতেও তার ভূমিকা অনস্বীকার্য। তাকে দেখেই বহু তরুণ আজ র‍্যাকেট হাতে তুলে নিয়েছে।
+            </p>
+
+            <!-- Google News Follow Button Block -->
+            <div class="border border-gray-200 rounded-lg p-3 flex items-center justify-between bg-white shadow-sm my-6">
+                <div class="flex items-center space-x-3">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/da/Google_News_icon.svg" alt="Google News" class="w-8 h-8">
+                    <span class="font-semibold text-gray-700 text-base">গুগল নিউজে ফলো করুন</span>
+                </div>
+                <button class="bg-blue-50 text-blue-600 px-4 py-1.5 rounded font-medium text-sm border border-blue-100 hover:bg-blue-100 transition">
+                    ফলো করুন
+                </button>
+            </div>
+
+            <p>
+                এমন একজন সুপ্রতিষ্ঠিত ও জনপ্রিয় খেলোয়াড়কে কেন টুর্নামেন্টের বাইরে রাখা হলো, তা নিয়ে আয়োজক কমিটি মুখ খোলেনি। তবে বিশ্বস্ত সূত্রে জানা গেছে, কমিটির অভ্যন্তরীণ কোন্দল এবং ব্যক্তিগত রেষারেষির কারণেই রেজওয়ানকে ইচ্ছাকৃতভাবে বাদ দেওয়া হয়েছে। এই ঘটনায় স্থানীয় ক্রীড়া সংগঠক এবং সাধারণ খেলোয়াড়দের মধ্যে তীব্র অসন্তোষ দেখা দিয়েছে।
+            </p>
+
+            <p>
+                সামাজিক যোগাযোগ মাধ্যমেও এই সিদ্ধান্তের বিরুদ্ধে প্রতিবাদের ঝড় উঠেছে। স্থানীয় ক্রীড়ামোদী আরমান হোসেন ক্ষোভ প্রকাশ করে বলেন, <span class="italic font-medium text-gray-700">"রেজওয়ান ভাইকে ছাড়া শিবগঞ্জের টুর্নামেন্ট অকল্পনীয়। এটা শুধু তাকে অপমান করা নয়, এটা শিবগঞ্জের পুরো ব্যাডমিন্টন কমিউনিটিকে অপমান করা। আমরা এই একপেশে সিদ্ধান্তের তীব্র নিন্দা জানাই।"</span>
+            </p>
+
+            <p>
+                আরেকজন সাবেক খেলোয়াড় নাম প্রকাশ না করার শর্তে বলেন, "কমিটির এমন হঠকারী সিদ্ধান্ত টুর্নামেন্টের জৌলুস নষ্ট করে দেবে। খেলোয়াড়দের মধ্যে বিভেদ তৈরি হবে এবং নতুনরা হতাশ হবে।"
+            </p>
+
+            <p>
+                এ বিষয়ে টুর্নামেন্ট আয়োজক কমিটির সভাপতির সাথে একাধিকবার যোগাযোগের চেষ্টা করা হলেও তিনি কোনো মন্তব্য করতে রাজি হননি। কমিটির এমন নীরবতা বিতর্ককে আরও উস্কে দিচ্ছে। সব মিলিয়ে, এই বিতর্কিত সিদ্ধান্তের ফলে এবারের টুর্নামেন্ট শুরুর আগেই তার জৌলুস হারিয়েছে এবং আয়োজনের মূল উদ্দেশ্য নিয়েই প্রশ্ন উঠেছে।
+            </p>
+
+        </article>
+
+        <!-- Tags -->
+        <div class="mt-10 pt-6 border-t border-gray-200">
+            <div class="flex flex-wrap gap-2">
+                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200">শিবগঞ্জ</span>
+                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200">ব্যাডমিন্টন</span>
+                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200">রেজওয়ান</span>
+                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200">বিতর্ক</span>
+            </div>
+        </div>
+
+        <!-- Related News Mock -->
+        <div class="mt-8">
+            <h3 class="text-xl font-bold mb-4 border-l-4 border-red-600 pl-2">আরও পড়ুন</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex space-x-3 cursor-pointer group">
+                    <img src="https://placehold.co/120x80/e2e8f0/475569?text=খেলা" class="w-24 h-20 object-cover rounded">
+                    <h4 class="font-medium text-gray-800 group-hover:text-red-600">শিবগঞ্জে খেলার মাঠ সংস্কারের দাবি এলাকাবাসীর</h4>
+                </div>
+                <div class="flex space-x-3 cursor-pointer group">
+                    <img src="https://placehold.co/120x80/e2e8f0/475569?text=টুর্নামেন্ট" class="w-24 h-20 object-cover rounded">
+                    <h4 class="font-medium text-gray-800 group-hover:text-red-600">শীতের আগমনে ব্যাডমিন্টন জ্বরে কাঁপছে পুরো উপজেলা</h4>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Footer -->
+    <footer class="bg-gray-100 border-t border-gray-200 py-8 mt-10">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <div class="flex justify-center space-x-6 text-gray-500 text-xl mb-4">
+                <i class="fab fa-facebook cursor-pointer hover:text-blue-600"></i>
+                <i class="fab fa-instagram cursor-pointer hover:text-pink-600"></i>
+                <i class="fab fa-twitter cursor-pointer hover:text-black"></i>
+                <i class="fab fa-youtube cursor-pointer hover:text-red-600"></i>
+            </div>
+            <p class="text-sm text-gray-500">© ২০২৫ দ্বিতীয় আলো | সব স্বত্ব সংরক্ষিত</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Current Font Size State
+        let currentFontSize = 19;
+        const minFontSize = 15;
+        const maxFontSize = 26;
+        const articleContent = document.getElementById('article-content');
+
+        // Function to change font size
+        function changeFontSize(delta) {
+            currentFontSize += delta;
+            
+            if (currentFontSize < minFontSize) currentFontSize = minFontSize;
+            if (currentFontSize > maxFontSize) currentFontSize = maxFontSize;
+
+            articleContent.style.fontSize = currentFontSize + 'px';
+            articleContent.style.lineHeight = (currentFontSize * 1.6) + 'px';
+        }
+    </script>
+</body>
+</html>
+
