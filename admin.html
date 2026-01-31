@@ -2,25 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSP Admin | Command Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SSP Admin | Master Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
     <style>
-        body { font-family: sans-serif; background: #f8fafc; }
-        .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: white; margin: 0 auto; box-shadow: 0 0 50px rgba(0,0,0,0.05); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        :root { --bg: #FDFBF7; --accent: #2563eb; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: #1A1A1A; margin: 0; }
+        .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); margin: 0 auto; position: relative; box-shadow: 0 4px 60px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .btn-press:active { transform: scale(0.96); transition: 0.1s; }
+        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 80px); }
+        .chat-bubble-admin { background: #1A1A1A; color: white; border-radius: 20px 20px 4px 20px; }
+        .chat-bubble-user { background: #f3f4f6; color: #1A1A1A; border-radius: 20px 20px 20px 4px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
+
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
+
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyAH5NrTOu9uT9_WMBlBhJS4Dqd-qkPEYs8",
             authDomain: "general-57884.firebaseapp.com",
@@ -28,66 +38,239 @@
             projectId: "general-57884",
             appId: "1:5002724584:web:80fde1ae04c6276eb9b55d"
         };
-        const DATA_PATH = "artifacts/main-portfolio/public/data";
+        const PATH = "artifacts/main-portfolio/public/data";
+        const MASTER_PASS = "admin123";
+
+        // --- ICONS ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const paths = {
+                plus: "M12 5v14M5 12h14",
+                trash: "M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6",
+                shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+                user: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2",
+                inbox: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z",
+                send: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
+                arrowLeft: "M19 12H5M12 19l-7-7 7-7",
+                x: "M18 6L6 18M6 6l12 12",
+                lock: "M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zM7 11V7a5 5 0 0 1 10 0v4"
+            };
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d={paths[name] || ""} />
+                    {name === 'user' && <circle cx="12" cy="7" r="4" />}
+                </svg>
+            );
+        };
 
         function AdminApp() {
+            const [isAuth, setIsAuth] = useState(false);
+            const [pass, setPass] = useState("");
+            const [tab, setTab] = useState('posts'); // posts, inbox, vault, identity
+            const [posts, setPosts] = useState([]);
+            const [verifications, setVerifications] = useState({});
+            const [messages, setMessages] = useState({});
             const [profile, setProfile] = useState({ name: "", handle: "", bio: "", avatar: "" });
-            const [verifications, setVerifications] = useState([]);
-            const [tab, setTab] = useState('profile');
+            const [activeChat, setActiveChat] = useState(null);
+            const [showPostModal, setShowPostModal] = useState(false);
+
             const rtdb = useRef(null);
 
             useEffect(() => {
-                if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-                rtdb.current = firebase.database();
-                firebase.auth().signInAnonymously().then(() => {
-                    rtdb.current.ref(`${DATA_PATH}/profile`).on('value', s => s.val() && setProfile(s.val()));
-                    rtdb.current.ref(`${DATA_PATH}/verifications`).on('value', snap => {
-                        const data = snap.val();
-                        if(data) setVerifications(Object.values(data));
+                if (isAuth) {
+                    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                    rtdb.current = firebase.database();
+                    firebase.auth().signInAnonymously().then(() => {
+                        // Sync Everything
+                        rtdb.current.ref(`${PATH}/profile`).on('value', s => s.val() && setProfile(s.val()));
+                        rtdb.current.ref(`${PATH}/posts`).on('value', s => {
+                            const val = s.val();
+                            setPosts(val ? Object.keys(val).map(k => ({id:k, ...val[k]})).sort((a,b)=>b.timestamp-a.timestamp) : []);
+                        });
+                        rtdb.current.ref(`${PATH}/verifications`).on('value', s => setVerifications(s.val() || {}));
+                        rtdb.current.ref(`${PATH}/messages`).on('value', s => setMessages(s.val() || {}));
                     });
+                }
+            }, [isAuth]);
+
+            const login = (e) => {
+                e.preventDefault();
+                if(pass === MASTER_PASS) setIsAuth(true);
+                else alert("Incorrect");
+            };
+
+            const handleReply = async (text) => {
+                if(!text.trim() || !activeChat) return;
+                await rtdb.current.ref(`${PATH}/messages/${activeChat}`).push({
+                    text, sender: 'admin', ts: Date.now()
                 });
-            }, []);
+            };
+
+            if (!isAuth) return (
+                <div className="app-shell flex items-center justify-center p-10 text-center">
+                    <form onSubmit={login} className="w-full space-y-6">
+                        <div className="w-20 h-20 bg-black text-white rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl"><Icon name="lock" size={32} /></div>
+                        <h1 className="text-3xl font-black">Admin Gate</h1>
+                        <input type="password" placeholder="Password" value={pass} onChange={e=>setPass(e.target.value)} className="w-full p-5 bg-white border border-gray-200 rounded-2xl text-center font-bold outline-none" />
+                        <button type="submit" className="w-full bg-black text-white py-5 rounded-2xl font-black btn-press">Unlock</button>
+                    </form>
+                </div>
+            );
 
             return (
-                <div className="app-shell flex flex-col">
-                    <header className="p-6 border-b flex justify-between bg-white sticky top-0">
-                        <h1 className="font-black text-xl">SSP Admin</h1>
-                        <div className="flex gap-4">
-                            <button onClick={() => setTab('profile')} className={tab==='profile'?'font-bold text-blue-600':'text-gray-300'}>Data</button>
-                            <button onClick={() => setTab('kyc')} className={tab==='kyc'?'font-bold text-blue-600':'text-gray-300'}>Vault</button>
+                <div className="app-shell">
+                    <header className="p-6 border-b bg-white flex justify-between items-center sticky top-0 z-30">
+                        <h2 className="font-black text-xl tracking-tighter">COMMAND</h2>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="text-[10px] font-black text-gray-400 uppercase">Live Database</span>
                         </div>
                     </header>
-                    <main className="flex-1 p-6 space-y-8 overflow-y-auto no-scrollbar">
-                        {tab === 'profile' && (
-                            <div className="space-y-6">
-                                <input className="w-full p-4 bg-gray-50 border rounded-2xl font-bold" value={profile.name} onChange={e=>setProfile({...profile, name:e.target.value})} placeholder="Name" />
-                                <textarea className="w-full p-4 bg-gray-50 border rounded-2xl h-32" value={profile.bio} onChange={e=>setProfile({...profile, bio:e.target.value})} placeholder="Bio" />
-                                <button onClick={()=>rtdb.current.ref(`${DATA_PATH}/profile`).set(profile).then(()=>alert("Saved"))} className="w-full bg-black text-white py-4 rounded-2xl font-black">Sync Profile</button>
+
+                    <main className="flex-1 overflow-y-auto no-scrollbar pb-safe">
+                        {tab === 'posts' && (
+                            <div className="p-6 space-y-6 animate-in fade-in">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-black text-2xl">Feed</h3>
+                                    <button onClick={()=>setShowPostModal(true)} className="bg-blue-600 text-white p-3 rounded-2xl shadow-lg btn-press"><Icon name="plus" size={24}/></button>
+                                </div>
+                                {posts.map(p => (
+                                    <div key={p.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm relative group">
+                                        <button onClick={()=>rtdb.current.ref(`${PATH}/posts/${p.id}`).remove()} className="absolute top-4 right-4 text-red-400 p-2"><Icon name="trash" size={18}/></button>
+                                        <span className="text-[10px] font-black uppercase text-blue-500 tracking-widest">{p.type || 'Post'}</span>
+                                        <h4 className="font-bold text-gray-900 mt-1">{p.title || "Thread Update"}</h4>
+                                        <p className="text-gray-500 text-xs mt-1 line-clamp-2">{p.content}</p>
+                                    </div>
+                                ))}
                             </div>
                         )}
-                        {tab === 'kyc' && (
-                            <div className="space-y-6">
-                                {verifications.map((v, i) => (
-                                    <div key={i} className="p-4 bg-white border rounded-3xl shadow-sm">
-                                        <p className="font-bold text-lg mb-2">{v.name}</p>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase text-gray-400 mb-1">ID Card</p>
-                                                <img src={v.idData} className="rounded-xl w-full h-32 object-cover border" />
+
+                        {tab === 'inbox' && (
+                            <div className="p-6 space-y-4 animate-in fade-in">
+                                <h3 className="font-black text-2xl mb-4">Inbox</h3>
+                                {Object.keys(messages).map(visitorId => (
+                                    <div key={visitorId} onClick={()=>setActiveChat(visitorId)} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm cursor-pointer btn-press">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-black text-blue-600">{verifications[visitorId]?.name || "Visitor"}</span>
+                                            <span className="text-[10px] font-bold text-gray-300 italic">{visitorId}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-1 line-clamp-1">{Object.values(messages[visitorId]).pop()?.text}</p>
+                                    </div>
+                                ))}
+                                {Object.keys(messages).length === 0 && <div className="py-20 text-center text-gray-300 font-bold uppercase text-xs tracking-widest italic">No messages</div>}
+                            </div>
+                        )}
+
+                        {tab === 'vault' && (
+                            <div className="p-6 space-y-6 animate-in fade-in">
+                                <h3 className="font-black text-2xl">Verified Visitors</h3>
+                                {Object.values(verifications).map((v, i) => (
+                                    <div key={i} className="bg-white p-5 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                                        <h4 className="font-bold text-lg">{v.name}</h4>
+                                        <div className="grid grid-cols-2 gap-2 mt-4">
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-black uppercase text-gray-400">ID Image</p>
+                                                <img src={v.idData} className="aspect-square w-full rounded-2xl object-cover border" />
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Selfie</p>
-                                                <img src={v.selfieData} className="rounded-xl w-full h-32 object-cover border" />
+                                            <div className="space-y-1">
+                                                <p className="text-[9px] font-black uppercase text-gray-400">Biometric</p>
+                                                <img src={v.selfieData} className="aspect-square w-full rounded-2xl object-cover border" />
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
+
+                        {tab === 'identity' && (
+                            <div className="p-6 space-y-6 animate-in fade-in">
+                                <h3 className="font-black text-2xl">Edit Profile</h3>
+                                <div className="space-y-4">
+                                    <input className="w-full p-4 bg-white border border-gray-200 rounded-2xl font-bold" value={profile.name} onChange={e=>setProfile({...profile, name:e.target.value})} placeholder="Display Name" />
+                                    <input className="w-full p-4 bg-white border border-gray-200 rounded-2xl font-bold text-blue-600" value={profile.handle} onChange={e=>setProfile({...profile, handle:e.target.value})} placeholder="@handle" />
+                                    <textarea className="w-full p-4 bg-white border border-gray-200 rounded-2xl font-medium h-32" value={profile.bio} onChange={e=>setProfile({...profile, bio:e.target.value})} placeholder="Bio..." />
+                                    <input className="w-full p-4 bg-white border border-gray-200 rounded-2xl text-xs" value={profile.avatar} onChange={e=>setProfile({...profile, avatar:e.target.value})} placeholder="Avatar URL" />
+                                    <button onClick={async ()=>{await rtdb.current.ref(`${PATH}/profile`).set(profile); alert("Saved")}} className="w-full bg-black text-white py-5 rounded-2xl font-black shadow-xl btn-press">Update Live Profile</button>
+                                </div>
+                            </div>
+                        )}
                     </main>
+
+                    <nav className="fixed bottom-0 w-full max-w-[480px] bg-white border-t border-gray-100 px-8 py-5 flex justify-between items-center z-40">
+                        <button onClick={() => setTab('posts')} className={tab === 'posts' ? 'text-blue-600' : 'text-gray-300'}><Icon name="plus" /></button>
+                        <button onClick={() => setTab('inbox')} className={tab === 'inbox' ? 'text-blue-600' : 'text-gray-300'}><Icon name="inbox" /></button>
+                        <button onClick={() => setTab('vault')} className={tab === 'vault' ? 'text-blue-600' : 'text-gray-300'}><Icon name="shield" /></button>
+                        <button onClick={() => setTab('identity')} className={tab === 'identity' ? 'text-blue-600' : 'text-gray-300'}><Icon name="user" /></button>
+                    </nav>
+
+                    {/* MODAL: NEW POST (With Base64 Image Converter) */}
+                    {showPostModal && (
+                        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-end justify-center p-4">
+                            <div className="w-full max-w-sm bg-white rounded-[2.8rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
+                                <div className="flex justify-between items-center mb-6"><h3 className="font-black text-xl">New Entry</h3><button onClick={()=>setShowPostModal(false)}><Icon name="x" size={20}/></button></div>
+                                <div className="space-y-4">
+                                    <select className="w-full p-4 bg-gray-50 rounded-2xl font-bold" onChange={e=>setPosts({...posts, type:e.target.value})}>
+                                        <option value="thread">Thread Update</option>
+                                        <option value="project">Project Case Study</option>
+                                    </select>
+                                    <input id="p_title" placeholder="Title" className="w-full p-4 bg-gray-50 rounded-2xl font-bold" />
+                                    <textarea id="p_content" placeholder="Content..." className="w-full p-4 bg-gray-50 rounded-2xl font-medium h-32" />
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black uppercase text-gray-400 ml-2">Post Image (Free Tier)</p>
+                                        <input type="file" id="p_file" className="text-xs font-bold w-full" accept="image/*" />
+                                    </div>
+                                </div>
+                                <button onClick={async ()=>{
+                                    const title = document.getElementById('p_title').value;
+                                    const content = document.getElementById('p_content').value;
+                                    const file = document.getElementById('p_file').files[0];
+                                    let imageUrl = "";
+                                    if(file) {
+                                        const reader = new FileReader();
+                                        reader.readAsDataURL(file);
+                                        reader.onload = async (ev) => {
+                                            await rtdb.current.ref(`${PATH}/posts`).push({ title, content, imageUrl: ev.target.result, timestamp: Date.now(), likes: 0 });
+                                            setShowPostModal(false);
+                                        };
+                                    } else {
+                                        await rtdb.current.ref(`${PATH}/posts`).push({ title, content, imageUrl: "", timestamp: Date.now(), likes: 0 });
+                                        setShowPostModal(false);
+                                    }
+                                }} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black mt-8 shadow-xl btn-press">Publish to Live App</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* OVERLAY: LIVE CHAT REPLY */}
+                    {activeChat && (
+                        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+                            <header className="p-4 border-b flex items-center gap-4 bg-white sticky top-0">
+                                <button onClick={() => setActiveChat(null)} className="p-2 btn-press"><Icon name="arrowLeft" size={24}/></button>
+                                <div><span className="font-bold block">{verifications[activeChat]?.name || "Visitor"}</span><span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Active Session</span></div>
+                            </header>
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar bg-slate-50/50">
+                                {messages[activeChat] && Object.values(messages[activeChat]).map((m, i) => (
+                                    <div key={i} className={`flex ${m.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[85%] px-5 py-3 text-sm font-medium shadow-sm ${m.sender === 'admin' ? 'chat-bubble-admin' : 'chat-bubble-user'}`}>{m.text}</div>
+                                    </div>
+                                ))}
+                            </div>
+                            <ChatReply onSend={handleReply} />
+                        </div>
+                    )}
                 </div>
             );
         }
+
+        const ChatReply = ({ onSend }) => {
+            const [val, setVal] = useState("");
+            return (
+                <form onSubmit={(e)=>{e.preventDefault(); onSend(val); setVal("")}} className="p-4 border-t flex gap-2 pb-10 bg-white">
+                    <input className="flex-1 bg-gray-100 rounded-2xl px-6 py-4 outline-none font-bold text-sm" placeholder="Type a reply..." value={val} onChange={e=>setVal(e.target.value)} />
+                    <button type="submit" className="bg-black text-white p-4 rounded-2xl btn-press"><Icon name="send" size={20}/></button>
+                </form>
+            );
+        };
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<AdminApp />);
     </script>
