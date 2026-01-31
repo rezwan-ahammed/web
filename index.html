@@ -1,227 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Professional Portfolio</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Professional Portfolio</title>
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- React -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f6f8;
-    }
-  </style>
+<style>
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:#f1f5f9;
+}
+.app-shell {
+  max-width:480px;
+  margin:0 auto;
+  background:#fff;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+.chat-bubble {
+  max-width:80%;
+  padding:12px 16px;
+  border-radius:18px;
+  font-size:14px;
+}
+.b-visitor { background:#2563eb; color:#fff; margin-left:auto; }
+.b-admin { background:#e5e7eb; color:#000; margin-right:auto; }
+</style>
 </head>
+
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
 
-const { useState } = React;
+const {useState,useEffect,useRef} = React;
 
-/* ---------------- ICON ---------------- */
+/* ---------- CONFIG ---------- */
+const CONFIG = {
+  apiKey: "AIzaSyAH5NrTOu9uT9_WMBlBhJS4Dqd-qkPEYs8",
+  authDomain: "general-57884.firebaseapp.com",
+  databaseURL: "https://general-57884-default-rtdb.firebaseio.com",
+  projectId: "general-57884",
+  appId: "1:5002724584:web:80fde1ae04c6276eb9b55d"
+};
+const DATA_PATH = "artifacts/main-portfolio/public/data";
 
-const Icon = ({ children }) => (
-  <span className="w-5 h-5 inline-flex items-center justify-center">
-    {children}
-  </span>
-);
+/* ---------- APP ---------- */
+function App(){
+  const [visitor,setVisitor]=useState(null);
+  const [gate,setGate]=useState(false);
+  const [chat,setChat]=useState(false);
+  const rtdb=useRef(null);
 
-/* ---------------- APP ---------------- */
+  useEffect(()=>{
+    if(!firebase.apps.length) firebase.initializeApp(CONFIG);
+    rtdb.current=firebase.database();
+    firebase.auth().signInAnonymously();
+  },[]);
 
-function App() {
-  const [tab, setTab] = useState("home");
-  const [chatOpen, setChatOpen] = useState(false);
+  return(
+    <div className="app-shell">
 
-  return (
-    <div className="max-w-md mx-auto min-h-screen bg-white shadow-sm flex flex-col">
+      <header className="p-4 border-b flex justify-between items-center">
+        <h1 className="font-bold text-lg">portfolio.</h1>
+        {visitor && <img src={visitor.selfieData} className="w-9 h-9 rounded-full object-cover"/>}
+      </header>
 
-      {/* HEADER */}
-      <header className="px-6 py-5 border-b bg-white sticky top-0 z-10">
-        <h1 className="text-xl font-semibold tracking-tight">
-          Rejwan Rejvi
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
+      <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <h2 className="text-2xl font-bold">Rejwan Rejvi</h2>
+        <p className="text-slate-600">
           Frontend Engineer · UI Systems · React
         </p>
-      </header>
-
-      {/* CONTENT */}
-      <main className="flex-1 overflow-y-auto">
-
-        {tab === "home" && <Home onContact={() => setChatOpen(true)} />}
-        {tab === "work" && <Work />}
-        {tab === "profile" && <Profile />}
-
+        <button
+          onClick={()=>visitor?setChat(true):setGate(true)}
+          className="w-full bg-black text-white py-3 rounded-xl font-semibold">
+          Connect
+        </button>
       </main>
 
-      {/* NAV */}
-      <nav className="border-t px-6 py-4 flex justify-between text-sm font-medium bg-white">
-        <button onClick={() => setTab("home")} className={tab==="home"?"text-blue-600":"text-gray-400"}>Home</button>
-        <button onClick={() => setTab("work")} className={tab==="work"?"text-blue-600":"text-gray-400"}>Work</button>
-        <button onClick={() => setTab("profile")} className={tab==="profile"?"text-blue-600":"text-gray-400"}>Profile</button>
-      </nav>
+      {gate && (
+        <Gatekeeper
+          rtdb={rtdb.current}
+          onClose={()=>setGate(false)}
+          onSuccess={(v)=>{setVisitor(v);setGate(false);setChat(true);}}
+        />
+      )}
 
-      {chatOpen && <Chat onClose={() => setChatOpen(false)} />}
+      {chat && visitor && (
+        <Messenger
+          visitor={visitor}
+          rtdb={rtdb.current}
+          onClose={()=>setChat(false)}
+        />
+      )}
 
     </div>
   );
 }
 
-/* ---------------- HOME ---------------- */
+/* ---------- GATEKEEPER ---------- */
+function Gatekeeper({onClose,onSuccess,rtdb}){
+  const [step,setStep]=useState(1);
+  const [name,setName]=useState("");
+  const [locked,setLocked]=useState(false);
+  const videoRef=useRef(null);
+  let streamRef=useRef(null);
 
-function Home({ onContact }) {
-  return (
-    <section className="px-6 py-8 space-y-6">
+  useEffect(()=>{
+    if(step===3){
+      navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}})
+        .then(s=>{
+          streamRef.current=s;
+          videoRef.current.srcObject=s;
+        });
+    }
+    return ()=>{
+      if(streamRef.current){
+        streamRef.current.getTracks().forEach(t=>t.stop());
+        streamRef.current=null;
+      }
+    };
+  },[step]);
 
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-gray-200" />
-        <div>
-          <p className="font-semibold">Available for freelance</p>
-          <p className="text-sm text-gray-500">Replies within 24 hours</p>
-        </div>
-      </div>
-
-      <p className="text-gray-600 leading-relaxed">
-        I design and build clean, scalable user interfaces with a focus on
-        clarity, performance, and product thinking.
-      </p>
-
-      <button
-        onClick={onContact}
-        className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium"
-      >
-        Contact Me
-      </button>
-
-    </section>
-  );
-}
-
-/* ---------------- WORK ---------------- */
-
-function Work() {
-  return (
-    <section className="px-6 py-8 space-y-6">
-
-      <h2 className="text-lg font-semibold">Work Updates</h2>
-
-      <WorkCard
-        title="Secure Portfolio Platform"
-        description="Designed and built a private portfolio system with verified contact access and real-time messaging."
-        result="Reduced spam by 90% · Improved response quality"
-      />
-
-      <WorkCard
-        title="UI Component System"
-        description="Created a reusable UI system focused on typography, spacing, and interaction consistency."
-        result="Faster development · Cleaner UX"
-      />
-
-    </section>
-  );
-}
-
-function WorkCard({ title, description, result }) {
-  return (
-    <div className="border rounded-xl p-5 space-y-2">
-      <p className="text-xs uppercase text-gray-400">Project</p>
-      <h3 className="font-semibold">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
-      <p className="text-sm text-gray-500 italic">{result}</p>
-    </div>
-  );
-}
-
-/* ---------------- PROFILE ---------------- */
-
-function Profile() {
-  return (
-    <section className="px-6 py-8 space-y-6">
-
-      <h2 className="text-lg font-semibold">Experience</h2>
-
-      <Timeline
-        year="2023 — Present"
-        role="Frontend Engineer"
-        company="Independent / Freelance"
-      />
-
-      <Timeline
-        year="2021 — 2023"
-        role="UI Designer"
-        company="Product-based teams"
-      />
-
-    </section>
-  );
-}
-
-function Timeline({ year, role, company }) {
-  return (
-    <div>
-      <p className="text-sm text-gray-400">{year}</p>
-      <p className="font-medium">{role}</p>
-      <p className="text-sm text-gray-500">{company}</p>
-    </div>
-  );
-}
-
-/* ---------------- CHAT ---------------- */
-
-function Chat({ onClose }) {
-  const [messages, setMessages] = useState([
-    { system: true, text: "Conversation started" }
-  ]);
-  const [input, setInput] = useState("");
-
-  const send = () => {
-    if (!input.trim()) return;
-    setMessages([...messages, { text: input }]);
-    setInput("");
+  const capture=async()=>{
+    if(locked) return;
+    setLocked(true);
+    const canvas=document.createElement("canvas");
+    canvas.width=400;canvas.height=400;
+    canvas.getContext("2d").drawImage(videoRef.current,0,0,400,400);
+    const selfie=canvas.toDataURL("image/jpeg",0.7);
+    const data={name,selfieData:selfie,ts:Date.now()};
+    await rtdb.ref(`${DATA_PATH}/verifications/${data.ts}`).set(data);
+    onSuccess(data);
   };
 
-  return (
+  return(
+    <div className="fixed inset-0 bg-black/60 flex items-end p-4">
+      <div className="bg-white w-full rounded-2xl p-6">
+
+        {step===1 && (
+          <>
+            <h2 className="font-bold text-xl mb-2">Quick Verification</h2>
+            <p className="text-sm text-slate-500 mb-6">
+              Helps prevent spam and keeps conversations meaningful.
+            </p>
+            <input
+              placeholder="Your name"
+              className="w-full border rounded-xl px-4 py-3 mb-4"
+              onChange={e=>setName(e.target.value)}
+            />
+            <button
+              disabled={!name}
+              onClick={()=>setStep(3)}
+              className="w-full bg-black text-white py-3 rounded-xl">
+              Continue
+            </button>
+          </>
+        )}
+
+        {step===3 && (
+          <>
+            <h2 className="font-bold text-xl mb-4">Take a selfie</h2>
+            <video ref={videoRef} autoPlay playsInline className="w-full rounded-xl mb-4"/>
+            <button
+              onClick={capture}
+              disabled={locked}
+              className="w-full bg-blue-600 text-white py-3 rounded-xl">
+              {locked?"Processing...":"Verify"}
+            </button>
+          </>
+        )}
+
+        <button onClick={onClose} className="mt-4 text-sm text-slate-400">
+          Cancel
+        </button>
+
+      </div>
+    </div>
+  );
+}
+
+/* ---------- MESSENGER ---------- */
+function Messenger({visitor,rtdb,onClose}){
+  const [msgs,setMsgs]=useState([]);
+  const [input,setInput]=useState("");
+  const [locked,setLocked]=useState(false);
+  const scrollRef=useRef();
+
+  useEffect(()=>{
+    const ref=rtdb.ref(`${DATA_PATH}/messages/${visitor.ts}`);
+    ref.on("value",s=>{
+      const list=s.val()
+        ? Object.values(s.val()).sort((a,b)=>a.ts-b.ts)
+        : [];
+      setMsgs(list);
+    });
+    return()=>ref.off();
+  },[]);
+
+  useEffect(()=>{
+    if(msgs.at(-1)?.sender==="visitor"){
+      scrollRef.current?.scrollIntoView({behavior:"smooth"});
+    }
+  },[msgs]);
+
+  const send=async()=>{
+    if(!input.trim()||locked) return;
+    setLocked(true);
+    await rtdb.ref(`${DATA_PATH}/messages/${visitor.ts}`)
+      .push({text:input,sender:"visitor",ts:Date.now()});
+    setInput("");
+    setTimeout(()=>setLocked(false),500);
+  };
+
+  return(
     <div className="fixed inset-0 bg-white flex flex-col">
 
-      <header className="px-4 py-3 border-b flex justify-between items-center">
-        <p className="font-medium">Contact</p>
-        <button onClick={onClose} className="text-gray-400">Close</button>
+      <header className="p-4 border-b flex justify-between items-center">
+        <p className="font-semibold">Conversation</p>
+        <button onClick={onClose}>Close</button>
       </header>
 
-      <div className="flex-1 p-4 space-y-3 bg-gray-50 overflow-y-auto">
-        {messages.map((m, i) => (
-          <div key={i} className={m.system ? "text-center text-xs text-gray-400" : "bg-blue-600 text-white px-4 py-2 rounded-xl max-w-[80%] ml-auto"}>
+      <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+        {msgs.map((m,i)=>(
+          <div key={i} className={`chat-bubble ${m.sender==="visitor"?"b-visitor":"b-admin"}`}>
             {m.text}
           </div>
         ))}
+        <div ref={scrollRef}/>
       </div>
 
       <div className="p-4 border-t flex gap-2">
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Write a message…"
-          className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm outline-none"
+          onChange={e=>setInput(e.target.value)}
+          className="flex-1 bg-slate-100 rounded-full px-4 py-2"
+          placeholder="Message…"
         />
-        <button onClick={send} className="text-blue-600 font-medium">Send</button>
+        <button onClick={send} className="text-blue-600 font-semibold">
+          Send
+        </button>
       </div>
 
     </div>
   );
 }
 
-/* ---------------- RENDER ---------------- */
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+/* ---------- RENDER ---------- */
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 
 </script>
 </body>
