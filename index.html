@@ -3,27 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Professional Portfolio | Secure Social</title>
+    <title>Professional Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
         :root { --bg: #FDFBF7; --accent: #0084FF; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; overscroll-behavior: none; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: #1A1A1A; margin: 0; padding: 0; overscroll-behavior: none; }
+        .font-serif { font-family: 'Playfair Display', serif; }
         .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); margin: 0 auto; position: relative; box-shadow: 0 10px 100px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .btn-press:active { transform: scale(0.95); transition: 0.1s; }
         .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 80px); }
         .glass { background: rgba(253, 251, 247, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        .chat-bubble { max-width: 80%; padding: 12px 16px; font-size: 14px; font-weight: 500; line-height: 1.4; }
-        .bubble-visitor { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; }
-        .bubble-admin { background: #E4E6EB; color: black; border-radius: 18px 18px 18px 4px; }
+        
+        /* Dynamic Island */
+        @keyframes islandDrop { 
+            0% { transform: translate(-50%, -100%); opacity: 0; }
+            20% { transform: translate(-50%, 20px); opacity: 1; }
+            80% { transform: translate(-50%, 20px); opacity: 1; }
+            100% { transform: translate(-50%, -100%); opacity: 0; }
+        }
+        .island-pill { position: fixed; left: 50%; top: 0; z-index: 100; background: #1A1A1A; color: white; padding: 10px 20px; border-radius: 99px; font-size: 11px; font-weight: 800; pointer-events: none; animation: islandDrop 4s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Messenger Styles */
+        .chat-bubble { max-width: 85%; padding: 12px 16px; font-size: 15px; font-weight: 500; line-height: 1.4; position: relative; }
+        .bubble-visitor { background: var(--accent); color: white; border-radius: 20px 20px 4px 20px; }
+        .bubble-admin { background: #E4E6EB; color: black; border-radius: 20px 20px 20px 4px; }
+        
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-modal { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
 <body>
@@ -43,16 +59,14 @@
 
         const Icon = ({ name, size = 24, className = "" }) => {
             const paths = {
-                plus: "M12 5v14M5 12h14",
                 image: "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 100-8 4 4 0 000 8z",
                 send: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
                 arrowLeft: "M19 12H5M12 19l-7-7 7-7",
                 shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-                x: "M18 6L6 18M6 6l12 12"
+                x: "M18 6L6 18M6 6l12 12",
+                plus: "M12 5v14M5 12h14"
             };
-            return (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d={paths[name] || ""} /></svg>
-            );
+            return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d={paths[name] || ""} /></svg>;
         };
 
         function App() {
@@ -60,12 +74,19 @@
             const [posts, setPosts] = useState([]);
             const [gateAction, setGateAction] = useState(null);
             const [visitor, setVisitor] = useState(() => JSON.parse(localStorage.getItem('v_auth')));
+            const [showIsland, setShowIsland] = useState(false);
             const rtdb = useRef(null);
+
+            const getFP = () => btoa(`${navigator.userAgent}-${screen.width}`).replace(/=/g, '');
 
             useEffect(() => {
                 if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
                 rtdb.current = firebase.database();
                 firebase.auth().signInAnonymously().then(() => {
+                    const fp = getFP();
+                    rtdb.current.ref(`${PATH}/device_trust/${fp}`).once('value', s => {
+                        if(s.exists()) { setVisitor(s.val()); setShowIsland(true); }
+                    });
                     rtdb.current.ref(`${PATH}/profile`).on('value', s => setProfile(s.val()));
                     rtdb.current.ref(`${PATH}/posts`).on('value', s => {
                         const val = s.val();
@@ -76,33 +97,43 @@
 
             return (
                 <div className="app-shell">
+                    {showIsland && visitor && (
+                        <div className="island-pill uppercase">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            Verified: {visitor.name}
+                        </div>
+                    )}
+
                     <header className="sticky top-0 z-40 glass px-6 py-5 border-b border-gray-100 flex justify-between items-center">
                         <div className="font-serif font-black text-2xl text-slate-900">portfolio.</div>
-                        {visitor && <div className="w-8 h-8 rounded-full border-2 border-blue-500 p-0.5 overflow-hidden"><img src={visitor.selfieData} className="w-full h-full object-cover rounded-full" /></div>}
+                        {visitor && <img src={visitor.selfieData} className="w-9 h-9 rounded-full object-cover border-2 border-blue-500" />}
                     </header>
 
-                    <main className="flex-1 overflow-y-auto pb-safe no-scrollbar">
+                    <main className="flex-1 overflow-y-auto no-scrollbar pb-safe">
                         <div className="px-6 py-10">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="w-20 h-20 rounded-3xl overflow-hidden shadow-xl border-4 border-white"><img src={profile?.avatar} className="w-full h-full object-cover" /></div>
-                                <button onClick={() => setGateAction(visitor ? 'chat' : 'gatekeeper')} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold btn-press shadow-lg shadow-blue-200">Message</button>
+                            <div className="flex justify-between items-start mb-8">
+                                <div className="w-24 h-24 rounded-[2.5rem] border-4 border-white shadow-2xl overflow-hidden bg-slate-100">
+                                    <img src={profile?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} className="w-full h-full object-cover" />
+                                </div>
+                                <button onClick={() => setGateAction(visitor ? 'chat' : 'gatekeeper')} className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold btn-press shadow-xl mt-2">Message</button>
                             </div>
-                            <h1 className="text-3xl font-black">{profile?.name}</h1>
-                            <p className="text-gray-500 font-medium mt-2">{profile?.bio}</p>
+                            <h1 className="text-3xl font-black tracking-tight leading-none">{profile?.name || "..."}</h1>
+                            <p className="text-blue-600 font-bold text-sm mt-2">{profile?.handle}</p>
+                            <p className="mt-5 text-gray-600 leading-relaxed font-medium text-[15px]">{profile?.bio}</p>
                         </div>
-                        
-                        <div className="bg-white border-t divide-y">
+
+                        <div className="divide-y border-t bg-white">
                             {posts.map(p => (
                                 <div key={p.id} className="p-6">
-                                    <h4 className="font-bold text-lg leading-tight">{p.title}</h4>
-                                    <p className="text-gray-500 text-sm mt-2">{p.content}</p>
-                                    {p.imageUrl && <img src={p.imageUrl} className="mt-4 rounded-3xl w-full" />}
+                                    <h3 className="font-bold text-lg leading-tight">{p.title}</h3>
+                                    <p className="text-gray-600 text-sm mt-2 leading-relaxed">{p.content}</p>
+                                    {p.imageUrl && <img src={p.imageUrl} className="rounded-3xl mt-4 w-full border" />}
                                 </div>
                             ))}
                         </div>
                     </main>
 
-                    {gateAction === 'gatekeeper' && <Gatekeeper onClose={()=>setGateAction(null)} onSuccess={(v)=>{setVisitor(v); localStorage.setItem('v_auth', JSON.stringify(v)); setGateAction('chat');}} rtdb={rtdb.current} />}
+                    {gateAction === 'gatekeeper' && <Gatekeeper onClose={()=>setGateAction(null)} onSuccess={(v)=>{setVisitor(v); rtdb.current.ref(`${PATH}/device_trust/${getFP()}`).set(v); localStorage.setItem('v_auth', JSON.stringify(v)); setGateAction('chat');}} rtdb={rtdb.current} />}
                     {gateAction === 'chat' && visitor && <Messenger onBack={()=>setGateAction(null)} profile={profile} visitor={visitor} rtdb={rtdb.current} />}
                 </div>
             );
@@ -117,57 +148,48 @@
                 const ref = rtdb.ref(`${PATH}/messages/${visitor.ts}`);
                 ref.on('value', snap => {
                     const data = snap.val();
-                    setMsgs(data ? Object.keys(data).map(k => ({id:k, ...data[k]})) : []);
+                    setMsgs(data ? Object.values(data) : []);
                 });
                 return () => ref.off();
             }, []);
 
             useEffect(() => scrollRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs]);
 
-            const sendMessage = async (type = 'text', content = "") => {
+            const send = async (type = 'text', content = "") => {
                 const text = type === 'text' ? input : "";
                 if(type === 'text' && !text.trim()) return;
-                
-                await rtdb.ref(`${PATH}/messages/${visitor.ts}`).push({
-                    type, text, mediaData: content, sender: 'visitor', ts: Date.now()
-                });
+                await rtdb.ref(`${PATH}/messages/${visitor.ts}`).push({ type, text, mediaData: content, sender: 'visitor', ts: Date.now() });
                 setInput("");
             };
 
             const handleMedia = (e) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(e.target.files[0]);
-                reader.onload = (ev) => sendMessage('image', ev.target.result);
+                const r = new FileReader(); r.readAsDataURL(e.target.files[0]);
+                r.onload = (ev) => send('image', ev.target.result);
             };
 
             return (
-                <div className="fixed inset-0 z-[60] bg-white flex flex-col">
+                <div className="fixed inset-0 z-[60] bg-white flex flex-col animate-modal">
                     <header className="p-4 border-b flex items-center justify-between glass sticky top-0">
                         <div className="flex items-center gap-3">
-                            <button onClick={onBack} className="p-2 btn-press"><Icon name="arrowLeft" /></button>
+                            <button onClick={onBack} className="p-2 btn-press bg-gray-100 rounded-full"><Icon name="arrowLeft" size={20}/></button>
                             <div className="w-10 h-10 rounded-full overflow-hidden border"><img src={profile?.avatar} className="w-full h-full object-cover" /></div>
-                            <div><p className="font-bold text-sm leading-none">{profile?.name}</p><p className="text-[10px] text-green-500 font-bold uppercase mt-1">Active</p></div>
+                            <div><p className="font-bold text-sm leading-none">{profile?.name}</p><p className="text-[10px] text-green-500 font-bold uppercase mt-1">Active Now</p></div>
                         </div>
                     </header>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-gray-50/50">
-                        {msgs.map((m) => (
-                            <div key={m.id} className={`flex ${m.sender === 'visitor' ? 'justify-end' : 'justify-start'}`}>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 no-scrollbar">
+                        {msgs.map((m, i) => (
+                            <div key={i} className={`flex ${m.sender === 'visitor' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`chat-bubble ${m.sender === 'visitor' ? 'bubble-visitor' : 'bubble-admin'}`}>
-                                    {m.type === 'image' ? <img src={m.mediaData} className="rounded-lg w-full max-w-[200px]" /> : m.text}
+                                    {m.type === 'image' ? <img src={m.mediaData} className="rounded-lg w-full max-w-[220px]" /> : m.text}
                                 </div>
                             </div>
                         ))}
                         <div ref={scrollRef} />
                     </div>
-
                     <div className="p-4 bg-white border-t flex items-center gap-3 pb-10">
-                        <label className="p-2 text-blue-600 cursor-pointer btn-press">
-                            <Icon name="image" size={24} />
-                            <input type="file" className="hidden" accept="image/*" onChange={handleMedia} />
-                        </label>
-                        <input className="flex-1 bg-gray-100 rounded-full px-5 py-3 outline-none text-sm font-medium" placeholder="Aa" value={input} onChange={e=>setInput(e.target.value)} onKeyPress={e=>e.key==='Enter' && sendMessage('text')} />
-                        <button onClick={()=>sendMessage('text')} className="text-blue-600 font-black px-2 btn-press"><Icon name="send" size={24} /></button>
+                        <label className="text-blue-600 cursor-pointer btn-press p-1"><Icon name="image" size={28} /><input type="file" className="hidden" accept="image/*" onChange={handleMedia} /></label>
+                        <input className="flex-1 bg-gray-100 rounded-full px-5 py-3 outline-none text-sm font-medium" placeholder="Aa" value={input} onChange={e=>setInput(e.target.value)} onKeyPress={e=>e.key==='Enter' && send('text')} />
+                        <button onClick={()=>send('text')} className="text-blue-600 btn-press"><Icon name="send" size={28} /></button>
                     </div>
                 </div>
             );
@@ -179,11 +201,11 @@
             const [idData, setIdData] = useState("");
             const videoRef = useRef();
 
-            const finish = async () => {
+            const capture = async () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = 300; canvas.height = 300;
                 canvas.getContext('2d').drawImage(videoRef.current, 0, 0, 300, 300);
-                const selfieData = canvas.toDataURL('image/jpeg', 0.5);
+                const selfieData = canvas.toDataURL('image/jpeg', 0.6);
                 const ts = Date.now();
                 await rtdb.ref(`${PATH}/verifications/${ts}`).set({ name, idData, selfieData, ts });
                 onSuccess({ name, selfieData, ts });
@@ -191,27 +213,25 @@
 
             return (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-end justify-center p-4">
-                    <div className="w-full max-w-sm bg-white rounded-[2.8rem] p-8 shadow-2xl overflow-hidden animate-modal">
+                    <div className="w-full max-w-sm bg-white rounded-[2.8rem] p-8 shadow-2xl animate-modal overflow-hidden">
                         <div className="flex justify-between mb-8"><div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Icon name="shield" size={28}/></div><button onClick={onClose}><Icon name="x" size={20}/></button></div>
                         {step === 1 && (
                             <div>
-                                <h2 className="text-2xl font-black mb-6 leading-tight">Verify Identity</h2>
+                                <h2 className="text-2xl font-black mb-2 leading-tight">Verify to Access</h2>
+                                <p className="text-gray-500 text-sm mb-8 font-medium">Please verify your professional identity.</p>
                                 <input className="w-full p-5 bg-gray-50 border rounded-2xl mb-6 font-bold" placeholder="Full Name" onChange={e=>setName(e.target.value)} />
-                                <input type="file" accept="image/*" onChange={e => {
-                                    const r = new FileReader(); r.readAsDataURL(e.target.files[0]);
-                                    r.onload = (ev) => setIdData(ev.target.result);
-                                }} className="mb-8 block text-xs" />
+                                <div className="space-y-1 mb-8"><p className="text-[10px] font-black uppercase text-gray-400 ml-2">Upload ID Document</p><input type="file" accept="image/*" onChange={e => { const r = new FileReader(); r.readAsDataURL(e.target.files[0]); r.onload = (ev) => setIdData(ev.target.result); }} className="w-full text-xs font-bold text-gray-500" /></div>
                                 <button disabled={!name || !idData} onClick={async ()=>{
                                     const s = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
                                     setStep(2); setTimeout(()=>videoRef.current.srcObject=s,100);
-                                }} className="w-full bg-black text-white py-5 rounded-2xl font-black">Open Camera</button>
+                                }} className="w-full bg-black text-white py-5 rounded-2xl font-black shadow-xl btn-press">Open Camera</button>
                             </div>
                         )}
                         {step === 2 && (
                             <div className="text-center">
-                                <h2 className="text-xl font-black mb-6">Biometric Selfie</h2>
-                                <video ref={videoRef} autoPlay playsInline className="w-60 h-60 mx-auto rounded-full object-cover bg-black mb-8" />
-                                <button onClick={finish} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black">Complete KYC</button>
+                                <h2 className="text-xl font-black mb-6">Position Face</h2>
+                                <video ref={videoRef} autoPlay playsInline className="w-64 h-64 mx-auto rounded-full object-cover bg-black mb-8 border-4 border-gray-100 shadow-xl" />
+                                <button onClick={capture} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black shadow-lg btn-press">Capture & Verify</button>
                             </div>
                         )}
                     </div>
