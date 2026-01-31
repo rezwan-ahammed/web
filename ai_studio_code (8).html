@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Professional Portfolio | Secure Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
+        :root { --bg: #FDFBF7; --accent: #2563eb; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: #1A1A1A; margin: 0; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); margin: 0 auto; position: relative; box-shadow: 0 4px 60px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+        .btn-press:active { transform: scale(0.96); transition: 0.1s; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 80px); }
+        .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shim 1.5s infinite; }
+        @keyframes shim { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .camera-view { transform: scaleX(-1); object-fit: cover; border-radius: 999px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAH5NrTOu9uT9_WMBlBhJS4Dqd-qkPEYs8",
+            authDomain: "general-57884.firebaseapp.com",
+            databaseURL: "https://general-57884-default-rtdb.firebaseio.com",
+            projectId: "general-57884",
+            storageBucket: "general-57884.firebasestorage.app",
+            messagingSenderId: "5002724584",
+            appId: "1:5002724584:web:80fde1ae04c6276eb9b55d"
+        };
+        const DATA_PATH = "artifacts/main-portfolio/public/data";
+
+        // --- ROBUST INTERNAL ICONS ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const paths = {
+                home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+                search: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35",
+                plus: "M12 5v14M5 12h14",
+                heart: "M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z",
+                user: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2",
+                shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+                camera: "M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2zM12 17a4 4 0 100-8 4 4 0 000 8z",
+                x: "M18 6L6 18M6 6l12 12",
+                send: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
+                arrowLeft: "M19 12H5M12 19l-7-7 7-7"
+            };
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d={paths[name] || ""} />
+                    {name === 'user' && <circle cx="12" cy="7" r="4" />}
+                </svg>
+            );
+        };
+
+        function VisitorApp() {
+            const [tab, setTab] = useState('home');
+            const [profile, setProfile] = useState(null);
+            const [posts, setPosts] = useState([]);
+            const [gateAction, setGateAction] = useState(null);
+            const [visitor, setVisitor] = useState(() => JSON.parse(localStorage.getItem('v_auth')));
+            
+            const rtdb = useRef(null);
+
+            useEffect(() => {
+                if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                rtdb.current = firebase.database();
+                firebase.auth().signInAnonymously();
+
+                // Real-time Sync
+                rtdb.current.ref(`${DATA_PATH}/profile`).on('value', snap => setProfile(snap.val()));
+                rtdb.current.ref(`${DATA_PATH}/posts`).on('value', snap => {
+                    const data = snap.val();
+                    if (data) {
+                        const list = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                        setPosts(list.sort((a, b) => b.timestamp - a.timestamp));
+                    }
+                });
+            }, []);
+
+            const handleAction = (a) => {
+                if (visitor) setGateAction(a);
+                else setGateAction('gatekeeper');
+            };
+
+            return (
+                <div className="app-shell">
+                    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                        <div className="font-serif font-black text-2xl tracking-tighter">portfolio<span className="text-blue-600">.</span></div>
+                        <Icon name="search" size={20} className="text-gray-300" />
+                    </header>
+
+                    <main className="flex-1 overflow-y-auto no-scrollbar pb-safe">
+                        <div className="animate-in fade-in duration-500">
+                            {tab === 'home' && (
+                                <>
+                                    <div className="px-6 py-10">
+                                        <div className="flex justify-between items-start mb-8">
+                                            <div className="w-24 h-24 rounded-[2.5rem] border-4 border-white shadow-2xl overflow-hidden bg-gray-50">
+                                                {profile?.avatar ? <img src={profile.avatar} className="w-full h-full object-cover" /> : <div className="shimmer w-full h-full" />}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleAction('chat')} className="bg-gray-900 text-white px-8 py-3.5 rounded-2xl font-bold text-sm btn-press shadow-xl shadow-gray-200">Connect</button>
+                                                <button onClick={() => handleAction('resume')} className="p-3.5 border border-gray-200 rounded-2xl text-gray-400 btn-press"><Icon name="shield" size={20}/></button>
+                                            </div>
+                                        </div>
+                                        <h1 className="text-3xl font-black tracking-tight">{profile?.name || "Loading..." }</h1>
+                                        <p className="text-blue-600 font-bold text-sm">{profile?.handle || "@..."}</p>
+                                        <p className="mt-5 text-gray-600 leading-relaxed font-medium text-[15px]">{profile?.bio}</p>
+                                    </div>
+
+                                    <div className="divide-y divide-gray-50 border-t border-gray-100 bg-white">
+                                        {posts.map(p => (
+                                            <div key={p.id} className="p-6">
+                                                <div className="flex gap-4">
+                                                    <div className="w-10 h-10 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm shrink-0">
+                                                        <img src={profile?.avatar} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <span className="font-bold text-sm">{profile?.name}</span>
+                                                            <span className="text-[10px] font-black text-gray-200 uppercase">Update</span>
+                                                        </div>
+                                                        <h3 className="font-bold text-lg text-gray-900 leading-tight">{p.title}</h3>
+                                                        <p className="text-gray-600 text-[15px] leading-relaxed mt-2">{p.content}</p>
+                                                        {p.imageUrl && <div className="rounded-[2rem] overflow-hidden mt-4 shadow-sm border border-gray-50"><img src={p.imageUrl} className="w-full h-auto" /></div>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            {tab === 'profile' && (
+                                <div className="p-10 text-center">
+                                    <div className="w-28 h-28 rounded-[2.5rem] border-4 border-white shadow-2xl mx-auto mb-6 overflow-hidden">
+                                        <img src={profile?.avatar} className="w-full h-full object-cover" />
+                                    </div>
+                                    <h2 className="text-2xl font-black">{profile?.name}</h2>
+                                    <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2">ID Verified Member</p>
+                                    <div className="grid grid-cols-3 gap-1 mt-12">
+                                        {posts.map(p => <div key={p.id} className="aspect-square bg-gray-100 rounded-2xl overflow-hidden shimmer"><img src={p.imageUrl} className="w-full h-full object-cover"/></div>)}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    {/* Navigation */}
+                    <nav className="fixed bottom-0 w-full max-w-[480px] bg-white/90 backdrop-blur-md border-t border-gray-100 px-10 py-5 flex justify-between items-center z-50">
+                        <button onClick={() => setTab('home')} className={tab === 'home' ? 'text-blue-600' : 'text-gray-300'}><Icon name="home" /></button>
+                        <button className="text-gray-300"><Icon name="search" /></button>
+                        <button onClick={() => handleAction('chat')} className="bg-gray-900 text-white p-4 rounded-3xl shadow-xl -mt-12 border-[6px] border-[#FDFBF7] btn-press shadow-blue-900/10"><Icon name="plus" size={26}/></button>
+                        <button className="text-gray-300"><Icon name="heart" /></button>
+                        <button onClick={() => setTab('profile')} className={tab === 'profile' ? 'text-blue-600' : 'text-gray-300'}><Icon name="user" /></button>
+                    </nav>
+
+                    {gateAction === 'gatekeeper' && <Gatekeeper onClose={() => setGateAction(null)} onSuccess={(v) => { setVisitor(v); localStorage.setItem('v_auth', JSON.stringify(v)); setGateAction('chat'); }} rtdb={rtdb.current} storage={firebase.storage()} />}
+                    {gateAction === 'chat' && visitor && <SecureChat onBack={() => setGateAction(null)} profile={profile} visitor={visitor} rtdb={rtdb.current} />}
+                    {gateAction === 'resume' && visitor && <ResumeView onClose={() => setGateAction(null)} profile={profile} />}
+                </div>
+            );
+        }
+
+        const Gatekeeper = ({ onClose, onSuccess, rtdb, storage }) => {
+            const [step, setStep] = useState(1);
+            const [name, setName] = useState("");
+            const [file, setFile] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const videoRef = useRef();
+
+            const startCamera = async () => {
+                try {
+                    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                    setStep(3);
+                    setTimeout(() => videoRef.current.srcObject = s, 100);
+                } catch(e) { alert("Camera Hardware Error"); }
+            };
+
+            const finish = async () => {
+                setLoading(true); setStep(4);
+                const ts = Date.now();
+                if(rtdb && storage && file) {
+                    const ref = storage.ref(`kyc/${ts}_id`);
+                    await ref.put(file);
+                    const url = await ref.getDownloadURL();
+                    await rtdb.ref(`${DATA_PATH}/verifications/${ts}`).set({ name, idUrl: url, timestamp: ts });
+                }
+                onSuccess({ name, ts });
+            };
+
+            return (
+                <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-xl flex items-end justify-center p-4 animate-in fade-in">
+                    <div className="w-full max-w-sm bg-white rounded-[2.8rem] p-8 shadow-2xl relative animate-in slide-in-from-bottom duration-300">
+                        <div className="flex justify-between mb-8"><div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Icon name="shield" size={28}/></div><button onClick={onClose}><Icon name="x" size={20}/></button></div>
+                        {step === 1 && (
+                            <div>
+                                <h2 className="text-2xl font-black mb-2">Gatekeeper</h2>
+                                <p className="text-gray-500 text-sm mb-8 font-medium">Verify your professional identity to unlock access.</p>
+                                <input className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl mb-4 outline-none font-bold" placeholder="Full Name" onChange={e => setName(e.target.value)} />
+                                <button disabled={!name} onClick={() => setStep(2)} className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold btn-press">Continue</button>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="text-center">
+                                <h2 className="text-2xl font-black mb-8">ID Check</h2>
+                                <label className="block w-full h-44 bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+                                    {file ? <img src={URL.createObjectURL(file)} className="w-full h-full object-cover"/> : <Icon name="camera" size={32} className="text-gray-300"/>}
+                                    <input type="file" className="hidden" onChange={e => setFile(e.target.files[0])} />
+                                </label>
+                                <button disabled={!file} onClick={startCamera} className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold mt-8 btn-press">Go to Liveness</button>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="text-center">
+                                <h2 className="text-2xl font-black mb-6">Biometric</h2>
+                                <div className="w-60 h-60 mx-auto rounded-full bg-black overflow-hidden mb-8 border-4 border-gray-50 shadow-2xl"><video ref={videoRef} autoPlay playsInline className="camera-view w-full h-full" /></div>
+                                <button onClick={finish} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl btn-press">Verify Now</button>
+                            </div>
+                        )}
+                        {step === 4 && <div className="text-center py-12"><h2 className="text-xl font-black">Encrypting...</h2></div>}
+                    </div>
+                </div>
+            );
+        };
+
+        const SecureChat = ({ onBack, profile, visitor, rtdb }) => {
+            const [input, setInput] = useState("");
+            const [msgs, setMsgs] = useState([]);
+
+            useEffect(() => {
+                const ref = rtdb.ref(`${DATA_PATH}/messages/${visitor.ts}`);
+                ref.on('value', snap => {
+                    const data = snap.val();
+                    if(data) setMsgs(Object.values(data));
+                });
+            }, []);
+
+            const send = async (e) => {
+                e.preventDefault(); if(!input.trim()) return;
+                const m = { text: input, sender: 'visitor', ts: Date.now() };
+                setInput("");
+                await rtdb.ref(`${DATA_PATH}/messages/${visitor.ts}`).push(m);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom duration-300">
+                    <header className="p-4 border-b flex items-center gap-4 bg-white sticky top-0"><button onClick={onBack}><Icon name="arrowLeft" size={24}/></button><div><span className="font-bold block">{profile?.name}</span><span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Secured Node</span></div></header>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+                        {msgs.map((m, i) => (
+                            <div key={i} className={`flex ${m.sender === 'visitor' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[85%] px-5 py-3 rounded-3xl text-sm font-medium ${m.sender === 'visitor' ? 'bg-gray-900 text-white rounded-br-none' : 'bg-white border border-gray-100 rounded-bl-none'}`}>{m.text}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <form onSubmit={send} className="p-4 bg-white border-t flex gap-2 pb-10"><input className="flex-1 bg-gray-100 rounded-2xl px-6 py-4 outline-none font-bold text-sm" placeholder="Secure message..." value={input} onChange={e=>setInput(e.target.value)} /><button className="bg-gray-900 text-white p-4 rounded-2xl btn-press"><Icon name="send" size={20}/></button></form>
+                </div>
+            );
+        };
+
+        const ResumeView = ({ onClose, profile }) => (
+            <div className="fixed inset-0 z-50 bg-white p-8 overflow-y-auto no-scrollbar animate-in slide-in-from-bottom duration-300">
+                <div className="flex justify-between items-start mb-14"><button onClick={onClose} className="p-2 btn-press bg-gray-50 rounded-full"><Icon name="x" size={24}/></button></div>
+                <h1 className="text-5xl font-black mb-3 tracking-tighter">{profile?.name}</h1>
+                <p className="text-blue-600 font-bold tracking-[0.3em] uppercase text-[10px] mb-12">Lead Architect • {profile?.location}</p>
+                <div className="border-l-4 border-gray-900 pl-8 ml-2"><h4 className="font-black text-xl mb-1">Senior Engineer</h4><p className="text-gray-500 leading-relaxed font-medium text-lg">Realtime Database Systems Implementation.</p></div>
+            </div>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<VisitorApp />);
+    </script>
+</body>
+</html>

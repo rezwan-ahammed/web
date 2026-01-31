@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSP Admin | Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: white; margin: 0 auto; box-shadow: 0 0 50px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAH5NrTOu9uT9_WMBlBhJS4Dqd-qkPEYs8",
+            authDomain: "general-57884.firebaseapp.com",
+            databaseURL: "https://general-57884-default-rtdb.firebaseio.com",
+            projectId: "general-57884",
+            storageBucket: "general-57884.firebasestorage.app",
+            messagingSenderId: "5002724584",
+            appId: "1:5002724584:web:80fde1ae04c6276eb9b55d"
+        };
+        const DATA_PATH = "artifacts/main-portfolio/public/data";
+
+        function AdminApp() {
+            const [profile, setProfile] = useState({ name: "", handle: "", bio: "", avatar: "" });
+            const [verifications, setVerifications] = useState([]);
+            const [tab, setTab] = useState('profile');
+            const rtdb = useRef(null);
+
+            useEffect(() => {
+                if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                rtdb.current = firebase.database();
+                firebase.auth().signInAnonymously().then(() => {
+                    rtdb.current.ref(`${DATA_PATH}/profile`).on('value', s => s.val() && setProfile(s.val()));
+                    rtdb.current.ref(`${DATA_PATH}/verifications`).on('value', snap => {
+                        const data = snap.val();
+                        if(data) setVerifications(Object.values(data));
+                    });
+                });
+            }, []);
+
+            const saveProfile = () => {
+                rtdb.current.ref(`${DATA_PATH}/profile`).set(profile).then(() => alert("✅ Profile Updated!"));
+            };
+
+            const addPost = () => {
+                const title = prompt("Post Title:");
+                const content = prompt("Post Content:");
+                const imageUrl = prompt("Image URL (optional):");
+                if(title && content) {
+                    rtdb.current.ref(`${DATA_PATH}/posts`).push({
+                        title, content, imageUrl, timestamp: Date.now()
+                    });
+                }
+            };
+
+            return (
+                <div className="app-shell flex flex-col">
+                    <header className="p-6 border-b flex justify-between items-center bg-white sticky top-0">
+                        <h1 className="font-black text-xl">SSP Command</h1>
+                        <div className="flex gap-4">
+                            <button onClick={() => setTab('profile')} className={tab==='profile'?'font-bold text-blue-600':'text-gray-300'}>Data</button>
+                            <button onClick={() => setTab('kyc')} className={tab==='kyc'?'font-bold text-blue-600':'text-gray-300'}>Vault</button>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 p-6 space-y-8 overflow-y-auto pb-24">
+                        {tab === 'profile' && (
+                            <div className="space-y-6">
+                                <h2 className="font-black text-gray-400 text-xs uppercase tracking-widest">Identity Management</h2>
+                                <input className="w-full p-4 bg-gray-50 border rounded-2xl font-bold" value={profile.name} onChange={e=>setProfile({...profile, name:e.target.value})} placeholder="Name" />
+                                <input className="w-full p-4 bg-gray-50 border rounded-2xl font-bold text-blue-600" value={profile.handle} onChange={e=>setProfile({...profile, handle:e.target.value})} placeholder="@handle" />
+                                <textarea className="w-full p-4 bg-gray-50 border rounded-2xl font-medium h-32" value={profile.bio} onChange={e=>setProfile({...profile, bio:e.target.value})} placeholder="Bio..." />
+                                <input className="w-full p-4 bg-gray-50 border rounded-2xl text-xs" value={profile.avatar} onChange={e=>setProfile({...profile, avatar:e.target.value})} placeholder="Avatar URL" />
+                                <button onClick={saveProfile} className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black">Sync Profile</button>
+                                <button onClick={addPost} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-10">+ New Post Entry</button>
+                            </div>
+                        )}
+
+                        {tab === 'kyc' && (
+                            <div className="space-y-6">
+                                <h2 className="font-black text-gray-400 text-xs uppercase tracking-widest">KYC Verifications</h2>
+                                {verifications.map((v, i) => (
+                                    <div key={i} className="p-4 bg-white border rounded-3xl shadow-sm">
+                                        <p className="font-bold">{v.name}</p>
+                                        <img src={v.idUrl} className="mt-2 rounded-xl w-full aspect-video object-cover" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AdminApp />);
+    </script>
+</body>
+</html>
