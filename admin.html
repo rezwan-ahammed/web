@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SSP Command | Messenger Admin</title>
+    <title>SSP Admin | Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,13 +11,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
-        .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: white; margin: 0 auto; box-shadow: 0 0 50px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        :root { --bg: #FDFBF7; --messenger: #0084FF; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; }
+        .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); margin: 0 auto; position: relative; box-shadow: 0 4px 60px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
         .btn-press:active { transform: scale(0.96); transition: 0.1s; }
-        .chat-admin { background: #0084FF; color: white; border-radius: 18px 18px 4px 18px; }
-        .chat-visitor { background: #F0F0F0; color: black; border-radius: 18px 18px 18px 4px; }
+        .chat-admin { background: var(--messenger); color: white; border-radius: 18px 18px 4px 18px; }
+        .chat-visitor { background: #E4E6EB; color: black; border-radius: 18px 18px 18px 4px; }
     </style>
 </head>
 <body>
@@ -36,100 +38,96 @@
 
         function AdminApp() {
             const [isAuth, setIsAuth] = useState(false);
-            const [tab, setTab] = useState('inbox');
             const [msgs, setMsgs] = useState({});
             const [verifications, setVerifications] = useState({});
             const [activeChat, setActiveChat] = useState(null);
             const db = useRef(null);
 
             useEffect(() => {
-                if(isAuth) {
-                    if (!firebase.apps.length) firebase.initializeApp(CONFIG);
-                    db.current = firebase.database();
-                    firebase.auth().signInAnonymously().then(() => {
-                        db.current.ref(`${PATH}/verifications`).on('value', s => setVerifications(s.val() || {}));
-                        db.current.ref(`${PATH}/messages`).on('value', s => setMsgs(s.val() || {}));
-                    });
-                }
-            }, [isAuth]);
+                if (!firebase.apps.length) firebase.initializeApp(CONFIG);
+                db.current = firebase.database();
+                firebase.auth().signInAnonymously().then(() => {
+                    db.current.ref(`${PATH}/verifications`).on('value', s => setVerifications(s.val() || {}));
+                    db.current.ref(`${PATH}/messages`).on('value', s => setMsgs(s.val() || {}));
+                });
+            }, []);
 
-            const deleteConversation = (id) => {
-                if(confirm("Delete this entire chat?")) {
-                    db.current.ref(`${PATH}/messages/${id}`).remove();
-                }
+            const unsend = (visitorId, msgId) => {
+                if(confirm("Unsend message?")) db.current.ref(`${PATH}/messages/${visitorId}/${msgId}`).remove();
             };
 
-            const unsendMsg = (visitorId, msgId) => {
-                if(confirm("Unsend message?")) {
-                    db.current.ref(`${PATH}/messages/${visitorId}/${msgId}`).remove();
-                }
+            const deleteInbox = (id) => {
+                if(confirm("Delete entire chat history?")) db.current.ref(`${PATH}/messages/${id}`).remove();
             };
 
             if(!isAuth) return (
-                <div className="h-screen flex items-center justify-center p-10">
-                    <button onClick={()=>setIsAuth(true)} className="bg-black text-white px-10 py-5 rounded-2xl font-black">Enter Command Center</button>
+                <div className="h-screen flex flex-col items-center justify-center p-10 bg-black text-white text-center">
+                    <h1 className="text-4xl font-black mb-8 italic">SSP COMMAND</h1>
+                    <button onClick={()=>setIsAuth(true)} className="w-full max-w-xs py-5 bg-white text-black rounded-3xl font-black text-xl">ENTER</button>
                 </div>
             );
 
             return (
                 <div className="app-shell">
-                    <header className="p-6 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-                        <h1 className="font-black text-xl">Inbox</h1>
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <header className="p-6 border-b bg-white flex justify-between items-center sticky top-0 z-20">
+                        <h1 className="font-black text-2xl tracking-tighter">INBOX</h1>
+                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-200"></div>
                     </header>
 
                     <main className="flex-1 overflow-y-auto no-scrollbar">
-                        {Object.keys(msgs).map(vId => (
-                            <div key={vId} className="p-4 border-b flex items-center justify-between hover:bg-gray-50 transition-all group">
-                                <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={()=>setActiveChat(vId)}>
-                                    <img src={verifications[vId]?.selfieData} className="w-12 h-12 rounded-full object-cover border" />
+                        {Object.keys(msgs).length > 0 ? Object.keys(msgs).map(vId => (
+                            <div key={vId} className="p-4 border-b flex items-center justify-between hover:bg-gray-50 transition-all">
+                                <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={()=>setActiveChat(vId)}>
+                                    <div className="relative">
+                                        <img src={verifications[vId]?.selfieData || "https://api.dicebear.com/7.x/initials/svg?seed=?"} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md" />
+                                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                                    </div>
                                     <div>
-                                        <p className="font-black text-sm">{verifications[vId]?.name || "Visitor"}</p>
-                                        <p className="text-xs text-gray-400 line-clamp-1">Last: {Object.values(msgs[vId]).pop()?.text || "Sent a photo"}</p>
+                                        <p className="font-black text-sm text-gray-900">{verifications[vId]?.name || "Anonymous Recruiter"}</p>
+                                        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">Last activity logged</p>
                                     </div>
                                 </div>
-                                <button onClick={()=>deleteConversation(vId)} className="p-2 text-red-400 btn-press"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                                <button onClick={()=>deleteInbox(vId)} className="p-3 text-red-400 btn-press"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
                             </div>
-                        ))}
+                        )) : <div className="p-20 text-center text-gray-300 font-black uppercase text-xs tracking-widest italic">No messages received</div>}
                     </main>
 
                     {activeChat && (
                         <div className="fixed inset-0 z-50 bg-white flex flex-col">
-                            <header className="p-4 border-b flex items-center gap-4 sticky top-0 bg-white shadow-sm">
-                                <button onClick={()=>setActiveChat(null)} className="font-bold text-blue-600">Back</button>
-                                <img src={verifications[activeChat]?.selfieData} className="w-10 h-10 rounded-full object-cover border" />
-                                <span className="font-black">{verifications[activeChat]?.name}</span>
+                            <header className="p-4 border-b flex items-center gap-4 bg-white sticky top-0 shadow-sm">
+                                <button onClick={()=>setActiveChat(null)} className="p-2 btn-press"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+                                <img src={verifications[activeChat]?.selfieData} className="w-10 h-10 rounded-full object-cover border shadow-sm" />
+                                <div><p className="font-black leading-none">{verifications[activeChat]?.name}</p><p className="text-[10px] font-bold text-blue-500 uppercase mt-1 tracking-tighter">Connected</p></div>
                             </header>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
                                 {Object.keys(msgs[activeChat]).map(mId => {
                                     const m = msgs[activeChat][mId];
                                     return (
                                         <div key={mId} className={`flex ${m.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`p-4 rounded-2xl text-sm font-medium shadow-sm max-w-[80%] ${m.sender === 'admin' ? 'chat-admin' : 'chat-visitor'}`} onDoubleClick={()=>m.sender==='admin' && unsendMsg(activeChat, mId)}>
+                                            <div 
+                                                className={`p-4 rounded-2xl text-sm font-medium shadow-sm max-w-[80%] ${m.sender === 'admin' ? 'chat-admin' : 'chat-visitor'}`} 
+                                                onDoubleClick={()=>m.sender==='admin' && unsend(activeChat, mId)}
+                                            >
                                                 {m.type === 'image' ? <img src={m.mediaData} className="rounded-lg w-full" /> : m.text}
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                            <ChatReply onSend={(val)=>db.current.ref(`${PATH}/messages/${activeChat}`).push({text:val, sender:'admin', type:'text', ts:Date.now()})} onMedia={(data)=>db.current.ref(`${PATH}/messages/${activeChat}`).push({mediaData:data, sender:'admin', type:'image', ts:Date.now()})} />
+                            <ChatPanel onSend={(v)=>db.current.ref(`${PATH}/messages/${activeChat}`).push({text:v, sender:'admin', type:'text', ts:Date.now()})} onMedia={(d)=>db.current.ref(`${PATH}/messages/${activeChat}`).push({mediaData:d, sender:'admin', type:'image', ts:Date.now()})} />
                         </div>
                     )}
                 </div>
             );
         }
 
-        const ChatReply = ({ onSend, onMedia }) => {
+        const ChatPanel = ({ onSend, onMedia }) => {
             const [v, setV] = useState("");
             return (
-                <div className="p-4 border-t flex gap-2 pb-10 bg-white items-center">
-                    <input type="file" id="m_file" className="hidden" accept="image/*" onChange={e=>{
-                        const r = new FileReader(); r.readAsDataURL(e.target.files[0]);
-                        r.onload = ev => onMedia(ev.target.result);
-                    }} />
-                    <button onClick={()=>document.getElementById('m_file').click()} className="text-blue-500 p-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
-                    <input className="flex-1 bg-gray-100 rounded-full px-4 py-3 outline-none" value={v} onChange={e=>setV(e.target.value)} placeholder="Aa" onKeyPress={e=>e.key==='Enter' && onSend(v)} />
-                    <button onClick={()=>{onSend(v); setV("")}} className="bg-blue-600 text-white p-3 rounded-full"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+                <div className="p-4 border-t flex gap-3 pb-10 bg-white items-center">
+                    <button onClick={()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=e=>{const r=new FileReader();r.readAsDataURL(e.target.files[0]);r.onload=ev=>onMedia(ev.target.result)};i.click()}} className="text-blue-500 p-1 btn-press"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+                    <input className="flex-1 bg-gray-100 rounded-full px-5 py-3 outline-none font-bold" value={v} onChange={e=>setV(e.target.value)} placeholder="Aa" onKeyPress={e=>e.key==='Enter' && (onSend(v),setV(""))} />
+                    <button onClick={()=>{onSend(v); setV("")}} className="text-blue-600 btn-press"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
                 </div>
             );
         }
