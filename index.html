@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Professional Portfolio | Secure Social</title>
+    <title>Professional Portfolio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -17,7 +17,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
         
-        :root { --bg: #FDFBF7; --accent: #2563eb; --radius: 32px; }
+        :root { --bg: #FDFBF7; --accent: #2563eb; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: #1A1A1A; margin: 0; padding: 0; }
         .font-serif { font-family: 'Playfair Display', serif; }
         
@@ -31,9 +31,21 @@
         .btn-press:active { transform: scale(0.95); transition: 0.1s; }
         .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 80px); }
         
-        /* Premium Animations */
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .animate-modal { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        /* Dynamic Island Animation */
+        @keyframes islandDrop {
+            0% { transform: translate(-50%, -100%); opacity: 0; }
+            20% { transform: translate(-50%, 20px); opacity: 1; }
+            80% { transform: translate(-50%, 20px); opacity: 1; }
+            100% { transform: translate(-50%, -100%); opacity: 0; }
+        }
+        .island-pill {
+            position: fixed; left: 50%; top: 0; z-index: 100;
+            background: #1A1A1A; color: white; padding: 8px 16px;
+            border-radius: 99px; font-size: 11px; font-weight: 800;
+            white-space: nowrap; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            pointer-events: none; animation: islandDrop 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            display: flex; items-center: center; gap: 8px; border: 1px solid rgba(255,255,255,0.1);
+        }
         
         .scan-line {
             height: 3px; background: var(--accent); position: absolute; width: 100%; top: 0;
@@ -43,6 +55,8 @@
 
         .camera-preview { transform: scaleX(-1); object-fit: cover; background: #000; border-radius: 999px; }
         .glass { background: rgba(253, 251, 247, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .animate-modal { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -83,6 +97,7 @@
                     {name === 'user' && <circle cx="12" cy="7" r="4" />}
                     {name === 'camera' && <circle cx="12" cy="13" r="3" />}
                     {name === 'search' && <circle cx="11" cy="11" r="8" />}
+                    {name === 'check' && <path d="M20 6L9 17l-5-5" />}
                 </svg>
             );
         };
@@ -92,10 +107,9 @@
             const [posts, setPosts] = useState([]);
             const [gateAction, setGateAction] = useState(null);
             const [visitor, setVisitor] = useState(null);
-            const [autoLogged, setAutoLogged] = useState(false);
+            const [showIsland, setShowIsland] = useState(false);
             
             const rtdb = useRef(null);
-
             const getFingerprint = () => btoa(`${navigator.userAgent}-${screen.width}-${navigator.language}`).replace(/=/g, '');
 
             useEffect(() => {
@@ -104,16 +118,13 @@
                 
                 firebase.auth().signInAnonymously().then(() => {
                     const fp = getFingerprint();
-                    // Recognition Logic
                     rtdb.current.ref(`${PATH}/device_trust/${fp}`).once('value', snap => {
                         if(snap.exists()) {
                             setVisitor(snap.val());
-                            setAutoLogged(true);
-                            setTimeout(() => setAutoLogged(false), 3000);
+                            setShowIsland(true);
                         }
                     });
 
-                    // Sync Data
                     rtdb.current.ref(`${PATH}/profile`).on('value', s => setProfile(s.val()));
                     rtdb.current.ref(`${PATH}/posts`).on('value', s => {
                         const val = s.val();
@@ -124,32 +135,37 @@
 
             return (
                 <div className="app-shell">
-                    {/* Auto Login Banner */}
-                    {autoLogged && (
-                        <div className="absolute top-4 inset-x-4 z-50 bg-blue-600 text-white p-4 rounded-2xl flex items-center gap-3 shadow-2xl animate-modal">
-                            <Icon name="check" size={20} />
-                            <p className="text-sm font-bold tracking-tight">Recognized Device. Welcome back, {visitor.name}.</p>
+                    {/* FIXED: Dynamic Island Pill (Non-intrusive) */}
+                    {showIsland && visitor && (
+                        <div className="island-pill uppercase tracking-widest">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            Recognized: {visitor.name}
                         </div>
                     )}
 
                     {/* Header */}
                     <header className="sticky top-0 z-40 glass px-6 py-5 border-b border-gray-100 flex justify-between items-center">
                         <div className="font-serif font-black text-2xl tracking-tighter">portfolio<span className="text-blue-600">.</span></div>
-                        <Icon name="search" size={20} className="text-gray-300" />
+                        <div className="flex items-center gap-4">
+                            <Icon name="search" size={20} className="text-gray-300" />
+                            {visitor && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            )}
+                        </div>
                     </header>
 
-                    {/* Feed */}
+                    {/* Main Scrollable Feed */}
                     <main className="flex-1 overflow-y-auto no-scrollbar pb-safe">
                         <div className="px-6 py-10">
                             <div className="flex justify-between items-start mb-8">
-                                <div className="w-24 h-24 rounded-[2.5rem] border-4 border-white shadow-2xl overflow-hidden bg-slate-50">
+                                <div className="w-24 h-24 rounded-[2.5rem] border-4 border-white shadow-2xl overflow-hidden bg-slate-100">
                                     <img src={profile?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex gap-2 mt-2">
                                     <button onClick={() => setGateAction(visitor ? 'chat' : 'gatekeeper')} className="bg-gray-900 text-white px-8 py-3.5 rounded-2xl font-bold text-sm btn-press shadow-xl">Contact</button>
                                 </div>
                             </div>
-                            <h1 className="text-3xl font-black tracking-tight leading-none">{profile?.name || "Initializing..."}</h1>
+                            <h1 className="text-3xl font-black tracking-tight leading-none text-gray-900">{profile?.name || "Initializing..."}</h1>
                             <p className="text-blue-600 font-bold text-sm mt-2">{profile?.handle}</p>
                             <p className="mt-5 text-gray-600 leading-relaxed font-medium text-[15px]">{profile?.bio}</p>
                         </div>
@@ -158,10 +174,10 @@
                             {posts.map(p => (
                                 <div key={p.id} className="p-6 transition-colors hover:bg-gray-50/50">
                                     <div className="flex gap-4">
-                                        <div className="w-10 h-10 rounded-2xl overflow-hidden shrink-0 border border-gray-100 shadow-sm">
+                                        <div className="w-10 h-10 rounded-2xl overflow-hidden shrink-0 border border-gray-100 bg-gray-50">
                                             <img src={profile?.avatar} className="w-full h-full object-cover" />
                                         </div>
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="font-bold text-sm text-gray-900">{profile?.name}</span>
                                                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Update</span>
@@ -169,8 +185,8 @@
                                             <h3 className="font-bold text-lg leading-tight text-gray-800">{p.title}</h3>
                                             <p className="text-gray-600 text-[15px] leading-relaxed mt-2">{p.content}</p>
                                             {p.imageUrl && (
-                                                <div className="rounded-[2rem] overflow-hidden border border-gray-100 mt-4 shadow-sm">
-                                                    <img src={p.imageUrl} className="w-full h-auto aspect-video object-cover" />
+                                                <div className="rounded-[2rem] overflow-hidden border border-gray-100 mt-4 shadow-sm bg-gray-100">
+                                                    <img src={p.imageUrl} className="w-full h-auto object-cover aspect-video" />
                                                 </div>
                                             )}
                                         </div>
@@ -184,14 +200,14 @@
                     <nav className="fixed bottom-0 w-full max-w-[480px] glass border-t border-gray-100 px-10 py-5 flex justify-between items-center z-40">
                         <Icon name="home" className="text-blue-600" />
                         <Icon name="search" className="text-gray-300" />
-                        <button onClick={() => setGateAction(visitor ? 'chat' : 'gatekeeper')} className="bg-gray-900 text-white p-4 rounded-3xl shadow-xl -mt-12 border-[6px] border-[#FDFBF7] btn-press shadow-blue-900/10">
+                        <button onClick={() => setGateAction(visitor ? 'chat' : 'gatekeeper')} className="bg-gray-900 text-white p-4 rounded-3xl shadow-xl -mt-12 border-[6px] border-[#FDFBF7] btn-press">
                             <Icon name="plus" size={26}/>
                         </button>
                         <Icon name="heart" className="text-gray-300" />
                         <Icon name="user" className="text-gray-300" />
                     </nav>
 
-                    {/* GATEKEEPER MODAL (Algorithm A) */}
+                    {/* GATEKEEPER (ID + SELFIE) */}
                     {gateAction === 'gatekeeper' && (
                         <Gatekeeper 
                             onClose={() => setGateAction(null)} 
@@ -199,7 +215,6 @@
                                 setVisitor(v);
                                 const fp = getFingerprint();
                                 rtdb.current.ref(`${PATH}/device_trust/${fp}`).set(v);
-                                localStorage.setItem('v_auth', JSON.stringify(v));
                                 setGateAction('chat');
                             }} 
                             rtdb={rtdb.current}
@@ -223,14 +238,12 @@
                     const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                     setStep(3);
                     setTimeout(() => videoRef.current.srcObject = s, 100);
-                } catch(e) { alert("Camera Permission Required."); }
+                } catch(e) { alert("Please allow camera access for verification."); }
             };
 
-            const captureAndFinish = async () => {
+            const finish = async () => {
                 setLoading(true); setStep(4);
                 const ts = Date.now();
-                
-                // Real-world: we'd upload Blobs here to Storage. For RTDB stability:
                 const storage = firebase.storage();
                 if(idFile) {
                     const ref = storage.ref(`kyc/${ts}_id`);
@@ -238,7 +251,6 @@
                     const url = await ref.getDownloadURL();
                     await rtdb.ref(`${PATH}/verifications/${ts}`).set({ name, idUrl: url, ts });
                 }
-                
                 onSuccess({ name, ts });
             };
 
@@ -246,44 +258,47 @@
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-end justify-center p-4">
                     <div className="w-full max-w-sm bg-white rounded-[2.8rem] p-8 shadow-2xl relative animate-modal overflow-hidden">
                         {loading && <div className="scan-line" />}
-                        <div className="flex justify-between mb-8"><div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Icon name="shield" size={28}/></div><button onClick={onClose}><Icon name="x" size={20}/></button></div>
+                        <div className="flex justify-between mb-8">
+                            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Icon name="shield" size={28}/></div>
+                            <button onClick={onClose} className="p-2 text-gray-400"><Icon name="x" size={20}/></button>
+                        </div>
                         
                         {step === 1 && (
-                            <div>
-                                <h2 className="text-2xl font-black mb-2 leading-tight tracking-tight">Identity Access</h2>
-                                <p className="text-gray-500 text-sm mb-8 font-medium">Verify your identity to unlock private projects and secure messaging.</p>
-                                <input className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl mb-6 outline-none font-bold text-lg" placeholder="Your Full Name" value={name} onChange={e=>setName(e.target.value)} />
+                            <div className="animate-page">
+                                <h2 className="text-2xl font-black mb-2">Identify Yourself</h2>
+                                <p className="text-gray-500 text-sm mb-8 font-medium leading-relaxed">Enter your professional name to unlock secure messaging and project archives.</p>
+                                <input className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl mb-6 outline-none font-bold text-lg" placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} />
                                 <button disabled={!name} onClick={()=>setStep(2)} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black shadow-xl btn-press">Next Step</button>
                             </div>
                         )}
 
                         {step === 2 && (
-                            <div className="text-center">
-                                <h2 className="text-2xl font-black mb-2">ID Verification</h2>
-                                <p className="text-gray-400 text-sm mb-8 font-medium">Upload Work ID or Business Card.</p>
-                                <label className="block w-full h-44 bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer overflow-hidden relative active:bg-gray-100 transition-all">
-                                    {idFile ? <img src={URL.createObjectURL(idFile)} className="w-full h-full object-cover"/> : <><Icon name="plus" size={32} className="text-gray-300"/><span className="text-[10px] font-black uppercase text-gray-400 mt-2 tracking-widest">Select File</span></>}
+                            <div className="text-center animate-page">
+                                <h2 className="text-2xl font-black mb-2">Document Proof</h2>
+                                <p className="text-gray-400 text-sm mb-8">Upload a photo of your Work ID or Card.</p>
+                                <label className="block w-full h-44 bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer overflow-hidden active:bg-gray-100 transition-all">
+                                    {idFile ? <img src={URL.createObjectURL(idFile)} className="w-full h-full object-cover"/> : <><Icon name="plus" size={32} className="text-gray-300"/><span className="text-[10px] font-black uppercase text-gray-400 mt-2">Select File</span></>}
                                     <input type="file" className="hidden" onChange={e=>setIdFile(e.target.files[0])} />
                                 </label>
-                                <button disabled={!idFile} onClick={startCamera} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black mt-8 btn-press">Continue to Selfie</button>
+                                <button disabled={!idFile} onClick={startCamera} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black mt-8 btn-press">Go to Selfie</button>
                             </div>
                         )}
 
                         {step === 3 && (
-                            <div className="text-center">
-                                <h2 className="text-2xl font-black mb-6">Liveness Check</h2>
+                            <div className="text-center animate-page">
+                                <h2 className="text-2xl font-black mb-6">Biometric Check</h2>
                                 <div className="w-60 h-60 mx-auto rounded-full bg-black overflow-hidden border-4 border-gray-50 shadow-2xl mb-8 relative">
                                     <video ref={videoRef} autoPlay playsInline className="camera-preview w-full h-full" />
                                     <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full animate-pulse"></div>
                                 </div>
-                                <button onClick={captureAndFinish} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black shadow-xl btn-press shadow-blue-200">Complete Biometrics</button>
+                                <button onClick={finish} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black shadow-xl btn-press">Verify Device</button>
                             </div>
                         )}
 
                         {step === 4 && (
                             <div className="text-center py-12">
-                                <h2 className="text-xl font-black mb-2 tracking-tight">Syncing Secure Vault</h2>
-                                <p className="text-gray-500 text-sm font-medium">Encrypting biometric data with Firebase...</p>
+                                <h2 className="text-xl font-black mb-2">Syncing Vault</h2>
+                                <p className="text-gray-500 text-sm font-medium">Encrypting biometrics with Firebase...</p>
                             </div>
                         )}
                     </div>
@@ -294,7 +309,7 @@
         const SecureChat = ({ onBack, profile, visitor, rtdb }) => {
             const [input, setInput] = useState("");
             const [msgs, setMsgs] = useState([]);
-            const bottomRef = useRef();
+            const bRef = useRef();
 
             useEffect(() => {
                 const ref = rtdb.ref(`${PATH}/messages/${visitor.ts}`);
@@ -302,7 +317,7 @@
                 return () => ref.off();
             }, []);
 
-            useEffect(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs]);
+            useEffect(() => bRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs]);
 
             const send = async (e) => {
                 e.preventDefault(); if(!input.trim()) return;
@@ -312,16 +327,16 @@
 
             return (
                 <div className="fixed inset-0 z-50 bg-white flex flex-col animate-modal">
-                    <header className="p-4 border-b flex items-center gap-4 bg-white sticky top-0"><button onClick={onBack} className="p-2 btn-press"><Icon name="arrow" /></button><div><span className="font-bold block text-gray-900">{profile?.name}</span><span className="text-[10px] text-green-500 font-black uppercase tracking-widest">Recognized Session</span></div></header>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar bg-slate-50/30">
+                    <header className="p-4 border-b flex items-center gap-4 bg-white sticky top-0"><button onClick={onBack} className="p-2 btn-press"><Icon name="arrow" /></button><div><span className="font-bold block text-gray-900">{profile?.name}</span><span className="text-[10px] text-green-500 font-black uppercase tracking-widest">Recognized Hardware</span></div></header>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
                         {msgs.map((m, i) => (
                             <div key={i} className={`flex ${m.sender === 'visitor' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] px-5 py-3 rounded-3xl text-sm font-medium shadow-sm ${m.sender === 'visitor' ? 'bg-black text-white rounded-br-none' : 'bg-white border border-gray-100 rounded-bl-none text-gray-700'}`}>{m.text}</div>
                             </div>
                         ))}
-                        <div ref={bottomRef} />
+                        <div ref={bRef} />
                     </div>
-                    <form onSubmit={send} className="p-4 bg-white border-t flex gap-2 pb-10"><input className="flex-1 bg-gray-100 rounded-2xl px-6 py-4 outline-none font-bold text-sm" placeholder="Secure message..." value={input} onChange={e=>setInput(e.target.value)} /><button className="bg-black text-white p-4 rounded-2xl btn-press"><Icon name="send" size={20}/></button></form>
+                    <form onSubmit={send} className="p-4 bg-white border-t flex gap-2 pb-10"><input className="flex-1 bg-gray-100 rounded-2xl px-6 py-4 outline-none font-bold text-sm" placeholder="Message..." value={input} onChange={e=>setInput(e.target.value)} /><button className="bg-black text-white p-4 rounded-2xl btn-press"><Icon name="send" size={20}/></button></form>
                 </div>
             );
         };
