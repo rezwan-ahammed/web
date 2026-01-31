@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SSP Admin | Command Center</title>
+    <title>SSP Admin | Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,12 +11,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         :root { --bg: #FDFBF7; --messenger: #0084FF; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; margin: 0; }
         .app-shell { width: 100%; max-width: 480px; min-height: 100vh; background: var(--bg); margin: 0 auto; position: relative; box-shadow: 0 4px 60px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         .btn-press:active { transform: scale(0.96); transition: 0.1s; }
         .chat-admin { background: var(--messenger); color: white; border-radius: 18px 18px 4px 18px; }
         .chat-visitor { background: #E4E6EB; color: black; border-radius: 18px 18px 18px 4px; }
@@ -24,7 +24,6 @@
 </head>
 <body>
     <div id="root"></div>
-
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
         const CONFIG = {
@@ -35,103 +34,154 @@
             appId: "1:5002724584:web:80fde1ae04c6276eb9b55d"
         };
         const PATH = "artifacts/main-portfolio/public/data";
+        const ADMIN_PASS = "admin123";
 
         function AdminApp() {
             const [isAuth, setIsAuth] = useState(false);
+            const [tab, setTab] = useState('posts'); 
+            const [posts, setPosts] = useState([]);
             const [msgs, setMsgs] = useState({});
             const [verifications, setVerifications] = useState({});
+            const [profile, setProfile] = useState({});
             const [activeChat, setActiveChat] = useState(null);
+            const [showModal, setShowModal] = useState(false);
             const db = useRef(null);
 
             useEffect(() => {
-                if (!firebase.apps.length) firebase.initializeApp(CONFIG);
-                db.current = firebase.database();
-                firebase.auth().signInAnonymously().then(() => {
-                    db.current.ref(`${PATH}/verifications`).on('value', s => setVerifications(s.val() || {}));
-                    db.current.ref(`${PATH}/messages`).on('value', s => setMsgs(s.val() || {}));
-                });
-            }, []);
-
-            const unsend = (visitorId, msgId) => {
-                if(confirm("Unsend message?")) db.current.ref(`${PATH}/messages/${visitorId}/${msgId}`).remove();
-            };
-
-            const deleteInbox = (id) => {
-                if(confirm("Delete entire chat history?")) db.current.ref(`${PATH}/messages/${id}`).remove();
-            };
+                if (isAuth) {
+                    if (!firebase.apps.length) firebase.initializeApp(CONFIG);
+                    db.current = firebase.database();
+                    firebase.auth().signInAnonymously().then(() => {
+                        db.current.ref(`${PATH}/profile`).on('value', s => setProfile(s.val() || {}));
+                        db.current.ref(`${PATH}/posts`).on('value', s => setPosts(s.val() ? Object.keys(s.val()).map(k=>({id:k,...s.val()[k]})).sort((a,b)=>b.timestamp-a.timestamp) : []));
+                        db.current.ref(`${PATH}/verifications`).on('value', s => setVerifications(s.val() || {}));
+                        db.current.ref(`${PATH}/messages`).on('value', s => setMsgs(s.val() || {}));
+                    });
+                }
+            }, [isAuth]);
 
             if(!isAuth) return (
-                <div className="h-screen flex flex-col items-center justify-center p-10 bg-black text-white text-center">
-                    <h1 className="text-4xl font-black mb-8 italic">SSP COMMAND</h1>
-                    <button onClick={()=>setIsAuth(true)} className="w-full max-w-xs py-5 bg-white text-black rounded-3xl font-black text-xl">ENTER</button>
+                <div className="h-screen flex flex-col items-center justify-center p-10 bg-black text-white">
+                    <h1 className="text-4xl font-black mb-8 italic tracking-tighter">COMMAND CENTER</h1>
+                    <button onClick={()=>setIsAuth(true)} className="w-full max-w-xs py-5 bg-white text-black rounded-3xl font-black">UNLOCK</button>
                 </div>
             );
 
             return (
                 <div className="app-shell">
                     <header className="p-6 border-b bg-white flex justify-between items-center sticky top-0 z-20">
-                        <h1 className="font-black text-2xl tracking-tighter">INBOX</h1>
-                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-200"></div>
+                        <h1 className="font-black text-2xl tracking-tighter uppercase">{tab}</h1>
+                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-lg"></div>
                     </header>
 
-                    <main className="flex-1 overflow-y-auto no-scrollbar">
-                        {Object.keys(msgs).length > 0 ? Object.keys(msgs).map(vId => (
-                            <div key={vId} className="p-4 border-b flex items-center justify-between hover:bg-gray-50 transition-all">
-                                <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={()=>setActiveChat(vId)}>
-                                    <div className="relative">
-                                        <img src={verifications[vId]?.selfieData || "https://api.dicebear.com/7.x/initials/svg?seed=?"} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md" />
-                                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                    <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
+                        {tab === 'posts' && (
+                            <div className="p-4 space-y-4">
+                                <button onClick={()=>setShowModal(true)} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg shadow-blue-200 mb-4">+ NEW ENTRY</button>
+                                {posts.map(p => (
+                                    <div key={p.id} className="bg-white p-4 rounded-2xl border flex justify-between items-center">
+                                        <div><p className="font-bold text-sm">{p.title || "Thread"}</p><p className="text-xs text-gray-400 truncate w-40">{p.content}</p></div>
+                                        <button onClick={()=>db.current.ref(`${PATH}/posts/${p.id}`).remove()} className="text-red-400 p-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
                                     </div>
-                                    <div>
-                                        <p className="font-black text-sm text-gray-900">{verifications[vId]?.name || "Anonymous Recruiter"}</p>
-                                        <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">Last activity logged</p>
-                                    </div>
-                                </div>
-                                <button onClick={()=>deleteInbox(vId)} className="p-3 text-red-400 btn-press"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+                                ))}
                             </div>
-                        )) : <div className="p-20 text-center text-gray-300 font-black uppercase text-xs tracking-widest italic">No messages received</div>}
+                        )}
+
+                        {tab === 'inbox' && (
+                            <div className="divide-y">
+                                {Object.keys(msgs).map(vId => (
+                                    <div key={vId} className="p-4 flex items-center justify-between bg-white hover:bg-gray-50">
+                                        <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={()=>setActiveChat(vId)}>
+                                            <img src={verifications[vId]?.selfieData} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md" />
+                                            <div><p className="font-black text-sm">{verifications[vId]?.name || "Visitor"}</p><p className="text-xs text-gray-400 line-clamp-1">Last message logged</p></div>
+                                        </div>
+                                        <button onClick={()=>db.current.ref(`${PATH}/messages/${vId}`).remove()} className="p-3 text-red-400"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {tab === 'vault' && (
+                            <div className="p-4 space-y-6">
+                                {Object.values(verifications).map((v, i) => (
+                                    <div key={i} className="bg-white p-5 rounded-[2.5rem] border shadow-sm">
+                                        <h4 className="font-black mb-4">{v.name}</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <img src={v.idData} className="rounded-2xl w-full h-32 object-cover border" />
+                                            <img src={v.selfieData} className="rounded-2xl w-full h-32 object-cover border" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {tab === 'identity' && (
+                            <div className="p-6 space-y-4">
+                                <input className="w-full p-4 bg-white border rounded-2xl font-bold" value={profile.name} onChange={e=>setProfile({...profile, name:e.target.value})} placeholder="Name" />
+                                <input className="w-full p-4 bg-white border rounded-2xl font-bold text-blue-600" value={profile.handle} onChange={e=>setProfile({...profile, handle:e.target.value})} placeholder="Handle" />
+                                <textarea className="w-full p-4 bg-white border rounded-2xl font-medium h-32" value={profile.bio} onChange={e=>setProfile({...profile, bio:e.target.value})} placeholder="Bio" />
+                                <input className="w-full p-4 bg-white border rounded-2xl text-xs" value={profile.avatar} onChange={e=>setProfile({...profile, avatar:e.target.value})} placeholder="Avatar URL" />
+                                <button onClick={()=>db.current.ref(`${PATH}/profile`).set(profile).then(()=>alert("Synced"))} className="w-full bg-black text-white py-5 rounded-2xl font-black">SAVE PROFILE</button>
+                            </div>
+                        )}
                     </main>
+
+                    <nav className="fixed bottom-0 w-full max-w-[480px] bg-white border-t px-8 py-5 flex justify-between items-center z-40 shadow-2xl">
+                        <button onClick={()=>setTab('posts')} className={tab==='posts'?'text-blue-600':'text-gray-300'}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
+                        <button onClick={()=>setTab('inbox')} className={tab==='inbox'?'text-blue-600':'text-gray-300'}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/></svg></button>
+                        <button onClick={()=>setTab('vault')} className={tab==='vault'?'text-blue-600':'text-gray-300'}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button>
+                        <button onClick={()=>setTab('identity')} className={tab==='identity'?'text-blue-600':'text-gray-300'}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/></svg></button>
+                    </nav>
 
                     {activeChat && (
                         <div className="fixed inset-0 z-50 bg-white flex flex-col">
                             <header className="p-4 border-b flex items-center gap-4 bg-white sticky top-0 shadow-sm">
-                                <button onClick={()=>setActiveChat(null)} className="p-2 btn-press"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-                                <img src={verifications[activeChat]?.selfieData} className="w-10 h-10 rounded-full object-cover border shadow-sm" />
-                                <div><p className="font-black leading-none">{verifications[activeChat]?.name}</p><p className="text-[10px] font-bold text-blue-500 uppercase mt-1 tracking-tighter">Connected</p></div>
+                                <button onClick={()=>setActiveChat(null)} className="font-bold text-blue-600">BACK</button>
+                                <img src={verifications[activeChat]?.selfieData} className="w-10 h-10 rounded-full object-cover border" />
+                                <span className="font-black text-sm">{verifications[activeChat]?.name}</span>
                             </header>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
-                                {Object.keys(msgs[activeChat]).map(mId => {
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+                                {msgs[activeChat] && Object.keys(msgs[activeChat]).map(mId => {
                                     const m = msgs[activeChat][mId];
                                     return (
                                         <div key={mId} className={`flex ${m.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                            <div 
-                                                className={`p-4 rounded-2xl text-sm font-medium shadow-sm max-w-[80%] ${m.sender === 'admin' ? 'chat-admin' : 'chat-visitor'}`} 
-                                                onDoubleClick={()=>m.sender==='admin' && unsend(activeChat, mId)}
-                                            >
+                                            <div onDoubleClick={()=>m.sender==='admin' && db.current.ref(`${PATH}/messages/${activeChat}/${mId}`).remove()} className={`p-4 rounded-2xl text-sm font-medium shadow-sm max-w-[80%] ${m.sender==='admin'?'chat-admin':'chat-visitor'}`}>
                                                 {m.type === 'image' ? <img src={m.mediaData} className="rounded-lg w-full" /> : m.text}
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                            <ChatPanel onSend={(v)=>db.current.ref(`${PATH}/messages/${activeChat}`).push({text:v, sender:'admin', type:'text', ts:Date.now()})} onMedia={(d)=>db.current.ref(`${PATH}/messages/${activeChat}`).push({mediaData:d, sender:'admin', type:'image', ts:Date.now()})} />
+                            <div className="p-4 border-t flex gap-2 pb-10 bg-white">
+                                <button onClick={()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=e=>{const r=new FileReader();r.readAsDataURL(e.target.files[0]);r.onload=ev=>db.current.ref(`${PATH}/messages/${activeChat}`).push({mediaData:ev.target.result, sender:'admin', type:'image', ts:Date.now()})};i.click()}} className="text-blue-500 p-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+                                <input id="admin_reply" className="flex-1 bg-gray-100 rounded-full px-4 py-3 outline-none" placeholder="Aa" onKeyPress={e=>e.key==='Enter' && (db.current.ref(`${PATH}/messages/${activeChat}`).push({text:e.target.value, sender:'admin', type:'text', ts:Date.now()}), e.target.value="")} />
+                            </div>
+                        </div>
+                    )}
+
+                    {showModal && (
+                        <div className="fixed inset-0 z-[100] bg-black/50 flex items-end justify-center p-4">
+                            <div className="w-full max-w-sm bg-white rounded-[2.8rem] p-8 shadow-2xl">
+                                <div className="flex justify-between items-center mb-6"><h3 className="font-black text-xl">NEW POST</h3><button onClick={()=>setShowModal(false)}>X</button></div>
+                                <div className="space-y-4">
+                                    <input id="new_title" placeholder="Title" className="w-full p-4 bg-gray-50 rounded-2xl font-bold outline-none" />
+                                    <textarea id="new_content" placeholder="Content" className="w-full p-4 bg-gray-50 rounded-2xl font-medium h-32 outline-none" />
+                                    <input type="file" id="new_file" className="text-xs w-full" />
+                                    <button onClick={async ()=>{
+                                        const t = document.getElementById('new_title').value;
+                                        const c = document.getElementById('new_content').value;
+                                        const f = document.getElementById('new_file').files[0];
+                                        let img = "";
+                                        if(f) { const r=new FileReader(); r.readAsDataURL(f); r.onload=async ev=>{ await db.current.ref(`${PATH}/posts`).push({title:t,content:c,imageUrl:ev.target.result,timestamp:Date.now()}); setShowModal(false); } }
+                                        else { await db.current.ref(`${PATH}/posts`).push({title:t,content:c,imageUrl:"",timestamp:Date.now()}); setShowModal(false); }
+                                    }} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black shadow-xl">PUBLISH</button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
             );
         }
-
-        const ChatPanel = ({ onSend, onMedia }) => {
-            const [v, setV] = useState("");
-            return (
-                <div className="p-4 border-t flex gap-3 pb-10 bg-white items-center">
-                    <button onClick={()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=e=>{const r=new FileReader();r.readAsDataURL(e.target.files[0]);r.onload=ev=>onMedia(ev.target.result)};i.click()}} className="text-blue-500 p-1 btn-press"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
-                    <input className="flex-1 bg-gray-100 rounded-full px-5 py-3 outline-none font-bold" value={v} onChange={e=>setV(e.target.value)} placeholder="Aa" onKeyPress={e=>e.key==='Enter' && (onSend(v),setV(""))} />
-                    <button onClick={()=>{onSend(v); setV("")}} className="text-blue-600 btn-press"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
-                </div>
-            );
-        }
-
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<AdminApp />);
     </script>
